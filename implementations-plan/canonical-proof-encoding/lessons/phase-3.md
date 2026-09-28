@@ -49,3 +49,15 @@ its artifact hash and class IDs. **no new material findings** — approve". The 
   `minerClassId` (the method checks out); the fixed artifact gives
   `0x0ee9c81b4018f249a69235d41eaddda33316e5142644398df3d6f56080c5b07f`, which the new record must carry. It does not
   match the live record, which is the availability hazard §3 describes.
+
+## A1 — the keyed-run route (2026-09-24 → 2026-09-28)
+
+- The owner moved the keys to 1Password with my-stack's keyed runs (`env-exec` on the host, `op-remote` on the Mac;
+  aa-skills `5b109e1`): item `Yacana-Testnet` in vault `Keyed-Runs`, a fresh operators key and deployer secret,
+  `deployments/testnet.env.example` holding only `op://` references and public values (`92075d8`).
+- Dry run `yacana-operators-address-324bb9b8` at `92075d8` (a `bun -e` reading the two env vars, printing the derived
+  address, its balance and the secret's length), approved on the Mac: `finished 0`. New operators address
+  `0xc9b7162F57B74257261cB61a0FAc870Eda87Cbb7`, 0 ETH on Sepolia; deployer secret 66 hex chars (`0x` + 32 bytes,
+  which `deploy.ts` accepts and reduces).
+- Next: the owner funds it from the old operators EOA `0xFcc2238319aC360e985f1736aBB3df6251DAF6F5`; then one request
+  runs the whole relaunch chain.
