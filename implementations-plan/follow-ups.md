@@ -23,3 +23,10 @@ Open items no active plan owns. Delete entries as they resolve.
 - **web-miner · sample later native proofs.** Only a build's first Presto proof is verified in the Worker (a win is verified before its claim regardless); a cheap periodic re-verification would catch a Presto that turns bad mid-session.
 - **web-miner · the replay lane's LNA test.** `lna.replay.ts` proves the permission gate against a loopback IP origin; Chromium refuses a passkey RP-ID on an IP, so the signed-in half of that flow is covered only by the live e2e.
 - **web-miner · the click-to-fetch window.** After the queued-messages turn, a revoke arriving in the SDK's synchronous pre-fetch stretch (base64, JSON) can still let one witness leave; measure that stretch, and if it is long, pass an `AbortSignal` through the SDK.
+- **contracts · track barretenberg#1607** (from canonical-proof-encoding). Keep `claim`'s reducedness check after an upstream fix: the ticket hashes raw fields, so uniqueness must not depend on the verifier's codec.
+- **contracts · an isolated TXE runner** (from canonical-proof-encoding). `aztec test` starts TXE on the fixed port 8081, so two runs cannot share a host; the gates probe the port and wait.
+- **CI · toolchain hashes before use** (from canonical-proof-encoding). The workflows check the pinned binaries' hashes after running them.
+- **contracts · optional: the pre-fix alias executed end to end** (from canonical-proof-encoding). An aliased proof minting on the unfixed miner under real proving was reasoned from bb's source, never run.
+- **deploy · verify the 2026-09-28 portal on Etherscan** (from canonical-proof-encoding). The 2026-09-13 portal was verified; the relaunch's was not (no Etherscan key in the keyed run).
+- **bridge · the 2026-09-13 portal's held send-ahead** (from canonical-proof-encoding). K2 (1 tYACA) stays held on the old portal, which will never register a later version; testnet, the team's own.
+- **web-miner · `words.e2e.ts` sign-out flake** (from canonical-proof-encoding). Once in two canary-shard runs on the merged tree, `start-create` never appeared after sign-out (main's one-surface sign-out flow); it passed on the rerun.

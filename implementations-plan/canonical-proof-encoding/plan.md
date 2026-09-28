@@ -10,6 +10,17 @@ status: drafted 2026-09-23; codex → conditional approve, Opus 5.5 → conditio
 created: 2026-09-23
 ---
 
+## Outcome
+
+Delivered 2026-09-28 as PR #66, unmerged (the merge is the owner's). Both phases ✓ on their gates: `claim` refuses
+a proof unless every coordinate of its 36 points is reduced, at offsets generated from the layout manifest; 31,985 →
+34,155 gates, `log n` 15 → 16; claim-transaction proving +8.9 % on the two planned samples (+6.9 % over three). The
+codex loop converged in two rounds ("no new material findings — approve"). A1 ran as a keyed run (1Password on the
+owner's Mac, `op-remote`, my-stack's keyed runs, built for this): a new portal and YACA on Sepolia, the fixed miner
+(class `0x0ee9c81b…b07f`, equal to the committed artifact's) registered at index 5, three real claims under real
+proving, the example claim recorded; `main`'s one-surface arcs merged in and the merged tree validated. Addresses and
+hashes: `lessons/phase-3.md`, `docs/deployments.md`. Its `/goal` and `/loop` seeds are retired.
+
 # canonical-proof-encoding: one encoding per proof point before the ticket
 
 The miner's `claim` verifies W's proof in-circuit and then hashes the proof's 410 raw fields into the ticket. The
