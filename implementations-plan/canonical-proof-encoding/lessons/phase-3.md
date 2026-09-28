@@ -89,3 +89,15 @@ its artifact hash and class IDs. **no new material findings** — approve". The 
   the node.
 - `bun run site:build` (production) passes its guards on the new record; `build.json` names the new miner and no
   `/witnesses/` file is served (the old archive moved out of the folder).
+
+## Main moved: the one-surface arcs (#67–#71)
+
+- After the record push the PR read CONFLICTING and GitHub reported no checks at all (a conflicted PR gets no
+  `pull_request` run). `main` had merged the five one-surface arcs. Merged `origin/main` into the branch (no history
+  rewrite; the PR squash-merges): two conflicts, `CLAUDE.md` (main's rows, including the new `packages/stats-view`,
+  plus this plan's two `proof_points.nr` mentions) and `implementations-plan/index.md` (both plans' lines).
+- On the merged tree: typecheck, lint, `bun test` 673 pass / 0 fail, components (ui 90, stats-view 83, web-landing
+  15, web-stats 2, web-miner 157), replay 9 passed, production `site:build` naming the new miner.
+- The canary shard on the merged tree, real proving: both canary cases passed (main's new pruned-anchor case
+  included). `words.e2e.ts` failed once waiting for `start-create` after sign-out (main's sign-out flow, no proof,
+  no contract call) and passed on the rerun with the other four: a flake, recorded, not this plan's.
