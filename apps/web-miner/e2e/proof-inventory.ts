@@ -30,7 +30,7 @@ export const INVENTORY: Readonly<Record<string, Readonly<Record<string, number>>
     'a poisoned CRS cache is purged before proving': 1,
     'three power changes keep mining, the ledger grows, memory stays bounded': 0,
     'a prover crash surfaces as an error and mining restarts on the next start': 0,
-    'the pop-out draws with the page fonts and its own loop': 0,
+    'the mini window: page fonts, its own loop, two lines that fit, open across pages; Start opens it when asked, and mines when refused': 0,
   },
   'passkey.e2e.ts': {
     'a passkey account: create, mine, claim, reload with one touch, the balance follows the account': 1,

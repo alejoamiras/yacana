@@ -59,7 +59,7 @@ test('the captured history through a mocked node: deterministic numbers, selecti
   await expect(page.getByTestId('sentence')).toContainText('the next epoch was eased ×4.00');
   await page.keyboard.press('ArrowRight');
   await expect(page).toHaveURL(/epoch=1/);
-  await expect(page.getByTestId('sentence')).toContainText('4 claims in');
+  await expect(page.getByTestId('sentence')).toContainText('4 wins in');
   const durationChart = page.getByTestId('chart-duration');
   await expect(durationChart.locator('g.claims rect, g.roll rect')).toHaveCount(30);
   // Every chart carries the selection (epoch 1 is closed): one halo shape in each.

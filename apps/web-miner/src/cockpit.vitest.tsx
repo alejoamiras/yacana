@@ -116,17 +116,17 @@ describe('the epoch tile and the ledger', () => {
     expect(getByText('your proofs')).toBeTruthy();
     expect(getByText('Your balance shows once you log in.')).toBeTruthy();
     expect(getByText('starts with mining')).toBeTruthy();
-    expect(getByText('the bar is 64.0 · about 64 proofs per win')).toBeTruthy();
+    expect(getByText('difficulty 64.0 · about 64 proofs per win')).toBeTruthy();
     // The rows in the visitor's words, each label a tip; the header word too.
     const labels = Array.from(
       getByTestId('rail').querySelectorAll('[data-slot=kv] > :first-child') as NodeListOf<HTMLElement>,
     ).map((l) => l.textContent);
     expect(labels).toEqual([
       'wins this epoch',
-      'the bar',
+      'difficulty',
       'open for',
-      'target length',
-      'next bar if it closed now',
+      'expected epoch time',
+      'next difficulty, if closed now',
       'reset if stuck',
     ]);
     expect(getByTestId('rail').querySelectorAll('[data-slot=tip-trigger]')).toHaveLength(6);

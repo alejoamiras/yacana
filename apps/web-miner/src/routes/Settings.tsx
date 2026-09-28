@@ -104,11 +104,11 @@ function MiningTile({
           cores={cores}
           threads={threads}
           onChange={onThreads}
-          disabled={presto.native}
+          disabled={presto.decides}
           label="browser threads"
         />
         <p className="text-xs text-ink-2" data-testid="power-note">
-          {presto.native
+          {presto.decides
             ? 'Not in use while Presto proves; Presto’s own speed setting decides. Yacana falls back to these threads if Presto drops out.'
             : 'This slider affects browser proving only; one core stays with the page.'}
         </p>
@@ -314,10 +314,12 @@ export function Settings({
             {flag('sound', 'sound', 'Sound on a win')}
             {flag('tabStatus', 'tab-status', 'Report in the tab title and icon')}
             {flag(
-              'pip',
-              'pip',
-              'Mini window',
-              canPip ? 'picture-in-picture' : 'not supported by this browser',
+              'pipOnStart',
+              'pip-on-start',
+              'Open the mini window when mining starts',
+              canPip
+                ? "your Start click opens it; browsers don't let a page open it when you switch tabs"
+                : 'not supported by this browser',
               !canPip,
             )}
           </Tile>

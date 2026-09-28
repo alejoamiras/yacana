@@ -8,6 +8,7 @@ import {
   lnaState,
   mayAsk,
   type PrestoState,
+  prestoDecides,
   prestoStanding,
 } from '../src/presto.ts';
 import type { ConsentRecord } from '../src/presto-consent.ts';
@@ -123,5 +124,31 @@ describe('prestoStanding', () => {
     expect(standing({ status: eligible, selected: 'presto' }, used, 'denied')).toBe('blocked');
     expect(standing({ ...clicked, status: blockedByBrowser }, never)).toBe('blocked');
     expect(standing({ status: blockedByBrowser }, used, 'unknown')).toBe('blocked');
+  });
+});
+
+describe('prestoDecides', () => {
+  const decides = (s: Partial<PrestoState>, record: ConsentRecord, lna: Lna = 'granted') =>
+    prestoDecides({ ...initialPresto, ...s }, record, lna);
+
+  test('the slider steps aside once Presto is found under consent, remembered or proving, and not otherwise', () => {
+    const table: Array<[string, Partial<PrestoState>, ConsentRecord, Lna, boolean]> = [
+      ['found', { ...clicked, status: eligible }, never, 'granted', true],
+      ['remembered', {}, used, 'granted', true],
+      ['proving', { status: eligible, selected: 'presto' }, used, 'granted', true],
+      ['absent', { ...clicked, status: offline }, never, 'granted', false],
+      ['checking', { ...clicked, looking: true }, never, 'granted', false],
+      ['consent revoked', { consentRev: 0, status: eligible }, { used: false, rev: 1 }, 'granted', false],
+      ['permission denied', { status: eligible, selected: 'presto' }, used, 'denied', false],
+      [
+        'the WASM fallback',
+        { status: eligible, selected: 'presto', fallbackReason: 'transient' },
+        used,
+        'granted',
+        false,
+      ],
+    ];
+    for (const [name, s, record, lna, want] of table)
+      expect([name, decides(s, record, lna)]).toEqual([name, want]);
   });
 });

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Claims that recover by themselves</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#0a0a0b}
+.b{--ground:#0a0a0b;--raised:#111114;--panel:#17171b;--panel2:#1e1e24;--ink:#f2efe9;--ink2:rgba(242,239,233,.64);--ink3:rgba(242,239,233,.5);--ink4:rgba(242,239,233,.22);--line:rgba(242,239,233,.1);--line2:rgba(242,239,233,.18);--uv:#8c6bff;--uv2:#b39dff;--uvdim:rgba(140,107,255,.18);--ok:#58c98b;--warn:#e8b54d;--bad:#e5624f;background:var(--ground);color:var(--ink);font:15px/1.55 "Hanken Grotesk",ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;box-sizing:border-box;overflow:hidden}
+.b *{box-sizing:border-box}
+.b p{margin:0}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.tag{align-self:flex-start;font:600 10.5px/1 "JetBrains Mono",monospace;letter-spacing:.1em;text-transform:uppercase;padding:5px 8px;border-radius:4px}
+.tag.now{color:var(--ink3);border:1px dashed var(--line2)}
+.tag.new{color:var(--ok);border:1px solid rgba(88,201,139,.5)}
+.tag.alt{color:var(--uv2);border:1px solid rgba(140,107,255,.5)}
+.tile{border:1px solid var(--line);border-radius:8px;background:var(--raised);padding:14px 16px;min-width:0;display:flex;flex-direction:column;gap:2px}
+.cap{font:500 11px/1.3 "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:8px}
+.ln{display:grid;grid-template-columns:64px 14px minmax(0,1fr);gap:8px;font:400 12px/1.5 "JetBrains Mono",monospace;color:var(--ink2);padding:5px 0;border-top:1px solid var(--line)}
+.ln.first{border-top:0}
+.ln .t{color:var(--ink3)}
+.win{color:var(--uv2)}.ok{color:var(--ok)}.warn{color:var(--warn)}.dim{color:var(--ink3)}.bad{color:var(--bad)}
+.retry{display:inline-flex;align-items:center;height:22px;padding:0 8px;margin-left:6px;border-radius:4px;border:1px solid rgba(232,181,77,.5);background:none;color:var(--warn);font:600 11px "JetBrains Mono",monospace;vertical-align:middle}
+.step{font:500 10.5px/1 "JetBrains Mono",monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);padding:10px 0 2px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(140,107,255,.5);background:var(--uvdim);border-radius:4px;padding:3px 8px;font:500 11px/1.3 "JetBrains Mono",monospace;color:var(--uv2)}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(140,107,255,.6);border-radius:4px;padding:3px 8px;font:500 11px/1.3 "JetBrains Mono",monospace;color:var(--uv2)}
+.pill i{width:5px;height:5px;background:var(--uv);display:inline-block}
+.btn{display:inline-flex;align-items:center;height:28px;padding:0 11px;border-radius:6px;border:1px solid var(--line2);background:transparent;color:var(--ink);font:600 12.5px "Hanken Grotesk",sans-serif}
+</style>
+</helmet>
+<div class="b" style="width: 1400px; height: 900px; padding: 28px 32px; display: grid; grid-template-columns: 480px minmax(0, 1fr); gap: 40px;">
+<div class="col">
+<span class="tag now">today · what you saw</span>
+<section class="tile">
+<p class="cap">proofs, newest first</p>
+<div class="ln first"><span class="t">14:31:07</span><span class="win">★</span><span><span class="win">#212 · score 71.2 · a win</span> <span class="warn">· claim failed: Block hash 0x2766a372…842993c6 not found when resolving query. If the node API has been queried with anchor block hash possibly a reorg has occurred. · mining paused</span><button class="retry">Retry</button></span></div>
+<div class="ln"><span class="t">14:48:52</span><span class="win">★</span><span><span class="win">#219 · score 88.0 · a win</span> <span class="warn">· claim failed: no effects for 0x075d240a…e0e4d505 · mining paused</span><button class="retry">Retry</button></span></div>
+</section>
+<p style="font: 500 11.5px/1.5 'JetBrains Mono', monospace; color: var(--ink3);">Both stop mining until Retry. Pressing Start instead throws the win away.</p>
+</div>
+<div class="col">
+<span class="tag new">A · the win line recovers by itself · mining waits</span>
+<section class="tile">
+<p class="cap">the node lost the block the wallet was reading · nothing was sent yet</p>
+<p class="step">first</p>
+<div class="ln first"><span class="t">14:31:07</span><span class="win">★</span><span><span class="win">#212 · reached 71.2 · a win</span> <span class="win">· claiming: proving in your browser, about 20 s</span></span></div>
+<p class="step">then</p>
+<div class="ln first"><span class="t">14:31:31</span><span class="win">★</span><span><span class="win">#212 · reached 71.2 · a win</span> <span class="win">· the node dropped the block it was reading · proving again, try 2 of 3</span></span></div>
+<p class="step">then</p>
+<div class="ln first"><span class="t">14:31:58</span><span class="ok">✓</span><span class="ok">minted in block 184,236 · 4 tYACA · settling</span></div>
+</section>
+<section class="tile">
+<p class="cap">the claim was seen in a block, then the node lost it</p>
+<p class="step">first</p>
+<div class="ln first"><span class="t">14:48:52</span><span class="win">★</span><span><span class="win">#219 · reached 88.0 · a win</span> <span class="win">· claiming: in a block · syncing the note</span></span></div>
+<p class="step">then</p>
+<div class="ln first"><span class="t">14:49:20</span><span class="win">★</span><span><span class="win">#219 · reached 88.0 · a win</span> <span class="win">· the node lost sight of it · checking the chain for your claim</span></span></div>
+<p class="step">then, whichever the chain says</p>
+<div class="ln first"><span class="t">14:49:31</span><span class="ok">✓</span><span class="ok">minted in block 184,251 · 4 tYACA · settling</span></div>
+<div class="ln"><span class="t">14:49:31</span><span class="win">★</span><span><span class="win">#219 · reached 88.0 · a win</span> <span class="win">· it didn’t land · sending again, try 2 of 3</span></span></div>
+</section>
+<section class="tile">
+<p class="cap">only when three tries fail</p>
+<div class="ln first"><span class="t">14:34:40</span><span class="win">★</span><span><span class="win">#212 · reached 71.2 · a win</span> <span class="warn">· couldn’t claim after 3 tries: the node keeps dropping blocks · the win stays claimable until epoch 57 closes</span><button class="retry">Retry</button></span></div>
+</section>
+<section class="tile" style="flex-direction: row; align-items: center; gap: 12px; flex-wrap: wrap;">
+<span class="tag alt" style="align-self: center;">B · also keep mining meanwhile</span>
+<span class="pill"><i></i>mining</span><span class="chip">claim #212 · try 2 of 3 · 31 s</span><button class="btn">Stop</button>
+<span style="font: 500 11.5px/1.5 'JetBrains Mono', monospace; color: var(--ink3);">the retry runs beside the proofs instead of pausing them</span>
+</section>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1400,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

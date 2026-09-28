@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Flywheel B: three facts</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#0a0a0b}
+.b{--ground:#0a0a0b;--raised:#111114;--panel:#17171b;--ink:#f2efe9;--ink2:rgba(242,239,233,.64);--ink3:rgba(242,239,233,.5);--ink4:rgba(242,239,233,.22);--line:rgba(242,239,233,.1);--line2:rgba(242,239,233,.18);--uv:#8c6bff;--uv2:#b39dff;background:var(--ground);color:var(--ink);font:15px/1.55 "Hanken Grotesk",ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased;box-sizing:border-box;overflow:hidden}
+.b *{box-sizing:border-box}
+.b p{margin:0}
+.sec{border-top:1px solid var(--line);padding:32px 36px}
+.label{font:500 11.5px/1 "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--uv2)}
+.h2{margin-top:10px;margin-bottom:14px;font-size:30px;line-height:1.02;font-weight:600;letter-spacing:-.03em;text-wrap:balance}
+.lede{font-size:15px;line-height:1.55;color:var(--ink2);max-width:680px}
+.ghost{opacity:.35}
+.tile{border:1px solid var(--line);border-radius:8px;background:var(--raised);padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.tile .n{font:500 12.5px/1 "JetBrains Mono",monospace;color:var(--uv2);margin-bottom:4px}
+.tile .t{font-size:14px;font-weight:600;line-height:1.45}
+.tile .d{font-size:12.5px;line-height:1.5;color:var(--ink3)}
+</style>
+</helmet>
+<div class="b" style="width: 1280px; height: 700px; display: flex; flex-direction: column;">
+<section class="sec ghost">
+<p class="label">how it works</p>
+<p class="h2" style="font-size: 24px;">Prove. Hash. Claim.</p>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;"><div class="tile" style="height: 54px;"></div><div class="tile" style="height: 54px;"></div><div class="tile" style="height: 54px;"></div></div>
+</section>
+<section class="sec" style="flex-grow: 1;">
+<p class="label">why proving</p>
+<p class="h2">Mining that makes Aztec faster.</p>
+<p class="lede" style="margin-bottom: 22px;">Mining is Aztec’s own prover, run flat out by everyone who wants to win.</p>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;">
+<div class="tile"><span class="n">1 · the work</span><span class="t">Aztec’s own prover</span><span class="d">Every proof a miner makes runs on Barretenberg, the prover behind every Aztec transaction.</span></div>
+<div class="tile"><span class="n">2 · the race</span><span class="t">Faster proving wins more</span><span class="d">More proofs a minute means more draws. Presto already proves several times faster than the browser; the next speedup is anyone’s to find.</span></div>
+<div class="tile"><span class="n">3 · the payoff</span><span class="t">Aztec keeps the speedup</span><span class="d">Speedups that land in Barretenberg make private transactions faster and cheaper for everyone. Issuance stays fixed: the difficulty absorbs the speed.</span></div>
+</div>
+</section>
+<section class="sec ghost" style="padding-bottom: 18px;">
+<p class="label">verify</p>
+<p class="h2" style="font-size: 24px; margin-bottom: 0;">See for yourself.</p>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":700}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

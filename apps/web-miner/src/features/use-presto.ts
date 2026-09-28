@@ -4,7 +4,7 @@
 import type { PrestoStanding } from '@yacana/ui';
 import { useAtomValue } from 'jotai';
 import { useMemo, useSyncExternalStore } from 'react';
-import { lnaAtom, prestoAtom, prestoEndpoint, prestoStanding } from '../presto';
+import { lnaAtom, prestoAtom, prestoDecides, prestoEndpoint, prestoStanding } from '../presto';
 import { isConsented, consent as pageConsent } from '../presto-consent';
 import type { Session } from '../session';
 import { minerAtom } from '../state';
@@ -14,7 +14,7 @@ export interface PrestoView {
   configured: boolean;
   standing: PrestoStanding;
   /** Presto's own speed setting decides: the browser's slider is not in force. */
-  native: boolean;
+  decides: boolean;
   /** Remembered, but the browser will ask before the next look. */
   needsLook: boolean;
   look: () => void;
@@ -35,7 +35,7 @@ export function usePresto(session: Session | undefined): PrestoView {
   return {
     configured,
     standing,
-    native: standing === 'remembered' || standing === 'proving',
+    decides: prestoDecides(state, record, lna),
     needsLook: lna === 'prompt',
     look: () => void session?.lookForPresto(),
     chooseBrowser: isConsented(record, state.consentRev) ? () => void session?.chooseBrowser() : undefined,

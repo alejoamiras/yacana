@@ -26,6 +26,7 @@ import type { Connection } from './config';
 import { isDesktop } from './desktop';
 import { useActivity } from './features/ActivityList';
 import { OldTabNotice } from './features/OldTabNotice';
+import { PipHost } from './features/PipHost';
 import { PreflightTile } from './features/PreflightTile';
 import { PrestoBanner } from './features/PrestoBanner';
 import { SignInDialog } from './features/SignInDialog';
@@ -135,7 +136,7 @@ export function App({ connection, session }: { connection: Connection; session: 
   const signIn = useAtomValue(signInAtom);
   const [settings] = useSettings();
   const controller = useCallback(() => session.controller, [session]);
-  // Stable: the loop tile's controls hand `onStart` to the picture-in-picture window, which a new identity would close.
+  // Stable: the mini window's view is rendered again whenever `onStart` changes identity.
   const onStart = useCallback(() => session.startMining(), [session]);
   // The fix-it row's Retry is a Look: one entry point consents and probes.
   const onRetry = useCallback(() => void session.lookForPresto(), [session]);
@@ -149,7 +150,7 @@ export function App({ connection, session }: { connection: Connection; session: 
   const dialogShowing =
     route !== 'settings' && (boot.phase === 'opening' || (boot.phase === 'signedOut' && signIn));
   useTabStatus(settings.tabStatus);
-  useHotkeys(controller, onStart, !dialogShowing);
+  useHotkeys(controller, onStart, session.consent, !dialogShowing);
   usePauses(controller, settings);
   useResumeOnOpen(onStart);
   if (!isDesktop(window)) return <DesktopOnly />;
@@ -177,6 +178,7 @@ export function App({ connection, session }: { connection: Connection; session: 
       {open && route === 'wallet' && <Wallet session={session} />}
       {route === 'settings' && <Settings connection={connection} controller={controller} session={session} />}
       {route !== 'settings' && <SignInDialog session={session} />}
+      <PipHost controller={controller} onStart={onStart} />
       <Toaster />
     </Shell>
   );

@@ -38,7 +38,7 @@ function MintedTile({ fixed }: { fixed: Fixed | null }) {
       unit={PARAMS.TOKEN_SYMBOL}
       sub={
         fixed ? (
-          `${amount(fixed.supply / PARAMS.REWARD, 0)} claims × ${unit} · no premine`
+          `${amount(fixed.supply / PARAMS.REWARD, 0)} wins × ${unit} · no premine`
         ) : (
           <Sk className={SK_SUB} />
         )
@@ -58,7 +58,7 @@ function OpenEpoch({ open, rows, nowSec }: { open: number | null; rows: Rows; no
       <Kpi
         label={label}
         value={<span data-testid="open-claims">—</span>}
-        unit={`of ${PARAMS.N} claims`}
+        unit={`of ${PARAMS.N} wins`}
         sub={rows.length ? 'this epoch not read yet' : 'history unavailable'}
       />
     );
@@ -68,7 +68,7 @@ function OpenEpoch({ open, rows, nowSec }: { open: number | null; rows: Rows; no
     <Kpi
       label={label}
       value={<span data-testid="open-claims">{row.claims}</span>}
-      unit={`of ${PARAMS.N} claims`}
+      unit={`of ${PARAMS.N} wins`}
       sub={
         <span className="inline-flex items-center gap-1.5">
           <EpochRing elapsed={elapsed} expected={EXPECTED} hatch={hatch} />
@@ -100,7 +100,7 @@ function DifficultyTile({ open, rows }: { open: number | null; rows: Rows }) {
 function ClaimsPerHour({ rows, nowSec }: { rows: Rows; nowSec: number }) {
   return (
     <Kpi
-      label="claims / hour"
+      label="wins / hour"
       value={
         <span data-testid="claims-per-hour">
           <Tweened id="claims-per-hour" value={rows ? claimsPerHour(rows, nowSec) : null} />

@@ -39,7 +39,7 @@ describe('miner reducer', () => {
     [s] = reduce(s, attempt(3.9));
     [s] = reduce(s, attempt(29.8));
     expect(s).toMatchObject({ tickets: 2, proofs: 2, best: 29.8 });
-    // The retarget eases the bar from 64 to 16.
+    // The retarget eases the difficulty from 64 to 16.
     const [s2, cmds] = reduce(s, { type: 'epoch', epoch: epoch(4n, 99n, 1n << 124n), difficultyRatio: 0.25 });
     expect(cmds).toEqual([
       { type: 'halt' },
@@ -54,7 +54,7 @@ describe('miner reducer', () => {
       [64, false],
       [64, false],
     ]);
-    expect(s2.ledger[0]).toMatchObject({ kind: 'epoch', text: 'epoch 4 opened · bar 16.0 (×0.25)' });
+    expect(s2.ledger[0]).toMatchObject({ kind: 'epoch', text: 'epoch 4 opened · difficulty 16.0 (×0.25)' });
     // The same epoch reported again is a no-op.
     expect(reduce(s2, { type: 'epoch', epoch: epoch(4n, 99n) })[1]).toEqual([]);
   });

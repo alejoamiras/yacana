@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Flywheel A: the loop</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#0a0a0b}
+.b{--ground:#0a0a0b;--raised:#111114;--panel:#17171b;--panel2:#1e1e24;--ink:#f2efe9;--ink2:rgba(242,239,233,.64);--ink3:rgba(242,239,233,.5);--ink4:rgba(242,239,233,.22);--line:rgba(242,239,233,.1);--line2:rgba(242,239,233,.18);--uv:#8c6bff;--uv2:#b39dff;--uvdim:rgba(140,107,255,.18);--ok:#58c98b;background:var(--ground);color:var(--ink);font:15px/1.55 "Hanken Grotesk",ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased;box-sizing:border-box;overflow:hidden}
+.b *{box-sizing:border-box}
+.b p{margin:0}
+.sec{border-top:1px solid var(--line);padding:32px 36px}
+.label{font:500 11.5px/1 "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--uv2)}
+.h2{margin-top:10px;margin-bottom:14px;font-size:30px;line-height:1.02;font-weight:600;letter-spacing:-.03em;text-wrap:balance}
+.lede{font-size:15px;line-height:1.55;color:var(--ink2);max-width:440px}
+.ghost{opacity:.35}
+.tile{border:1px solid var(--line);border-radius:8px;background:var(--raised);padding:14px 16px}
+.node{position:absolute;width:210px;border:1px solid var(--line2);border-radius:8px;background:var(--raised);padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.node .n{font:500 11px/1 "JetBrains Mono",monospace;color:var(--uv2);letter-spacing:.06em}
+.node .t{font-size:14px;font-weight:600;line-height:1.35}
+.node .d{font-size:12.5px;line-height:1.45;color:var(--ink3)}
+.core{position:absolute;left:230px;top:210px;width:240px;text-align:center;font:500 11.5px/1.5 "JetBrains Mono",monospace;color:var(--ink3)}
+</style>
+</helmet>
+<div class="b" style="width: 1280px; height: 900px; display: flex; flex-direction: column;">
+<section class="sec ghost">
+<p class="label">how it works</p>
+<p class="h2" style="font-size: 24px;">Prove. Hash. Claim.</p>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px;"><div class="tile" style="height: 54px;"></div><div class="tile" style="height: 54px;"></div><div class="tile" style="height: 54px;"></div></div>
+</section>
+<section class="sec" style="display: grid; grid-template-columns: 440px minmax(0, 1fr); gap: 40px; align-items: center; flex-grow: 1;">
+<div>
+<p class="label">why proving</p>
+<p class="h2">The race to mine is a race to make Aztec fast.</p>
+<p class="lede">Mining runs Barretenberg, the prover behind every Aztec transaction. Miners earn more by proving faster, and every speedup that lands in Barretenberg makes Aztec faster and cheaper for everyone.</p>
+</div>
+<div style="position: relative; width: 700px; height: 520px;">
+<svg width="700" height="520" viewBox="0 0 700 520" style="position: absolute; left: 0; top: 0;">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#b39dff"></path></marker></defs>
+<circle cx="350" cy="260" r="200" fill="none" stroke="rgba(242,239,233,.08)" stroke-width="1"></circle>
+<path d="M473.1 102.4 A200 200 0 0 1 537.9 191.6" fill="none" stroke="#b39dff" stroke-width="1.5" marker-end="url(#ah)"></path>
+<path d="M537.9 328.4 A200 200 0 0 1 473.1 417.6" fill="none" stroke="#b39dff" stroke-width="1.5" marker-end="url(#ah)"></path>
+<path d="M226.9 417.6 A200 200 0 0 1 162.1 328.4" fill="none" stroke="#b39dff" stroke-width="1.5" marker-end="url(#ah)"></path>
+<path d="M162.1 191.6 A200 200 0 0 1 226.9 102.4" fill="none" stroke="#b39dff" stroke-width="1.5" marker-end="url(#ah)"></path>
+</svg>
+<div class="node" style="left: 245px; top: 12px;"><span class="n">1 · earn</span><span class="t">Miners want more wins</span><span class="d">More proofs a minute, more draws.</span></div>
+<div class="node" style="left: 470px; top: 212px;"><span class="n">2 · optimize</span><span class="t">So they prove faster</span><span class="d">Native provers like Presto, leaner WASM, better hardware.</span></div>
+<div class="node" style="left: 245px; top: 412px;"><span class="n">3 · upstream</span><span class="t">Barretenberg gets faster</span><span class="d">Speedups that land upstream reach every Aztec prover.</span></div>
+<div class="node" style="left: 20px; top: 212px;"><span class="n">4 · grow</span><span class="t">Aztec gets cheaper to use</span><span class="d">Quicker private transactions draw more people, and more miners.</span></div>
+<p class="core">The difficulty keeps issuance at 4 wins every 5 min, however fast proving gets.</p>
+</div>
+</section>
+<section class="sec ghost" style="padding-bottom: 18px;">
+<p class="label">verify</p>
+<p class="h2" style="font-size: 24px; margin-bottom: 0;">See for yourself.</p>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,4 +1,5 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, cleanup, render, renderHook } from '@testing-library/react';
+import { Header } from '@yacana/ui';
 import { hostKind, keysAllowed, previewNotice, relyingParty } from '@yacana/web-kit/browser/host';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { queryOverridesAllowed } from './config';
@@ -8,6 +9,7 @@ import { navigate, pathFor, routeFromPath, useRoute } from './routes';
 import { tabTitle } from './tab-status';
 
 afterEach(() => {
+  cleanup();
   history.replaceState(null, '', '/');
   vi.unstubAllEnvs();
 });
@@ -56,6 +58,12 @@ describe('the header', () => {
     expect(tabs.map((t) => t.href)).toEqual(['/', 'https://yacana.network/stats/']);
     expect(tabs.map((t) => t.external ?? false)).toEqual([false, true]);
     expect(tabs[0]?.current).toBe(true);
+    const { container } = render(<Header version="V5" homeHref="/" mark="idle" tabs={tabs} />);
+    const glyphs = [...container.querySelectorAll('nav a svg')].map((s) => s.getAttribute('class'));
+    expect(glyphs).toEqual([
+      expect.stringContaining('lucide-pickaxe'),
+      expect.stringContaining('lucide-chart-column'),
+    ]);
   });
 });
 

@@ -147,7 +147,7 @@ describe('network metrics', () => {
     expect(sentence(rows.fast, rules)).toContain('made ×2.00 harder');
     expect(sentence(rows.slow, rules)).toContain('eased ×2.00');
     expect(sentence(rows.normal, rules)).toContain('made ×1.03 harder');
-    expect(sentence(rows.open, rules)).toContain('2 of 4 claims');
+    expect(sentence(rows.open, rules)).toContain('2 of 4 wins');
   });
 });
 

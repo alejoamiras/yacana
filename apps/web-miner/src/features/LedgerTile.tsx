@@ -6,6 +6,7 @@ import type { MinerController } from '../controller';
 import { ledgerLinks } from '../explorer';
 import { settlementSuffix, settlementTitle, winNote } from '../lib/claim-copy';
 import type { LedgerLine } from '../lib/reducer';
+import { epochOpened } from '../lib/words';
 import type { ProverKind } from '../presto';
 import { type ClaimRecord, claimsAtom, epochAtom, minerAtom, nowAtom } from '../state';
 import { useTxProver } from './dialogs/use-tx-prover';
@@ -50,7 +51,7 @@ export function LedgerTile({
             id: 0,
             kind: 'epoch',
             time: new Date(Number(epoch.openedAt) * 1000).toISOString().slice(11, 19),
-            text: `epoch ${epoch.epoch} opened · bar ${difficulty(epoch.target).toFixed(1)}`,
+            text: epochOpened(epoch.epoch, difficulty(epoch.target)),
           },
         ]
       : [];

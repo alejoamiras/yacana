@@ -56,7 +56,9 @@ function Attempt({ line, onAction }: { line: Extract<ProofLine, { n: number }>; 
   return (
     <>
       <span className="text-ink-2">#{line.n}</span>
-      <span className={line.kind === 'attempt' ? 'text-ink' : undefined}>score {line.score.toFixed(1)}</span>
+      <span className={line.kind === 'attempt' ? 'text-ink' : undefined}>
+        reached {line.score.toFixed(1)}
+      </span>
       <span className="text-ink-2">{seconds(line.proveMs)}</span>
       {line.kind === 'attempt' && line.best && <span className="text-uv-2">best this epoch</span>}
       {line.kind === 'win' && (

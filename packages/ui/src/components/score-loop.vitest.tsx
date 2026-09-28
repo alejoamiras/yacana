@@ -105,13 +105,13 @@ describe('ScoreLoop on a canvas', () => {
     expect(card()).toBeUndefined();
     // t = 50 000 sits at x = 148.
     fireEvent.pointerMove(canvas, { clientX: 150 });
-    expect(card()).toBe('#1 · score 3.0below the bar · 1.98 s · 16:06:41');
+    expect(card()).toBe('#1 · reached 3.0below the difficulty · 1.98 s · 16:06:41');
     fireEvent.pointerMove(canvas, { clientX: 300 });
     expect(card()).toBeUndefined();
     fireEvent.keyDown(canvas, { key: 'ArrowLeft' });
-    expect(card()).toContain('#3 · score 5.0');
+    expect(card()).toContain('#3 · reached 5.0');
     fireEvent.keyDown(canvas, { key: 'ArrowLeft' });
-    expect(card()).toBe('#2 · score 61.2a win · 1.98 s · 16:06:41');
+    expect(card()).toBe('#2 · reached 61.2a win · 1.98 s · 16:06:41');
     fireEvent.keyDown(canvas, { key: 'Escape' });
     expect(card()).toBeUndefined();
   });
@@ -156,12 +156,18 @@ describe('the proof under the pointer', () => {
 
   test('the strip too short for words takes neither a pointer nor a title', () => {
     const { container } = render(
-      <ScoreLoop calm difficulty={38.4} samples={FEW} height={48} axisTitle="score · log scale" />,
+      <ScoreLoop
+        calm
+        difficulty={38.4}
+        samples={FEW}
+        height={48}
+        axisTitle="difficulty reached · log scale"
+      />,
     );
     const canvas = container.querySelector('canvas') as HTMLCanvasElement;
     fireEvent.pointerMove(canvas, { clientX: 150 });
     expect(container.querySelector('[data-slot=score-hover]')).toBeNull();
     expect(canvas.tabIndex).toBe(-1);
-    expect(drawn.calls.fillText?.mock.calls.map((c) => c[0])).not.toContain('SCORE · LOG SCALE');
+    expect(drawn.calls.fillText?.mock.calls.map((c) => c[0])).not.toContain('DIFFICULTY REACHED · LOG SCALE');
   });
 });

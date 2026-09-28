@@ -30,7 +30,9 @@ describe('Header', () => {
     const nav = screen.getByRole('navigation', { name: 'miner' });
     const mine = screen.getByRole('link', { name: 'Mine' });
     expect(mine).toHaveAttribute('aria-current', 'page');
-    expect(mine.querySelector('[data-icon=mine]')).toBeTruthy();
+    expect(mine.querySelector('[data-icon=mine]')).toHaveClass('lucide-pickaxe');
+    expect(screen.getByRole('link', { name: 'Wallet' }).querySelector('svg')).toHaveClass('lucide-wallet');
+    expect(screen.getByTestId('nav-stats').querySelector('svg')).toHaveClass('lucide-chart-column');
     fireEvent.click(mine);
     expect(onSelect).toHaveBeenCalledTimes(1);
     // A modified click is the browser's (a new tab): not intercepted, not routed.
@@ -64,11 +66,24 @@ describe('Header', () => {
     expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/mine/settings');
   });
 
-  test('an icon draws its paths on the 24-grid and stays out of the accessibility tree', () => {
-    const { container } = render(<Icon name="verify" size={15} />);
-    const svg = container.querySelector('svg') as SVGElement;
-    expect(svg).toHaveAttribute('aria-hidden', 'true');
-    expect(svg).toHaveAttribute('width', '15');
-    expect(svg.querySelectorAll('path')).toHaveLength(2);
+  test('each name draws its Lucide glyph at stroke 1.5, out of the accessibility tree', () => {
+    const glyphs = {
+      mine: 'pickaxe',
+      wallet: 'wallet',
+      stats: 'chart-column',
+      verify: 'shield-check',
+      settings: 'settings',
+      finger: 'fingerprint-pattern',
+    } as const;
+    for (const [name, glyph] of Object.entries(glyphs)) {
+      const { container } = render(<Icon name={name as keyof typeof glyphs} size={15} />);
+      const svg = container.querySelector('svg') as SVGElement;
+      expect(svg).toHaveClass(`lucide-${glyph}`);
+      expect(svg).toHaveAttribute('data-icon', name);
+      expect(svg).toHaveAttribute('stroke-width', '1.5');
+      expect(svg).toHaveAttribute('aria-hidden', 'true');
+      expect(svg).toHaveAttribute('width', '15');
+      cleanup();
+    }
   });
 });

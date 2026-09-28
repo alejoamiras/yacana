@@ -377,7 +377,7 @@ export const difficultyChart: Spec = ({ rows, selected, open, width, height }) =
           x: mid,
           y: 'd',
           title: (s: Step) =>
-            `epoch ${s.epoch}\ndifficulty ${difficultyLabel(s.d)}\n${s.row.claims} claims · ${span(s.row, open)}${s.row.closedBy === 'roll' ? `\nclosed through the escape hatch · ${ratioLabel(s.row.retarget as number)} at the close` : ''}`,
+            `epoch ${s.epoch}\ndifficulty ${difficultyLabel(s.d)}\n${s.row.claims} wins · ${span(s.row, open)}${s.row.closedBy === 'roll' ? `\nclosed through the escape hatch · ${ratioLabel(s.row.retarget as number)} at the close` : ''}`,
         }),
       ),
     ],

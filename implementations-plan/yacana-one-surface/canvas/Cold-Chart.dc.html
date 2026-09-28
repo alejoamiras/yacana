@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>B: the empty chart explains</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#0a0a0b}
+.b{--ground:#0a0a0b;--raised:#111114;--panel:#17171b;--panel2:#1e1e24;--ink:#f2efe9;--ink2:rgba(242,239,233,.64);--ink3:rgba(242,239,233,.5);--ink4:rgba(242,239,233,.22);--line:rgba(242,239,233,.1);--line2:rgba(242,239,233,.18);--uv:#8c6bff;--uv2:#b39dff;--uvdim:rgba(140,107,255,.18);--ok:#58c98b;--warn:#e8b54d;--bad:#e5624f;background:var(--ground);color:var(--ink);font:15px/1.55 "Hanken Grotesk",ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;box-sizing:border-box;overflow:hidden}
+.b *{box-sizing:border-box}
+.b p{margin:0}
+.hdr{height:52px;display:flex;align-items:center;gap:20px;padding:0 20px;border-bottom:1px solid var(--line)}
+.brand{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:15px;letter-spacing:-.01em}
+.chip{font:500 10.5px/1 "JetBrains Mono",monospace;color:var(--ink3);border:1px solid var(--line2);border-radius:4px;padding:3px 5px}
+.nav{display:flex;gap:18px;font-size:13px;align-self:stretch}
+.nav a{display:inline-flex;align-items:center;gap:7px;color:var(--ink2);border-bottom:2px solid transparent;padding-top:2px;text-decoration:none}
+.nav a.on{color:var(--ink);border-color:var(--ink)}
+.ext{font-size:10px;color:var(--ink4)}
+.right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.badge{display:inline-flex;align-items:center;border:1px solid var(--line);background:var(--panel);border-radius:4px;padding:3px 7px;font:400 11px/1.3 "JetBrains Mono",monospace;color:var(--ink2)}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);border-radius:4px;padding:4px 9px;font:500 11px/1.3 "JetBrains Mono",monospace;color:var(--ink2)}
+.pill i{width:5px;height:5px;background:var(--ink3);display:inline-block}
+.gear{width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;color:var(--ink2);border:0;background:none;padding:0}
+.tile{border:1px solid var(--line);border-radius:8px;background:var(--raised);padding:16px 18px;min-width:0}
+.th{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;min-height:30px}
+.cap{font:500 11px/1.3 "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)}
+.aside{font:400 11px/1.3 "JetBrains Mono",monospace;letter-spacing:.04em;color:var(--ink3)}
+.q{width:20px;height:20px;border-radius:50%;border:1px solid var(--line2);background:none;color:var(--ink3);font:600 11px/1 "JetBrains Mono",monospace;padding:0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:34px;padding:0 14px;border-radius:6px;border:1px solid var(--line2);background:transparent;color:var(--ink);font:600 13px "Hanken Grotesk",sans-serif;white-space:nowrap}
+.btn.pri{background:var(--ink);color:var(--ground);border-color:var(--ink)}
+.btn.sm{height:30px;padding:0 12px;font-size:12.5px}
+.chart{height:230px;border-radius:6px;position:relative;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px}
+.chart .base{position:absolute;left:0;right:0;bottom:0;border-top:1px solid var(--line2)}
+.chart .barline{position:absolute;left:0;right:0;top:34%;border-top:1px dashed rgba(179,157,255,.55)}
+.kv{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding:7px 0;font-size:13px}
+.kv.first{border-top:0}
+.kv .k{color:var(--ink2);border-bottom:1px dotted var(--ink4)}
+.kv .k.plain{border-bottom:0}
+.kv .v{font-family:"JetBrains Mono",monospace;font-size:12.5px}
+.rail{display:flex;gap:4px;margin:0 0 10px}
+.rail i{flex:1;height:6px;border-radius:2px;background:var(--panel2);display:block}
+.rail i.on{background:rgba(140,107,255,.55)}
+.slider{height:4px;border-radius:2px;background:var(--line2);position:relative;margin:12px 0 10px}
+.slider i{position:absolute;left:0;top:0;height:100%;width:84%;background:var(--uv);border-radius:2px;display:block}
+.slider b{position:absolute;top:-6px;left:84%;width:16px;height:16px;border-radius:50%;background:var(--uv2);border:2px solid var(--ground);margin-left:-8px}
+.presets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.presets span{display:flex;justify-content:center;align-items:center;height:26px;border-radius:5px;border:1px solid var(--line);font:500 11px "JetBrains Mono",monospace;color:var(--ink2)}
+.presets span.on{border-color:rgba(140,107,255,.6);color:var(--uv2);background:var(--uvdim)}
+.presto{display:flex;gap:10px;align-items:flex-start;border:1px solid rgba(140,107,255,.4);border-radius:8px;padding:10px 12px;background:var(--uvdim);margin-top:14px}
+.glyph{width:24px;height:24px;border-radius:6px;background:var(--uv);color:#0a0a0b;display:flex;align-items:center;justify-content:center;font-size:12px;flex:none}
+.kpi{display:flex;flex-direction:column;gap:4px}
+.kpi .v{font-size:34px;line-height:1;font-weight:600;letter-spacing:-.03em}
+.kpi .v small{font-size:13px;font-weight:500;color:var(--ink3);letter-spacing:0;margin-left:6px}
+.kpi .s{font-size:12.5px;color:var(--ink3)}
+.xs{font-size:12.5px;line-height:1.4}.x2{font-size:11px;line-height:1.35}
+.ink2{color:var(--ink2)}.ink3{color:var(--ink3)}.uv2{color:var(--uv2)}
+.mono{font-family:"JetBrains Mono",monospace}
+.steps{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px;width:100%;padding:0 12px}
+.step{display:flex;flex-direction:column;gap:6px}
+.step .n{font:600 11.5px/1 "JetBrains Mono",monospace;color:var(--uv2);letter-spacing:.08em}
+.step .t{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.step .d{font-size:12.5px;line-height:1.45;color:var(--ink2)}
+.link{font-size:12.5px;color:var(--ink2);text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--ink4)}
+</style>
+</helmet>
+<div class="b" style="width: 1280px; height: 900px; display: flex; flex-direction: column;">
+<header class="hdr">
+<span class="brand"><svg width="20" height="20" viewBox="0 0 32 32"><rect x="5" y="23" width="22" height="3" rx="1.5" fill="#f2efe9"></rect><circle cx="16" cy="15" r="5" fill="rgba(242,239,233,.45)"></circle></svg>Yacana <span class="chip">V5</span></span>
+<nav class="nav" aria-label="Miner">
+<a class="on" href="#"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l6 6M4 20l9-9M13 5l6 6"></path><path d="M9 9c2-3 6-4 9-3-1 3-2 5-3 6"></path></svg>Mine</a>
+<a href="#"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18v13H3z"></path><path d="M16 12h5M3 10h18"></path></svg>Wallet</a>
+<a href="#"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path></svg>Stats <span class="ext">↗</span></a>
+<a href="#"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"></path><path d="M9 12l2 2 4-4"></path></svg>Verify <span class="ext">↗</span></a>
+</nav>
+<span class="right"><span class="badge">testnet</span><span class="pill"><i></i>idle</span><button class="gear" aria-label="Settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path></svg></button></span>
+</header>
+<div style="padding: 20px; display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; align-items: start;">
+<div style="display: flex; flex-direction: column; gap: 14px;">
+<section class="tile">
+<div class="th"><span style="display: flex; align-items: center; gap: 10px;"><span class="cap">your proofs</span><button class="q" aria-label="How to read this">?</button></span><button class="btn pri sm">Start mining</button></div>
+<div class="chart" style="justify-content: center; gap: 22px;"><div class="base"></div>
+<div class="steps">
+<div class="step"><span class="n">1 · prove</span><p class="t">Your browser proves</p><p class="d">A fixed circuit, a few seconds a proof, on your own processor. Nothing to install, nothing to buy.</p></div>
+<div class="step"><span class="n">2 · draw</span><p class="t">Each proof is a lottery ticket</p><p class="d">Its hash lands on some difficulty by pure luck. Reach today’s 64.0 and it wins: about one proof in 64 does.</p></div>
+<div class="step"><span class="n">3 · claim</span><p class="t">A win mints in private</p><p class="d">4 tYACA into an account only you can open. The chain records that a coin was mined, never by whom.</p></div>
+</div>
+<p class="x2 ink3" style="position: relative;">Your proofs draw here once you start · <a class="link" href="#">What is Yacana? ↗</a></p>
+</div>
+</section>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px;">
+<div class="tile kpi"><span class="cap">rate</span><span class="v">—<small>proofs/min</small></span><span class="s">starts with mining</span></div>
+<div class="tile kpi"><span class="cap">next win, at this rate</span><span class="v">—</span><span class="s">difficulty 64.0 · about 64 proofs per win</span></div>
+<div class="tile kpi"><span class="cap">best difficulty this epoch</span><span class="v">—</span><span class="s"> </span></div>
+</div>
+<section class="tile">
+<div class="th"><span class="cap">proofs, newest first</span><span class="aside">★ win · ✓ minted · ✗ failed · ── epoch</span></div>
+<p class="xs mono ink3">── epoch 57 opened · difficulty 64.0</p>
+</section>
+</div>
+<div style="display: flex; flex-direction: column; gap: 14px;">
+<section class="tile">
+<div class="th"><span class="cap">balance</span><span class="aside" style="border-bottom: 1px dotted rgba(242,239,233,.22);">private</span></div>
+<p style="font-size: 40px; line-height: 1; font-weight: 600;">—</p>
+<p class="xs ink3" style="margin-top: 10px;">Your balance shows once you log in.</p>
+<div style="display: flex; gap: 8px; margin-top: 14px;"><button class="btn sm pri">Log in</button><button class="btn sm" disabled style="opacity: .45;">Wallet →</button></div>
+</section>
+<section class="tile">
+<div class="th"><span class="cap" style="border-bottom: 1px dotted rgba(242,239,233,.22);">epoch 57</span><span class="aside">opened 14:02:11</span></div>
+<div class="rail" role="img" aria-label="1 of 4 wins"><i class="on"></i><i></i><i></i><i></i></div>
+<div class="kv first"><span class="k">wins this epoch</span><span class="v">1 of 4</span></div>
+<div class="kv"><span class="k">difficulty</span><span class="v">64.0</span></div>
+<div class="kv"><span class="k plain">open for</span><span class="v">2 min</span></div>
+<div class="kv"><span class="k">expected epoch time</span><span class="v">5 min</span></div>
+<div class="kv"><span class="k">next difficulty, if closed now</span><span class="v">147.8 (×2.31)</span></div>
+<div class="kv"><span class="k">reset if stuck</span><span class="v">in 18 min</span></div>
+<div style="margin-top: 14px; display: flex; justify-content: space-between;"><span class="cap">power</span><span class="xs mono ink2">11 threads</span></div>
+<div class="slider"><i></i><b></b></div>
+<div class="presets"><span>eco</span><span>balanced</span><span class="on">max</span></div>
+<p class="x2 ink3" style="margin-top: 8px;">12 cores, one stays with the page. A change applies at the next proof; the rate readout follows within a minute.</p>
+<div class="presto"><span class="glyph">✦</span><div style="display: flex; flex-direction: column; gap: 3px;"><p style="font-size: 13px; font-weight: 600;">Have Presto?</p><p class="xs ink2">Native proving, several times faster. <span class="uv2">Get Presto</span></p><span style="margin-top: 4px;"><button class="btn sm">Look for Presto</button></span><p class="x2 ink3">Your browser will ask first. Nothing leaves your machine.</p></div></div>
+</section>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

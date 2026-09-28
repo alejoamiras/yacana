@@ -4,6 +4,7 @@
 import { type ClaimFailure, revertCause } from '@yacana/miner-core/claim-failure';
 import { difficulty } from '@yacana/miner-core/metrics';
 import type { ClaimSpan, ProofLine, Sample } from '@yacana/ui';
+import { epochOpened } from './words';
 
 export interface EpochInfo {
   epoch: bigint;
@@ -277,7 +278,6 @@ function epochSwitch(state: MinerState, e: Extract<Event, { type: 'epoch' }>): [
   // A new epoch while mining: the in-flight nonce is worthless and the secret rotates with it.
   // The running job is halted first; the Worker starts the replacement once it has stopped.
   if (state.job?.epoch === e.epoch.epoch) return [state, []];
-  const ratio = e.difficultyRatio === undefined ? '' : ` (×${e.difficultyRatio.toFixed(2)})`;
   const opened = {
     ...state,
     tickets: 0,
@@ -285,7 +285,7 @@ function epochSwitch(state: MinerState, e: Extract<Event, { type: 'epoch' }>): [
     ledger: line(state, {
       kind: 'epoch',
       time: clock(e.at),
-      text: `epoch ${e.epoch.epoch} opened · bar ${difficulty(e.epoch.target).toFixed(1)}${ratio}`,
+      text: epochOpened(e.epoch.epoch, difficulty(e.epoch.target), e.difficultyRatio),
     }),
   };
   if (state.phase !== 'mining') return [opened, []];

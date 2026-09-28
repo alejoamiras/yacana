@@ -10,13 +10,13 @@ const clock = (unix: number) => new Date(unix * 1000).toISOString().slice(11, 19
 
 type State = 'roll' | 'claims' | 'open' | 'unread';
 
-/** How the row ended: by roll, by the Nth claim, not yet (the open epoch), or closed but unread. */
+/** How the row ended: by roll, by the Nth win, not yet (the open epoch), or closed but unread. */
 const stateOf = (row: EpochRow, open: boolean): State =>
   row.closedBy === 'roll' ? 'roll' : row.duration !== null ? 'claims' : open ? 'open' : 'unread';
 
 const BADGE: Record<State, { variant: 'warn' | 'neutral' | 'uv'; text: string }> = {
   roll: { variant: 'warn', text: 'closed by the escape hatch' },
-  claims: { variant: 'neutral', text: `closed by the ${PARAMS.N}th claim` },
+  claims: { variant: 'neutral', text: `closed by the ${PARAMS.N}th win` },
   open: { variant: 'uv', text: 'open' },
   unread: { variant: 'neutral', text: 'closed · not read yet' },
 };
@@ -29,7 +29,7 @@ function DetailSkeleton({ className, epoch }: { className?: string; epoch: numbe
         {epoch === null ? 'epoch' : `epoch ${epoch}`}
       </TileHeader>
       <div className="mb-2 flex flex-wrap gap-4">
-        {['claims', 'duration', 'difficulty'].map((label) => (
+        {['wins', 'duration', 'difficulty'].map((label) => (
           <Kpi key={label} label={label} value={<Sk className="h-[22px] w-10 rounded-[4px]" />} />
         ))}
       </div>
@@ -72,7 +72,7 @@ export function Detail({
       <TileHeader aside={span}>epoch {row.epoch}</TileHeader>
       <div className="mb-2 flex flex-wrap gap-4">
         <Kpi
-          label="claims"
+          label="wins"
           value={<span className={state === 'roll' ? 'text-warn' : undefined}>{row.claims}</span>}
           unit={`of ${PARAMS.N}`}
         />

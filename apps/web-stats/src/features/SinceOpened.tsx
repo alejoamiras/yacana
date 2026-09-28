@@ -6,7 +6,7 @@ import { sinceOpenedAtom } from '../state';
 import { SK_SUB, Sk } from './Sk';
 import { Tweened } from './Tweened';
 
-/** Claims minted since this tab's first read; a skeleton until beat one lands. */
+/** Wins minted since this tab's first read; a skeleton until beat one lands. */
 export function SinceOpened({ supply, now }: { supply: bigint | null; now: number }) {
   const since = useAtomValue(sinceOpenedAtom);
   if (supply === null)
@@ -40,7 +40,7 @@ export function SinceOpened({ supply, now }: { supply: bigint | null; now: numbe
           +<Tweened id="since-opened" value={claims} />
         </span>
       }
-      unit={claims === 1 ? 'claim' : 'claims'}
+      unit={claims === 1 ? 'win' : 'wins'}
       sub={
         since
           ? `${amount(minted, PARAMS.DECIMALS, 0)} ${PARAMS.TOKEN_SYMBOL} minted · ${duration(Math.max(0, (now - since.at) / 1000))}`

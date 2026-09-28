@@ -4,7 +4,8 @@ import { clampThreads } from '@yacana/ui';
 import { useAtomValue, useStore } from 'jotai';
 import { useEffect } from 'react';
 import type { MinerController } from '../controller';
-import { prestoAtom } from '../presto';
+import { lnaAtom, prestoAtom, prestoDecides } from '../presto';
+import type { Consent } from '../presto-consent';
 import { navigate } from '../routes';
 import { type Settings, settingsAtom } from '../settings';
 import { bootAtom, minerAtom } from '../state';
@@ -27,10 +28,11 @@ const interactive = (t: EventTarget | null) =>
       'input, textarea, select, button, a, [role="button"], [contenteditable], [role="dialog"], [role="alertdialog"]',
     ) !== null);
 
-/** Space is the Start button's own action (`onStart`: it also re-asks Presto), Stop when mining. */
+/** Space is the Start button's own action (`onStart`: it also re-asks Presto; only a click opens the mini window), Stop when mining. */
 export function useHotkeys(
   controller: () => MinerController | undefined,
   onStart: () => void,
+  consent: Consent,
   enabled = true,
 ) {
   const store = useStore();
@@ -46,8 +48,8 @@ export function useHotkeys(
       const cores = navigator.hardwareConcurrency || 2;
       const threads = settings.threads ?? Math.max(1, cores - 1);
       const power = (delta: number) => {
-        // Under native proving the slider is disabled: Presto's Speed setting governs, not the page's threads.
-        if (store.get(prestoAtom).active === 'presto') return;
+        // The slider is gone while Presto decides: its own speed setting governs, not the page's threads.
+        if (prestoDecides(store.get(prestoAtom), consent.read(), store.get(lnaAtom))) return;
         const next = clampThreads(threads + delta, cores);
         store.set(settingsAtom, { threads: next });
         c?.reconfigure(next);
@@ -69,7 +71,7 @@ export function useHotkeys(
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [controller, onStart, store, enabled]);
+  }, [controller, onStart, consent, store, enabled]);
 }
 
 /** Battery and hidden-tab pauses; both clear by themselves. */

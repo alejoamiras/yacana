@@ -7,6 +7,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./bridge-types": "./src/bridge-types.ts",
+    "./score-loop-model": "./src/score-loop-model.ts",
     "./theme.css": "./src/theme.css"
   },
   "main": "src/index.ts",

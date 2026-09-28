@@ -264,19 +264,22 @@ test('a prover crash surfaces as an error and mining restarts on the next start'
   await page.getByTestId('stop').click();
 });
 
-test('the pop-out draws with the page fonts and its own loop', async ({ page, context }) => {
+test('the mini window: page fonts, its own loop, two lines that fit, open across pages; Start opens it when asked, and mines when refused', async ({
+  page,
+  context,
+}) => {
   const r = run();
   await bootPage(page, pageUrl(r));
   const supported = await page.evaluate(() => 'documentPictureInPicture' in window);
   test.skip(!supported, 'Document Picture-in-Picture is not available in this browser build');
-  await page.getByRole('link', { name: 'Settings' }).click();
-  await page.getByRole('switch', { name: 'Mini window' }).click();
-  await page.getByRole('link', { name: 'Mine' }).click();
-  const popped = context.waitForEvent('page');
+  let popped = context.waitForEvent('page');
   await page.getByTestId('pop-out').click();
-  const pip = await popped;
+  let pip = await popped;
   await pip.waitForLoadState();
+  // Headless, the window takes the context's viewport; a headed browser gives it the size asked for.
+  await pip.setViewportSize({ width: 360, height: 216 });
   await expect(pip.locator('[data-slot=score-loop][data-calm]')).toBeVisible();
+  await expect(page.getByTestId('pop-out')).toBeDisabled();
   // A loaded face, not `fonts.check`, which is true for a face that never loaded; and no failed font request.
   const fonts = await pip.evaluate(async () => {
     await document.fonts.ready;
@@ -290,5 +293,51 @@ test('the pop-out draws with the page fonts and its own loop', async ({ page, co
   });
   expect(fonts.failed).toEqual([]);
   expect(fonts.loaded).toBeGreaterThan(0);
+  // The user's numbers, then the network's: two rows, neither wider than the window.
+  const fit = await pip.evaluate(() => {
+    const footer = document.querySelector('[data-testid=pip-footer]') as HTMLElement;
+    const rows = Array.from(footer.children) as HTMLElement[];
+    return {
+      width: window.innerWidth,
+      page: document.documentElement.scrollWidth,
+      rows: rows.map((r) => [r.scrollWidth, r.clientWidth, r.getBoundingClientRect().right]),
+    };
+  });
+  console.log(`[pip] ${JSON.stringify(fit)}`);
+  expect(fit.width).toBe(360);
+  expect(fit.page).toBeLessThanOrEqual(fit.width);
+  expect(fit.rows).toHaveLength(2);
+  for (const [scroll, client, right] of fit.rows as number[][]) {
+    expect(scroll).toBeLessThanOrEqual(client as number);
+    expect(right).toBeLessThanOrEqual(fit.width);
+  }
+  // The shell owns the window: a page change neither closes it nor empties it.
+  await page.getByRole('link', { name: 'Wallet' }).click();
+  await expect(page).toHaveURL(/\/wallet$/);
+  await page.getByRole('link', { name: 'Mine' }).click();
+  await expect(pip.locator('[data-testid=pip-footer]')).toBeVisible();
+  expect(pip.isClosed()).toBe(false);
   await pip.close();
+  await expect(page.getByTestId('pop-out')).toBeEnabled();
+
+  // Asked for, the Start click opens it; mining starts either way.
+  await page.getByRole('link', { name: 'Settings' }).click();
+  await page.getByRole('switch', { name: /Open the mini window when mining starts/ }).click();
+  await page.getByRole('link', { name: 'Mine' }).click();
+  popped = context.waitForEvent('page');
+  await page.getByTestId('start').click();
+  pip = await popped;
+  await expect(page.getByTestId('phase')).toHaveText('mining');
+  await pip.getByRole('button', { name: 'Stop' }).click();
+  await expect(page.getByTestId('start')).toBeEnabled({ timeout: 2 * 60_000 });
+  await pip.close();
+  await page.evaluate(() => {
+    const api = (window as unknown as { documentPictureInPicture: { requestWindow: () => Promise<Window> } })
+      .documentPictureInPicture;
+    api.requestWindow = () => Promise.reject(new DOMException('refused', 'NotAllowedError'));
+  });
+  await page.getByTestId('start').click();
+  await expect(page.getByTestId('phase')).toHaveText('mining');
+  await expect(page.getByTestId('pop-out')).toBeEnabled();
+  await page.getByTestId('stop').click();
 });

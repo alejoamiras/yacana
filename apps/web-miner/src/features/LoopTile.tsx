@@ -4,6 +4,7 @@ import {
   Button,
   ClaimChip,
   cn,
+  difficultyLabel,
   Kpi,
   Mark,
   Popover,
@@ -16,18 +17,17 @@ import {
   Tip,
   useTweenedNumber,
 } from '@yacana/ui';
-import { Provider, useAtomValue, useSetAtom, useStore } from 'jotai';
-import { useEffect, useState } from 'react';
-import { createRoot } from 'react-dom/client';
+import { useAtomValue, useStore } from 'jotai';
 import type { MinerController } from '../controller';
 import { chipStep } from '../lib/claim-copy';
 import { amount, compact, durationParts } from '../lib/format';
 import type { MinerState } from '../lib/reducer';
 import { pillStatus } from '../lib/status';
-import { openPip, pipSupported } from '../pip';
+import { difficultyCaption, emptyCaption, loopHelp, perWinSub, pipDifficultyTip } from '../lib/words';
+import { openPip, pipSupported, pipWindowAtom } from '../pip';
 import { prestoAtom } from '../presto';
-import { useSettings } from '../settings';
-import { bootAtom, epochAtom, mineIntentAtom, minerAtom, nowAtom, signInAtom } from '../state';
+import { bootAtom, epochAtom, minerAtom, nowAtom } from '../state';
+import { useStartClick } from './use-start-click';
 
 /** The user's Start goes through the session (it asks Presto beside the start); the controller alone stops. */
 type Controls = { controller: () => MinerController | undefined; onStart: () => void };
@@ -35,7 +35,7 @@ type Controls = { controller: () => MinerController | undefined; onStart: () => 
 /** The window the header names: since the start until it is three minutes old, then the last three minutes. */
 const WINDOW_MS = 180_000;
 
-/** The mini window: the state and Stop, the last minute of the loop as a strip, then rate · epoch · wins. */
+/** The mini window: the state and Stop, the last minute of the loop as a strip, your numbers, then the network's. */
 export function PipView({ controller, onStart, win }: Controls & { win: Window }) {
   const miner = useAtomValue(minerAtom);
   const epoch = useAtomValue(epochAtom);
@@ -43,6 +43,8 @@ export function PipView({ controller, onStart, win }: Controls & { win: Window }
   const native = useAtomValue(prestoAtom).active === 'presto';
   const perMinute = useTweenedNumber(proofsPerMinute(miner.recent));
   const bar = epoch ? difficulty(epoch.target) : null;
+  const opening = useAtomValue(bootAtom).phase === 'opening';
+  const startClick = useStartClick(onStart);
   return (
     <div className="flex h-full flex-col justify-between bg-ground p-3 text-ink">
       <div className="flex items-center justify-between">
@@ -55,7 +57,13 @@ export function PipView({ controller, onStart, win }: Controls & { win: Window }
             Stop
           </Button>
         ) : (
-          <Button size="sm" variant="primary" disabled={miner.phase !== 'idle'} onClick={onStart}>
+          <Button
+            size="sm"
+            variant="primary"
+            disabled={opening || miner.phase !== 'idle'}
+            onClick={startClick}
+            data-testid="pip-start"
+          >
             Start
           </Button>
         )}
@@ -65,63 +73,47 @@ export function PipView({ controller, onStart, win }: Controls & { win: Window }
         difficulty={bar}
         samples={miner.samples}
         spans={miner.claimSpans}
+        barCaption={difficultyCaption(bar)}
         winAt={miner.winAt}
         height={48}
         spanMs={60_000}
         geometry={{ pad: 4, fontPx: 10 }}
         win={win}
       />
-      <div className="flex items-baseline justify-between gap-2 whitespace-nowrap font-mono text-[10px] text-ink-2">
-        <span>
-          <span className="font-sans text-lg font-semibold tracking-[-0.02em] text-ink">
-            {perMinute.toFixed(1)}
-          </span>{' '}
-          proofs/min{native && <span className="text-uv-2"> · native</span>}
-        </span>
-        {epoch && (
+      <div className="flex flex-col gap-[3px] font-mono text-[10px] text-ink-2" data-testid="pip-footer">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-2">
           <span>
-            epoch {epoch.epoch.toString()} · <span className="text-ink">{epoch.claims}</span> of {PARAMS.N} ·{' '}
-            <Tip tip="The score a proof must reach to win." container={win.document.body}>
-              bar
-            </Tip>{' '}
-            {bar === null ? '—' : bar.toFixed(1)}
+            <span className="font-sans text-lg font-semibold tracking-[-0.02em] text-ink">
+              {perMinute.toFixed(1)}
+            </span>{' '}
+            proofs/min{native && <span className="text-uv-2"> · native</span>}
           </span>
+          <span className="text-ok">
+            {miner.wins} {miner.wins === 1 ? 'win' : 'wins'} ·{' '}
+            {amount(PARAMS.REWARD * BigInt(miner.wins), PARAMS.DECIMALS)} {PARAMS.TOKEN_SYMBOL}
+          </span>
+        </div>
+        {epoch && (
+          <div>
+            epoch {epoch.epoch.toString()} · <span className="text-ink">{epoch.claims}</span> of {PARAMS.N}{' '}
+            wins ·{' '}
+            <Tip tip={pipDifficultyTip(bar)} container={win.document.body}>
+              difficulty
+            </Tip>{' '}
+            {bar === null ? '—' : difficultyLabel(bar)}
+          </div>
         )}
-        <span className="text-ok">
-          {miner.wins} {miner.wins === 1 ? 'win' : 'wins'} ·{' '}
-          {amount(PARAMS.REWARD * BigInt(miner.wins), PARAMS.DECIMALS)} {PARAMS.TOKEN_SYMBOL}
-        </span>
       </div>
     </div>
   );
 }
 
-function PopOut({ controller, onStart }: Controls) {
+/** Opens the mini window the shell renders into; one at a time. */
+function PopOut() {
   const store = useStore();
-  const [pip, setPip] = useState<Window | null>(null);
-  useEffect(() => {
-    if (!pip) return;
-    const root = createRoot(pip.document.body);
-    root.render(
-      <Provider store={store}>
-        <PipView controller={controller} onStart={onStart} win={pip} />
-      </Provider>,
-    );
-    const onHide = () => setPip(null);
-    pip.addEventListener('pagehide', onHide);
-    return () => {
-      pip.removeEventListener('pagehide', onHide);
-      root.unmount();
-      pip.close();
-    };
-  }, [pip, store, controller, onStart]);
+  const open = useAtomValue(pipWindowAtom) !== null;
   return (
-    <Button
-      size="sm"
-      disabled={pip !== null}
-      onClick={() => void openPip().then(setPip)}
-      data-testid="pop-out"
-    >
+    <Button size="sm" disabled={open} onClick={() => void openPip(store)} data-testid="pop-out">
       Pop out
     </Button>
   );
@@ -135,8 +127,7 @@ function StartControl({
   controller,
   onStart,
 }: Controls & { ready: boolean; opening: boolean; miner: MinerState }) {
-  const openSignIn = useSetAtom(signInAtom);
-  const setIntent = useSetAtom(mineIntentAtom);
+  const startClick = useStartClick(onStart);
   if (opening)
     return (
       <Button size="sm" variant="primary" disabled data-testid="start-opening">
@@ -145,17 +136,7 @@ function StartControl({
     );
   if (!ready)
     return (
-      <Button
-        size="sm"
-        variant="primary"
-        data-testid="sign-in-mine"
-        onClick={() => {
-          setIntent(true);
-          openSignIn(true);
-          // Start mining is the one moment Presto is asked: with no account yet, only the probe runs.
-          onStart();
-        }}
-      >
+      <Button size="sm" variant="primary" data-testid="sign-in-mine" onClick={startClick}>
         Start mining
       </Button>
     );
@@ -179,7 +160,7 @@ function StartControl({
       variant="primary"
       data-testid="start"
       disabled={miner.phase !== 'idle' || miner.proverDead}
-      onClick={onStart}
+      onClick={startClick}
     >
       Start mining
     </Button>
@@ -187,7 +168,7 @@ function StartControl({
 }
 
 function LoopHelp({ bar }: { bar: number | null }) {
-  const odds = oddsOf(bar);
+  const { height, reach } = loopHelp(bar);
   return (
     <Popover>
       <PopoverTrigger
@@ -200,14 +181,14 @@ function LoopHelp({ bar }: { bar: number | null }) {
       <PopoverContent className="normal-case tracking-normal" data-testid="loop-help-content">
         <b className="font-semibold text-ink">How to read this</b>
         <span>
-          Each tick is one proof. Its height is its <b className="font-medium text-ink">score</b>: pure luck,
-          a score of S comes up about once in S proofs.
+          {height[0]}
+          <b className="font-medium text-ink">{height[1]}</b>
+          {height[2]}
         </span>
         <span>
-          A proof that reaches <b className="font-medium text-uv-2">the bar</b> wins{' '}
-          {amount(PARAMS.REWARD, PARAMS.DECIMALS)} {PARAMS.TOKEN_SYMBOL}.
-          {odds !== null ? ` Today about 1 proof in ${odds} does, so most ticks stay low.` : ''} More proofs
-          per minute means more draws, not taller ones.
+          {reach[0]}
+          <b className="font-medium text-uv-2">{reach[1]}</b>
+          {reach[2]}
         </span>
       </PopoverContent>
     </Popover>
@@ -260,19 +241,6 @@ function RateLine({ native, miner, perProof }: { native: boolean; miner: MinerSt
   );
 }
 
-/** "About 1 proof in N reaches the bar": a score of S comes up about once in S proofs. None while they are not odds. */
-const oddsOf = (bar: number | null): number | null =>
-  bar === null || Math.round(bar) < 2 ? null : Math.round(bar);
-
-/** What reaching the bar means, and how often a proof does. */
-export const barCaption = (bar: number | null): string | undefined => {
-  if (bar === null) return undefined;
-  const odds = oddsOf(bar);
-  return odds === null
-    ? 'the bar · reach it and you win'
-    : `the bar · reach it and you win · about 1 in ${odds} do`;
-};
-
 /** The header row is a fixed-height status line with the claim's chip; the stepper lives in the rail. */
 export function LoopTile({ controller, onStart, className }: Controls & { className?: string }) {
   const boot = useAtomValue(bootAtom);
@@ -280,7 +248,6 @@ export function LoopTile({ controller, onStart, className }: Controls & { classN
   const epoch = useAtomValue(epochAtom);
   const now = useAtomValue(nowAtom);
   const native = useAtomValue(prestoAtom).active === 'presto';
-  const [settings] = useSettings();
   const last = miner.recent[miner.recent.length - 1];
   const perProof = useTweenedNumber(last === undefined ? 0 : last / 1000);
   const ready = boot.phase === 'ready';
@@ -293,7 +260,7 @@ export function LoopTile({ controller, onStart, className }: Controls & { classN
         className="mb-0 h-[30px] items-center"
         aside={
           <span className="flex items-center gap-3">
-            {settings.pip && pipSupported() && <PopOut controller={controller} onStart={onStart} />}
+            {pipSupported() && <PopOut />}
             <StartControl
               ready={ready}
               opening={opening}
@@ -315,15 +282,12 @@ export function LoopTile({ controller, onStart, className }: Controls & { classN
         difficulty={bar}
         samples={miner.samples}
         spans={miner.claimSpans}
-        axisTitle="score · log scale"
-        barCaption={barCaption(bar)}
+        axisTitle="difficulty reached · log scale"
+        barCaption={difficultyCaption(bar)}
         winAt={miner.winAt}
         since={miner.sinceT ?? undefined}
         height={230}
-        placeholder={[
-          'Your proofs draw here once you start.',
-          `The bar is ${bar === null ? '—' : bar.toFixed(1)} · clear it to win`,
-        ]}
+        placeholder={['Your proofs draw here once you start.', emptyCaption(bar)]}
         footer={<RateLine native={native} miner={miner} perProof={perProof} />}
       />
     </Tile>
@@ -339,8 +303,7 @@ const nextWin = (target: bigint, perMinute: number): [string, string] | null => 
 /** Signed out the values are dashes and the subs say what would fill them. */
 function kpiSubs(
   ready: boolean,
-  hasEpoch: boolean,
-  bar: number,
+  bar: number | null,
   miner: MinerState,
 ): { rate: string; next: string; best: string } {
   if (ready)
@@ -349,14 +312,7 @@ function kpiSubs(
       next: 'could be now, could be 3× longer',
       best: `${miner.wins} ${miner.wins === 1 ? 'win' : 'wins'} · ${amount(PARAMS.REWARD * BigInt(miner.wins), PARAMS.DECIMALS)} ${PARAMS.TOKEN_SYMBOL} this session`,
     };
-  const perWin = Math.max(1, Math.round(bar));
-  return {
-    rate: 'starts with mining',
-    next: hasEpoch
-      ? `the bar is ${bar.toFixed(1)} · about ${perWin} ${perWin === 1 ? 'proof' : 'proofs'} per win`
-      : 'the bar is not read yet',
-    best: '',
-  };
+  return { rate: 'starts with mining', next: perWinSub(bar), best: '' };
 }
 
 export function KpiTiles({ className }: { className?: string }) {
@@ -364,9 +320,9 @@ export function KpiTiles({ className }: { className?: string }) {
   const epoch = useAtomValue(epochAtom);
   const ready = useAtomValue(bootAtom).phase === 'ready';
   const perMinute = useTweenedNumber(proofsPerMinute(miner.recent));
-  const bar = epoch ? difficulty(epoch.target) : 1;
+  const bar = epoch ? difficulty(epoch.target) : null;
   const next = ready && epoch ? nextWin(epoch.target, proofsPerMinute(miner.recent)) : null;
-  const subs = kpiSubs(ready, epoch !== null, bar, miner);
+  const subs = kpiSubs(ready, bar, miner);
   return (
     <div className={cn('grid grid-cols-3 gap-[14px]', className)} data-testid="kpi-tiles">
       <Tile>
@@ -398,9 +354,9 @@ export function KpiTiles({ className }: { className?: string }) {
       <Tile>
         <Kpi
           size="lg"
-          label="best this epoch"
-          value={ready && miner.best !== null ? miner.best.toFixed(1) : '—'}
-          unit={ready && epoch ? `of ${bar.toFixed(1)}` : undefined}
+          label="best difficulty this epoch"
+          value={ready && miner.best !== null ? difficultyLabel(miner.best) : '—'}
+          unit={ready && bar !== null ? `of ${difficultyLabel(bar)}` : undefined}
           sub={subs.best || undefined}
         />
       </Tile>

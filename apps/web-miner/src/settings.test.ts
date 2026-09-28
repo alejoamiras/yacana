@@ -15,8 +15,15 @@ describe('settings', () => {
     expect(parseSettings(JSON.stringify({ threads: 0.5, theme: 'neon', notify: 'yes' }))).toEqual(DEFAULTS);
   });
 
+  test('the mini window opens on Start only when asked; the old "Mini window" switch is dropped', () => {
+    expect(DEFAULTS.pipOnStart).toBe(false);
+    const s = parseSettings(JSON.stringify({ pip: true }));
+    expect(s).toEqual(DEFAULTS);
+    expect('pip' in s).toBe(false);
+  });
+
   test('round-trips through JSON', () => {
-    const s = { ...DEFAULTS, threads: 3, pip: true, theme: 'system' as const };
+    const s = { ...DEFAULTS, threads: 3, pipOnStart: true, theme: 'system' as const };
     expect(parseSettings(JSON.stringify(s))).toEqual(s);
   });
 });

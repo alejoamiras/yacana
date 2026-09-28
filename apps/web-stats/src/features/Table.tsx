@@ -8,16 +8,7 @@ import { Sk } from './Sk';
 
 const FIRST = firstEpoch();
 const clock = (unix: number) => new Date(unix * 1000).toISOString().slice(11, 19);
-const HEAD = [
-  'epoch',
-  'opened (UTC)',
-  'claims',
-  'duration',
-  'vs expected',
-  'difficulty',
-  'closed by',
-  'next',
-];
+const HEAD = ['epoch', 'opened (UTC)', 'wins', 'duration', 'vs expected', 'difficulty', 'closed by', 'next'];
 /** Rows beyond this scroll inside the tile; the header stays. */
 const BODY_MAX = 'max-h-[460px]';
 /** The skeleton: eight rows, one 10 px block per column at the canvas's widths. */
@@ -65,7 +56,7 @@ function Row({
       </td>
       <td className={CELL}>{difficulty(r.target).toFixed(1)}</td>
       <td className={cn(CELL, 'text-ink-2')}>
-        {r.closedBy === 'roll' ? 'the escape hatch' : r.closedBy ? `${PARAMS.N}th claim` : '–'}
+        {r.closedBy === 'roll' ? 'the escape hatch' : r.closedBy ? `${PARAMS.N}th win` : '–'}
       </td>
       <td className={cn(CELL, 'text-ink-2')}>
         {r.retarget === null ? '–' : `×${(1 / r.retarget).toFixed(2)}`}

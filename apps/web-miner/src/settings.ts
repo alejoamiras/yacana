@@ -14,7 +14,8 @@ export interface Settings {
   notify: boolean;
   sound: boolean;
   tabStatus: boolean;
-  pip: boolean;
+  /** A signed-in Start click also opens the mini window (a click is what a browser lets open it). */
+  pipOnStart: boolean;
   theme: Theme;
   /** Passkey keys: keep the sealed master on this device instead of a touch per open. */
   stayOpen: boolean;
@@ -29,7 +30,7 @@ export const DEFAULTS: Settings = {
   notify: false,
   sound: false,
   tabStatus: true,
-  pip: false,
+  pipOnStart: false,
   theme: 'dark',
   stayOpen: false,
 };
@@ -41,7 +42,7 @@ export const BOOLEANS = [
   'notify',
   'sound',
   'tabStatus',
-  'pip',
+  'pipOnStart',
   'stayOpen',
 ] as const;
 export type BooleanSetting = (typeof BOOLEANS)[number];

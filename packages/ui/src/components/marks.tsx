@@ -40,7 +40,7 @@ export function Marks({
         {moreNotes > 0 && <span className="text-ink-2">+{moreNotes}</span>}
       </span>
       <span className={chip}>
-        <span className="text-ink-2">claims</span> {claims[0]} → {claims[1]}
+        <span className="text-ink-2">wins</span> {claims[0]} → {claims[1]}
         {suffix !== undefined && <span className="text-ink-2"> · {suffix}</span>}
       </span>
     </div>

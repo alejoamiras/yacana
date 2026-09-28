@@ -133,3 +133,39 @@ describe('the native indicator', () => {
     expect(screen.getByTestId('loop-window').textContent).toBe('live · since 22:12');
   });
 });
+
+describe('the slider beside Presto', () => {
+  test('found under consent, not mining yet: the slider leaves at once and the card says who decides; absent brings it back', () => {
+    const store = mining();
+    store.set(minerAtom, { ...store.get(minerAtom), phase: 'idle' });
+    const consented = { ...initialPresto, consentRev: 0 };
+    const eligible = {
+      available: true,
+      needsDownload: false,
+      schemes: ['ultra_honk'],
+      protocol: 'https',
+    } as const;
+    store.set(prestoAtom, { ...consented, status: eligible });
+    const { rerender } = render(
+      <Provider store={store}>
+        <Mine controller={() => undefined} />
+      </Provider>,
+    );
+    expect(screen.getByTestId('presto-card').dataset.standing).toBe('found');
+    expect(screen.getByTestId('presto-card').textContent).toContain(
+      'proves when you start · its own speed setting decides',
+    );
+    expect(screen.queryByRole('slider')).toBeNull();
+    store.set(prestoAtom, {
+      ...consented,
+      status: { available: false, reason: 'offline' },
+    });
+    rerender(
+      <Provider store={store}>
+        <Mine controller={() => undefined} />
+      </Provider>,
+    );
+    expect(screen.getByTestId('presto-card').dataset.standing).toBe('absent');
+    expect((screen.getByRole('slider') as HTMLInputElement).disabled).toBe(false);
+  });
+});
