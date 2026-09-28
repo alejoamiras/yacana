@@ -1,0 +1,11 @@
+{
+  "miner": "0x058c14aeaf1cd0b05d03c642a371cfb00feae0a3118bba4215ce4ef5ae36f38f",
+  "chainId": "11155111",
+  "rollupVersion": "1821665230",
+  "epoch": 0,
+  "claims": [1, 2],
+  "block": 80514,
+  "txHash": "0x282fde31d2f705c1a6f68bbb296dae0c704640c7f703f7389104326ea2c22727",
+  "nullifier": "0x0d46ac5e9a930d48e784d559b341af7109ab06857e3a5ad379b3ba08a328d838",
+  "noteHash": "0x2718d86dc07c152c10ad113604843204669eff0ef28bcf4c957e091d110cf4a4"
+}
