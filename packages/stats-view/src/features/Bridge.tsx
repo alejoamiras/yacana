@@ -30,11 +30,10 @@ import {
   whereOf,
 } from '../bridge-beat';
 import { l1Links } from '../explorer';
-import { FAQ_HREF } from '../routes';
+import { useStatsHost } from '../host';
 import { CoinsChart } from './CoinsChart';
 
 const FIRST = firstEpoch();
-export const RULES_HREF = `${FAQ_HREF}#rules`;
 
 const chainName = (chainId: string): string =>
   chainId === '1'
@@ -135,11 +134,12 @@ export function BridgePhases({
   snapshot: Pick<BridgeSnapshot, 'policy' | 'chainTime'> | null;
   className?: string;
 }) {
+  const { faqHref } = useStatsHost();
   return (
     <Tile className={className} data-testid="bridge-phases">
       <TileHeader
         aside={
-          <a href={FAQ_HREF} className="hover:text-ink" data-testid="bridge-faq">
+          <a href={faqHref} className="hover:text-ink" data-testid="bridge-faq">
             what happens →
           </a>
         }
@@ -334,11 +334,12 @@ export function BridgePortal({
   chainId: string;
   className?: string;
 }) {
+  const { faqHref } = useStatsHost();
   return (
     <Tile className={className} data-testid="bridge-portal">
       <TileHeader
         aside={
-          <a href={RULES_HREF} className="hover:text-ink" data-testid="bridge-rules">
+          <a href={`${faqHref}#rules`} className="hover:text-ink" data-testid="bridge-rules">
             the rules →
           </a>
         }

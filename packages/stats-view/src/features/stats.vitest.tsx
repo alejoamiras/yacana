@@ -4,13 +4,13 @@ import { type EpochRow, linkRows, rowsFromJson } from '@yacana/miner-core/reader
 import { Skeleton } from '@yacana/ui';
 import { createStore, Provider } from 'jotai';
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { App } from '../App';
+import { hosted } from '../../tests/host';
 import { Difficulty, Duration, Emission, Retarget } from '../charts/index.tsx';
 import { span } from '../charts/specs';
 import { IDLE } from '../history-fill';
-import { selectedFromSearch } from '../routes';
-import { Stats } from '../routes/Stats';
+import { Stats } from '../pages/Stats';
 import { type Fixed, fixedAtom, historyAtom, sinceOpenedAtom, slowAtom, unsettledAtom } from '../state';
+import { selectedFromSearch } from '../url-state';
 import { type EpochWindow, windowFor, windowRowsOf } from '../window';
 import { Detail } from './Detail';
 import { Observatory } from './Observatory';
@@ -369,9 +369,7 @@ describe('the page', () => {
       lottery: { mix: 0n, reveals: 0 },
     });
     const { container } = render(
-      <Provider store={store}>
-        <Stats onWindow={() => {}} nodeUrl="http://node.test" />
-      </Provider>,
+      <Provider store={store}>{hosted(<Stats onWindow={() => {}} nodeUrl="http://node.test" />)}</Provider>,
     );
     const grid = container.querySelector('[data-testid=stats]') as HTMLElement;
     expect(grid.className).toContain('md:grid-cols-6');
@@ -444,9 +442,7 @@ describe('the two beats on the page', () => {
   });
   const page = (store = createStore()) =>
     render(
-      <Provider store={store}>
-        <Stats onWindow={() => {}} nodeUrl="http://node.test" />
-      </Provider>,
+      <Provider store={store}>{hosted(<Stats onWindow={() => {}} nodeUrl="http://node.test" />)}</Provider>,
     );
 
   test('before any beat every tile is on the page, as its skeleton', () => {
@@ -472,33 +468,6 @@ describe('the two beats on the page', () => {
     expect(screen.getByTestId('detail').textContent).toContain(`epoch ${last.epoch}`);
     expect(screen.queryByTestId('open-claims')).toBeNull();
     expect(screen.getByTestId('strip').hasAttribute('data-skeleton')).toBe(true);
-  });
-
-  test('the header pill reads the chain until beat one, then names the block; settled waits for beat two', async () => {
-    const store = createStore();
-    render(
-      <Provider store={store}>
-        <App
-          connection={{
-            nodeUrl: 'http://node.test',
-            ethRpcUrl: 'http://rpc.test',
-            miner: '0x1',
-            token: '0x2',
-            firstEpoch: 0,
-          }}
-          onWindow={() => {}}
-        />
-      </Provider>,
-    );
-    expect(screen.getByTestId('freshness-pending').textContent).toBe('reading the chain…');
-    const main = screen.getByRole('main');
-    expect(main.getAttribute('data-settled')).toBe('0');
-    store.set(fixedAtom, fixedOf(last.epoch));
-    await waitFor(() => expect(screen.getByTestId('freshness').textContent).toContain('block 1'));
-    await waitFor(() => expect(store.get(unsettledAtom).size).toBe(0));
-    expect(main.getAttribute('data-settled')).toBe('0');
-    store.set(historyAtom, { rows: new Map(rows.map((r) => [r.epoch, r])), lottery: null });
-    await waitFor(() => expect(main.getAttribute('data-settled')).toBe('1'));
   });
 
   test('fast first, slow second: the window skeleton is quiet until the timer, then shimmers; minted never blinks', async () => {

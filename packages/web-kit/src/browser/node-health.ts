@@ -310,15 +310,20 @@ export const subscribeNodeHealth = (fn: () => void): (() => void) => {
 /**
  * Resolves when the endpoint is usable again: at once when `ok`; at the deadline when no recovery
  * is out; when a recovery in flight settles (`ok` resolves everyone, a failure re-arms the wait).
+ * An abort of `signal` resolves it at once and leaves nothing armed.
  */
-export function waitTurn(): Promise<void> {
+export function waitTurn(signal?: AbortSignal): Promise<void> {
   return new Promise((resolve) => {
+    const done = () => {
+      off();
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', done);
+      resolve();
+    };
     const check = () => {
       const t = health.transport;
       if (t.kind === 'ok' || (Date.now() >= t.retryAt && !probing)) {
-        off();
-        clearTimeout(timer);
-        resolve();
+        done();
         return true;
       }
       return false;
@@ -334,6 +339,8 @@ export function waitTurn(): Promise<void> {
     const off = subscribeNodeHealth(() => {
       if (!check()) arm();
     });
+    if (signal?.aborted) return done();
+    signal?.addEventListener('abort', done);
     if (!check()) arm();
   });
 }

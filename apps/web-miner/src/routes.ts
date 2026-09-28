@@ -1,3 +1,4 @@
+import { dispatchNavigate, subscribeLocation } from '@yacana/web-kit/browser/navigation';
 import * as React from 'react';
 
 export type Route = 'mine' | 'wallet' | 'settings';
@@ -13,15 +14,13 @@ export const routeFromPath = (pathname: string): Route => {
 
 export const pathFor = (route: Route): string => `${base}/${route === 'mine' ? '' : route}`;
 
-const NAVIGATE = 'yacana:navigate';
-
 /** What the wallet opens on arrival: the Send dialog, or the words backup on the way to Sign out. */
 export type Intent = 'send' | 'backup';
 
 /** `intent` rides in history state, read once by the wallet. */
 export const navigate = (route: Route, intent?: Intent): void => {
   history.pushState(intent ? { intent } : null, '', pathFor(route));
-  window.dispatchEvent(new Event(NAVIGATE));
+  dispatchNavigate();
 };
 
 /** Reads and clears a navigation intent, so a reload or a back does not reopen the sheet. */
@@ -31,18 +30,9 @@ export const takeIntent = (): Intent | undefined => {
   return intent;
 };
 
-const subscribe = (cb: () => void) => {
-  window.addEventListener('popstate', cb);
-  window.addEventListener(NAVIGATE, cb);
-  return () => {
-    window.removeEventListener('popstate', cb);
-    window.removeEventListener(NAVIGATE, cb);
-  };
-};
-
 export const useRoute = (): Route =>
   React.useSyncExternalStore(
-    subscribe,
+    subscribeLocation,
     () => routeFromPath(location.pathname),
     () => 'mine',
   );

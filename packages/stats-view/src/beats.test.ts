@@ -1,7 +1,7 @@
 import type { EpochRow } from '@yacana/miner-core/reader';
 import { describe, expect, test } from 'vitest';
-import { type BeatReads, type BeatSinks, bootBeats, pollBeats, settled, windowBeat } from './beats';
-import type { Fixed, History } from './state';
+import { type BeatReads, type BeatSinks, bootBeats, pollBeats, windowBeat } from './beats';
+import { type Fixed, type History, settled } from './state';
 import { WINDOW } from './window';
 
 /** Epoch `e` opened at `e × 300` with 4 claims (the open one 1), target 2^122. */

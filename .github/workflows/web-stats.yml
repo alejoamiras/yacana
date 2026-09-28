@@ -18,6 +18,7 @@ jobs:
         relevant:
           - 'apps/web-stats/**'
           - '!apps/web-stats/**/*.md'
+          - 'packages/stats-view/**'
           - 'packages/ui/**'
           - 'packages/web-kit/**'
           - 'packages/bridge/**'
@@ -45,9 +46,11 @@ jobs:
       - uses: ./.github/actions/setup-bun
       - run: bun run lint
       - run: bun run --cwd apps/web-stats typecheck
+      - run: bun run --cwd packages/stats-view typecheck
       - run: bun run --cwd apps/web-stats test:components
-      # The beats, the window, the map geometry, the cache, the fill (and one page on the wire).
-      - run: bun test apps/web-stats
+      - run: bun run --cwd packages/stats-view test:components
+      # The beats, the window, the map geometry, the cache, the fill (and one page on the wire), the runtime.
+      - run: bun test apps/web-stats packages/stats-view
       # The slot table pinned against deriveStorageSlotInMap, and the CSV / metrics on the fixture.
       - run: bun test packages/miner-core/src/reader.test.ts packages/miner-core/src/metrics.test.ts packages/miner-core/src/csv.test.ts
 

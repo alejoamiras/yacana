@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest';
-import { coalesced, serial } from './serial';
+import { createSerial } from './serial';
+
+const { coalesced, serial } = createSerial();
 
 const deferred = () => {
   let resolve!: () => void;

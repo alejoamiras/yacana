@@ -5,9 +5,9 @@ import type { VersionFlows } from '@yacana/bridge/portal-reader';
 import { PARAMS } from '@yacana/miner-core/generated/params';
 import { createStore, Provider } from 'jotai';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { hosted } from '../../tests/host';
 import type { BridgeSnapshot } from '../bridge-beat';
-import { routeFromPath } from '../routes';
-import { Bridge } from '../routes/Bridge';
+import { Bridge } from '../pages/Bridge';
 import { bridgeAtom, nowAtom } from '../state';
 import { Announcement } from './Announcement';
 
@@ -72,7 +72,7 @@ const mount = (ui: React.ReactNode, setup: (s: ReturnType<typeof createStore>) =
   const store = createStore();
   store.set(nowAtom, NOW);
   setup(store);
-  render(<Provider store={store}>{ui}</Provider>);
+  render(<Provider store={store}>{hosted(ui)}</Provider>);
   return store;
 };
 
@@ -139,27 +139,23 @@ describe('the bridge page', () => {
     expect(screen.queryAllByTestId('bridge-version')).toHaveLength(0);
   });
 
-  test('a deployment without a portal says so, and the route names the page', () => {
+  test('a deployment without a portal says so', () => {
     vi.stubEnv('VITE_BRIDGE', '');
     mount(<Bridge />, (s) => s.set(bridgeAtom, { phase: 'none' }));
     expect(screen.getByTestId('no-bridge').textContent).toContain('no bridge yet');
-    // Under the test's base of `/`; production serves the app under `/stats/`.
-    expect(routeFromPath('/bridge')).toBe('bridge');
-    expect(routeFromPath('/bridge/')).toBe('bridge');
-    expect(routeFromPath('/')).toBe('stats');
   });
 });
 
 describe('the announcement line', () => {
   test('nothing on a quiet version; one line with the expected day and the FAQ when a migration is announced', () => {
-    const { container } = render(<Announcement />);
+    const { container } = render(hosted(<Announcement />));
     expect(container.innerHTML).toBe('');
     cleanup();
     vi.stubEnv(
       'VITE_MIGRATION',
       JSON.stringify({ toIndex: '2', announcedAt: '1799900000', expectedFlipAt: '1800500000' }),
     );
-    render(<Announcement />);
+    render(hosted(<Announcement />));
     const line = screen.getByTestId('announcement');
     expect(line.textContent).toContain('arrives around 2027-01-21. Mining on V6 ends when the upgrade lands');
     expect(line.querySelector('a')?.getAttribute('href')).toBe('/faq');

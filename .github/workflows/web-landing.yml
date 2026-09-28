@@ -27,6 +27,7 @@ jobs:
           - 'apps/web-miner/**'
           - 'protocol/work-circuit/**'
           - 'apps/web-stats/**'
+          - 'packages/stats-view/**'
           - 'biome.json'
           - 'bunfig.toml'
           - 'tsconfig.json'

@@ -11,6 +11,7 @@
     "./browser/format": "./src/browser/format.ts",
     "./browser/host": "./src/browser/host.ts",
     "./browser/l1-explorer": "./src/browser/l1-explorer.ts",
+    "./browser/navigation": "./src/browser/navigation.ts",
     "./browser/node": "./src/browser/node.ts",
     "./browser/node-guard": "./src/browser/node-guard.ts",
     "./browser/node-health": "./src/browser/node-health.ts",

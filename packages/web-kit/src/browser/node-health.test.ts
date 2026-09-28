@@ -278,8 +278,18 @@ describe('the gate', () => {
     expect(calls.length).toBe(1);
   });
 
-  test('waitTurn resolves at the deadline, or when a recovery in flight settles', async () => {
+  test('waitTurn resolves at the deadline, when a recovery in flight settles, or at once on abort', async () => {
     guard.setNodeEndpoint('https://node.example/rpc?delay=50', 1_000);
+    health.setTransportForTests({
+      kind: 'throttled',
+      retryAt: Date.now() + 60_000,
+      status: 429,
+      backoffMs: 60_000,
+    });
+    const gaveUp = new AbortController();
+    const abandoned = health.waitTurn(gaveUp.signal);
+    gaveUp.abort();
+    await abandoned;
     health.setTransportForTests({ kind: 'throttled', retryAt: Date.now() + 40, status: 429, backoffMs: 40 });
     const t0 = Date.now();
     await health.waitTurn();

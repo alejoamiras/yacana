@@ -101,7 +101,3 @@ export async function windowBeat(
     publish.history({ ...held.history, error: message(e) });
   }
 }
-
-/** The page is settled once beat two landed whole and every number is at rest: what the visual gate waits for. */
-export const settled = (history: History | null, unsettled: ReadonlySet<string>): boolean =>
-  history !== null && !history.error && unsettled.size === 0;

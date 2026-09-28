@@ -625,7 +625,7 @@ miner"); `external-link-arrows` green.
 
 ### Arc 4a — `@yacana/stats-view`
 
-**P7 · The package, web-stats as its shell.** §3.4. A pure move: nothing on `/stats` changes. Gate: fast layers (the
+**P7 · The package, web-stats as its shell. ✓** §3.4. A pure move: nothing on `/stats` changes. Gate: fast layers (the
 layout and boundaries guards accept the package; its Vitest runs in `test:components` and in CI); a runtime spec
 (no setter called; `fill: false` never enters `quietNodeReads`; while `yieldTo` holds, no boot, window, bridge or poll
 read starts, and a window asked for meanwhile is read once it clears; `start`/`stop` idempotent; `stop()` during a

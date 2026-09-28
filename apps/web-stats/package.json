@@ -25,6 +25,7 @@
     "@tailwindcss/vite": "^4",
     "@yacana/bridge": "workspace:*",
     "@yacana/miner-core": "workspace:*",
+    "@yacana/stats-view": "workspace:*",
     "@yacana/ui": "workspace:*",
     "@yacana/web-kit": "workspace:*",
     "@yacana/work-circuit": "workspace:*",

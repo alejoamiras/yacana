@@ -2,14 +2,15 @@ import { Chip, ChipLink, shortHash, Tile, TileHeader } from '@yacana/ui';
 import type { DeploymentRecord } from '@yacana/web-kit/config';
 import { W_VK_HASH } from '@yacana/work-circuit/generated/vk';
 import { links } from '../explorer';
+import { useStatsHost } from '../host';
 import { reproduceCommand } from '../lib/reproduce.ts';
-import { navigate, pathFor } from '../routes';
 
 const record = JSON.parse(import.meta.env.VITE_DEPLOYMENT_RECORD) as DeploymentRecord;
 
 /** The deployment's identity as chips, and the one command that reproduces the page; the route has the rest. */
 export function VerifyTile({ nodeUrl, className }: { nodeUrl: string; className?: string }) {
   const commit = import.meta.env.VITE_SOURCE_COMMIT;
+  const { navigate, pathFor } = useStatsHost();
   return (
     <Tile className={className} data-testid="verify-tile">
       <TileHeader

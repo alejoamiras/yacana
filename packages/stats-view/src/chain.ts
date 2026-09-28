@@ -2,15 +2,12 @@
 import { AztecAddress } from '@aztec/aztec.js/addresses';
 import {
   assertDeployment,
-  DEFAULT_LIMITS,
   expectedFromStrings,
   type Node,
   type SlotLoader,
   type StorageLayout,
 } from '@yacana/miner-core/reader';
 import { type Connection, expectedDeployment } from '@yacana/web-kit/browser/connection';
-import { nodeClient } from '@yacana/web-kit/browser/node';
-import { setNodeEndpoint } from '@yacana/web-kit/browser/node-guard';
 import { chunkLoader, fetchLayouts } from '@yacana/web-kit/browser/slots';
 
 /** The poll's cadence; the banner calls the numbers stale after two of them. */
@@ -25,12 +22,8 @@ export interface Reader {
   load: SlotLoader;
 }
 
-/** The boot check, then the layouts the reads need. */
-export async function openReader(connection: Connection): Promise<Reader> {
-  // A read the reader gave up on ends with it: one deadline per request, no transport retries
-  // (the SDK's default would keep an abandoned read alive through three more attempts).
-  setNodeEndpoint(connection.nodeUrl, DEFAULT_LIMITS.timeoutMs);
-  const node = nodeClient(connection.nodeUrl);
+/** The boot check through the host's client, then the layouts the reads need. */
+export async function openReader(connection: Connection, node: Node): Promise<Reader> {
   const layout = await fetchLayouts();
   const expected = expectedDeployment();
   await assertDeployment(

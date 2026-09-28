@@ -1,7 +1,16 @@
+import { type EpochWindow, StatsPages } from '@yacana/stats-view/pages';
+import { POLL_MS } from '@yacana/stats-view/runtime';
+import {
+  fixedAtom,
+  historyAtom,
+  nowAtom,
+  settled,
+  statusAtom,
+  unsettledAtom,
+} from '@yacana/stats-view/state';
 import {
   Alert,
   AlertDescription,
-  AlertTitle,
   Badge,
   ExternalLink,
   Header,
@@ -15,22 +24,17 @@ import {
   NODE_SETTINGS_HREF,
   restoreDefaultNode,
 } from '@yacana/web-kit/browser/connection';
+import { explorer, explorerBase } from '@yacana/web-kit/browser/explorer';
 import { duration } from '@yacana/web-kit/browser/format';
 import { previewNotice } from '@yacana/web-kit/browser/host';
 import { bannerState, nodeHealth, subscribeNodeHealth } from '@yacana/web-kit/browser/node-health';
 import { ownVersionName } from '@yacana/web-kit/browser/version-name';
 import { useAtomValue } from 'jotai';
-import { type ReactNode, useEffect, useSyncExternalStore } from 'react';
-import { settled } from './beats';
-import { POLL_MS } from './chain';
-import { links } from './explorer';
-import { Announcement } from './features/Announcement';
-import { navigate, pathFor, type Route, useRoute } from './routes';
-import { Bridge } from './routes/Bridge';
-import { Stats } from './routes/Stats';
-import { Verify } from './routes/Verify';
-import { fixedAtom, historyAtom, nowAtom, statusAtom, unsettledAtom } from './state';
-import type { EpochWindow } from './window';
+import { useEffect, useSyncExternalStore } from 'react';
+import { FAQ_HREF, navigate, pathFor, type Route, useRoute } from './routes';
+
+const links = explorer(explorerBase(import.meta.env.VITE_EXPLORER_URL));
+const HOST = { pathFor, navigate, faqHref: FAQ_HREF };
 
 /** Stats · Bridge · Verify · Mine ↗: the miner opens in its own tab, where mining then lives. */
 export const statsTabs = (route: Route, go: (route: Route) => void, minerHref: string): HeaderTab[] => [
@@ -95,7 +99,13 @@ function Freshness() {
   );
 }
 
-function Shell({ children, connection }: { children: ReactNode; connection: Connection }) {
+export function App({
+  connection,
+  onWindow,
+}: {
+  connection: Connection;
+  onWindow: (w: EpochWindow) => void;
+}) {
   const route = useRoute();
   const status = useAtomValue(statusAtom);
   const unsettled = useAtomValue(unsettledAtom);
@@ -108,6 +118,7 @@ function Shell({ children, connection }: { children: ReactNode; connection: Conn
   const notice = previewNotice(location.hostname);
   const health = useSyncExternalStore(subscribeNodeHealth, nodeHealth, nodeHealth);
   const now = useAtomValue(nowAtom);
+  const onDefault = connection.nodeUrl === defaultNodeUrl() ? undefined : restoreDefaultNode;
   return (
     <div className="mx-auto flex max-w-[1120px] flex-col">
       <Header
@@ -130,24 +141,20 @@ function Shell({ children, connection }: { children: ReactNode; connection: Conn
             <AlertDescription>{notice}</AlertDescription>
           </Alert>
         )}
-        <Announcement />
-        <NodeBanner
-          state={bannerState(health, now, 2 * POLL_MS)}
-          settingsHref={NODE_SETTINGS_HREF}
-          onDefault={connection.nodeUrl === defaultNodeUrl() ? undefined : restoreDefaultNode}
-        />
-        {status.phase === 'error' && (
-          <Alert variant="bad" data-testid="boot-error">
-            <AlertTitle>Cannot read this deployment</AlertTitle>
-            <AlertDescription>{status.message}</AlertDescription>
-            <NodeWayOut
-              className="mt-2"
-              onDefault={connection.nodeUrl === defaultNodeUrl() ? undefined : restoreDefaultNode}
+        <StatsPages
+          page={route}
+          host={HOST}
+          connection={connection}
+          onWindow={onWindow}
+          banner={
+            <NodeBanner
+              state={bannerState(health, now, 2 * POLL_MS)}
               settingsHref={NODE_SETTINGS_HREF}
+              onDefault={onDefault}
             />
-          </Alert>
-        )}
-        {children}
+          }
+          wayOut={<NodeWayOut className="mt-2" onDefault={onDefault} settingsHref={NODE_SETTINGS_HREF} />}
+        />
         <footer className="flex flex-wrap gap-x-4 gap-y-1 border-t border-line pt-3 text-2xs text-ink-2">
           <span>© Yacana · read from public storage · no trackers</span>
           <span data-testid="node">node {new URL(connection.nodeUrl).host}</span>
@@ -155,22 +162,5 @@ function Shell({ children, connection }: { children: ReactNode; connection: Conn
         </footer>
       </main>
     </div>
-  );
-}
-
-export function App({
-  connection,
-  onWindow,
-}: {
-  connection: Connection;
-  onWindow: (w: EpochWindow) => void;
-}) {
-  const route = useRoute();
-  return (
-    <Shell connection={connection}>
-      {route === 'stats' && <Stats onWindow={onWindow} nodeUrl={connection.nodeUrl} />}
-      {route === 'bridge' && <Bridge />}
-      {route === 'verify' && <Verify nodeUrl={connection.nodeUrl} />}
-    </Shell>
   );
 }

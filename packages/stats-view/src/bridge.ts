@@ -1,29 +1,25 @@
-// The bridge page's poll: the portal read over the Ethereum RPC every `POLL_MS`, into its atom,
-// with the extras the page draws (YACA's supply, every crossing's event with its block's time). A
-// deployment without a portal has nothing to read; a read that fails keeps the last snapshot on
-// the page and says the RPC is not answering; extras that fail leave the sentences standing.
+// The bridge page's read: the portal over the Ethereum RPC, with the extras the page draws (YACA's
+// supply, every crossing's event with its block's time). A deployment without a portal has nothing to
+// read; extras that fail leave the sentences standing.
 
 import { scanLogs } from '@yacana/bridge/logs';
 import { yacaAbi, yacanaPortalAbi } from '@yacana/bridge/portal';
 import { portalReader } from '@yacana/bridge/portal-reader';
 import type { BridgeRecord } from '@yacana/bridge/record';
-import type { Connection } from '@yacana/web-kit/browser/connection';
-import { ethRpcClient } from '@yacana/web-kit/browser/eth-rpc';
-import { setEthRpcEndpoint } from '@yacana/web-kit/browser/node-guard';
-import type { createStore } from 'jotai';
 import type { Hex, PublicClient } from 'viem';
-import { type BridgeExtras, type FlowEvent, readBridge, sampleBlocks } from './bridge-beat';
-import { POLL_MS } from './chain';
-import { bridgeAtom } from './state';
+import {
+  type BridgeExtras,
+  type BridgeSnapshot,
+  type FlowEvent,
+  readBridge,
+  sampleBlocks,
+} from './bridge-beat';
 
-const ETH_RPC_DEADLINE_MS = 10_000;
 /** Blocks whose time is read; the rest are placed between their neighbours. */
 const BLOCK_TIMES = 120;
 
 export const bridgeRecord = (): BridgeRecord | null =>
   import.meta.env.VITE_BRIDGE ? (JSON.parse(import.meta.env.VITE_BRIDGE) as BridgeRecord) : null;
-
-const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 interface RawEvent {
   kind: FlowEvent['kind'];
@@ -95,43 +91,16 @@ async function readExtras(client: PublicClient, record: BridgeRecord): Promise<B
   return { yacaSupply, events, lastCrossingAt: events.length ? (events.at(-1) as FlowEvent).at : null };
 }
 
-/** Reads once now and every poll after; returns the stop. */
-export function startBridge(store: ReturnType<typeof createStore>, connection: Connection): () => void {
-  const record = bridgeRecord();
-  if (!record) {
-    store.set(bridgeAtom, { phase: 'none' });
-    return () => {};
-  }
-  setEthRpcEndpoint(connection.ethRpcUrl, ETH_RPC_DEADLINE_MS);
-  const client = ethRpcClient(connection.ethRpcUrl);
+/** One read of the portal and its extras through `client`. */
+export function bridgeSource(record: BridgeRecord, client: PublicClient): () => Promise<BridgeSnapshot> {
   const reader = portalReader(client, {
     portal: record.portal as Hex,
     registry: record.registry as Hex,
     deployBlock: BigInt(record.deployBlock ?? 0),
   });
-  let reading = false;
-  const read = async () => {
-    if (reading) return;
-    reading = true;
-    try {
-      const snapshot = await readBridge(reader);
-      const extras = await readExtras(client, record).catch(() => undefined);
-      store.set(bridgeAtom, {
-        phase: 'ready',
-        snapshot: extras ? { ...snapshot, extras } : snapshot,
-        unreachable: false,
-      });
-    } catch (e) {
-      const held = store.get(bridgeAtom);
-      store.set(
-        bridgeAtom,
-        held.phase === 'ready' ? { ...held, unreachable: true } : { phase: 'error', message: message(e) },
-      );
-    } finally {
-      reading = false;
-    }
+  return async () => {
+    const snapshot = await readBridge(reader);
+    const extras = await readExtras(client, record).catch(() => undefined);
+    return extras ? { ...snapshot, extras } : snapshot;
   };
-  void read();
-  const timer = setInterval(() => void read(), POLL_MS);
-  return () => clearInterval(timer);
 }

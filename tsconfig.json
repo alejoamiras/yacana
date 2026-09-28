@@ -20,6 +20,9 @@
       "path": "./packages/miner-core"
     },
     {
+      "path": "./packages/stats-view"
+    },
+    {
       "path": "./packages/ui"
     },
     {

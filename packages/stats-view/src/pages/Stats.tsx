@@ -10,8 +10,8 @@ import { Observatory } from '../features/Observatory';
 import { Strip } from '../features/Strip';
 import { Table } from '../features/Table';
 import { VerifyTile } from '../features/VerifyTile';
-import { select, setFrom, useFrom, useSelected } from '../routes';
 import { fillAtom, fixedAtom, type History, historyAtom, nowAtom, rowsAtom } from '../state';
+import { select, setFrom, useFrom, useSelected } from '../url-state';
 import { type EpochWindow, windowFor, windowHeld, windowRowsOf } from '../window';
 
 const FIRST = firstEpoch();

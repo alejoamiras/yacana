@@ -131,6 +131,7 @@
         "@tailwindcss/vite": "^4",
         "@yacana/bridge": "workspace:*",
         "@yacana/miner-core": "workspace:*",
+        "@yacana/stats-view": "workspace:*",
         "@yacana/ui": "workspace:*",
         "@yacana/web-kit": "workspace:*",
         "@yacana/work-circuit": "workspace:*",
@@ -184,6 +185,32 @@
         "@aztec/stdlib": "5.2.0",
         "@aztec/wallets": "5.2.0",
         "@scure/bip39": "2.3.0",
+      },
+    },
+    "packages/stats-view": {
+      "name": "@yacana/stats-view",
+      "version": "0.0.0",
+      "dependencies": {
+        "@aztec/aztec.js": "5.2.0",
+        "@observablehq/plot": "0.6.17",
+        "@yacana/bridge": "workspace:*",
+        "@yacana/miner-core": "workspace:*",
+        "@yacana/ui": "workspace:*",
+        "@yacana/web-kit": "workspace:*",
+        "@yacana/work-circuit": "workspace:*",
+        "jotai": "^2",
+        "react": "^19.2.6",
+      },
+      "devDependencies": {
+        "@testing-library/jest-dom": "^6",
+        "@testing-library/react": "^16",
+        "@types/react": "^19",
+        "@types/react-dom": "^19",
+        "@vitejs/plugin-react": "^6",
+        "jsdom": "^28",
+        "react-dom": "^19.2.6",
+        "typescript": "~6",
+        "vitest": "^4",
       },
     },
     "packages/ui": {
@@ -1105,6 +1132,8 @@
     "@yacana/portal": ["@yacana/portal@workspace:protocol/portal"],
 
     "@yacana/site": ["@yacana/site@workspace:apps/site"],
+
+    "@yacana/stats-view": ["@yacana/stats-view@workspace:packages/stats-view"],
 
     "@yacana/ui": ["@yacana/ui@workspace:packages/ui"],
 
