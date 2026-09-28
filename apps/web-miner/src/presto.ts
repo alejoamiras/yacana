@@ -187,6 +187,15 @@ export function prestoStanding(
   return record.used ? 'remembered' : 'ask';
 }
 
+/**
+ * Presto's own speed setting decides, not the browser's threads: found (which implies consent),
+ * remembered, or proving. Mining only tells found from proving, so it is not an input.
+ */
+export const prestoDecides = (s: PrestoState, record: ConsentRecord, lna: Lna): boolean => {
+  const standing = prestoStanding(s, record, lna, false);
+  return standing === 'found' || standing === 'remembered';
+};
+
 /** What the controller asks of the page's consent, for every native message the Worker sends. */
 export interface ConsentHooks {
   /** Native may be published and remembered: consent is in force right now. */

@@ -66,6 +66,8 @@ test('first visit creates an account, mines at the easy target, claims and shows
   const r = run();
   const memory = rssWatcher();
   await bootPage(page, pageUrl(r));
+  // The first visit's strip has its own title; the frame below is the cockpit's own.
+  await page.getByTestId('intro-dismiss').click();
   expect(await page.evaluate(() => crossOriginIsolated)).toBe(true);
   await expect(page.getByTestId('balance')).toHaveText('0');
   await expect(page.getByTestId('balance').locator('xpath=..')).toHaveText(/^0\s*tYACA$/);
@@ -165,8 +167,10 @@ test('first visit creates an account, mines at the easy target, claims and shows
   // ten seconds after the last one.
   await expect(page.getByTestId('mint-line')).toHaveText('', { timeout: 15_000 });
   expect(await tileHeight()).toBe(balanceHeight);
-  // The nav reaches the stats app on the same origin.
-  await expect(page.getByTestId('nav-stats')).toHaveAttribute('href', /\/stats\/$/);
+  // The bar's Stats is this app's own page: its route under the app's base, never the new tab an external
+  // Stats opens.
+  await expect(page.getByTestId('nav-stats')).toHaveAttribute('href', /\/stats$/);
+  await expect(page.getByTestId('nav-stats')).not.toHaveAttribute('target');
   // At this easy target more than one claim can have minted before Stop landed: what the first visit
   // holds is whatever it claimed, and the second visit must add exactly one more.
   const minted = Number(await page.getByTestId('claims').textContent());
@@ -193,6 +197,22 @@ test('first visit creates an account, mines at the easy target, claims and shows
     JSON.stringify({ peakMiB: memory.peakMiB() }),
   );
   expect(memory.peakMiB()).toBeGreaterThan(0);
+});
+
+test('the first visit’s strip: shown to a new visitor, put away by its ×, still away after a reload', async ({
+  page,
+}) => {
+  page.on('pageerror', (e) => console.log(`[page error] ${e.message}`));
+  await page.goto(pageUrl(run()));
+  await expect(page.getByTestId('cockpit')).toBeVisible({ timeout: BOOT_MS });
+  const strip = page.getByTestId('intro');
+  await expect(strip).toContainText('Yacana is private money, mined by proving.');
+  await expect(strip.getByRole('link', { name: /How it works/ })).toHaveAttribute('target', '_blank');
+  await page.getByTestId('intro-dismiss').click();
+  await expect(strip).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByTestId('epoch')).not.toBeEmpty({ timeout: BOOT_MS });
+  await expect(strip).toHaveCount(0);
 });
 
 test('a poisoned CRS cache is purged before proving', async ({ page }) => {
@@ -224,8 +244,11 @@ test('three power changes keep mining, the ledger grows, memory stays bounded', 
   // The hard deployment: no win, so no claim proof (≈ 2 GB on its own) muddies the measurement.
   await bootPage(page, pageUrl(r, { miner: r.hardMiner, token: r.hardToken }));
   const memory = rssWatcher();
+  // The first visit's strip stays through the account's opening and leaves once mining runs.
+  await expect(page.getByTestId('intro')).toBeVisible();
   await page.getByTestId('start').click();
   await expect(page.getByTestId('phase')).toHaveText('mining');
+  await expect(page.getByTestId('intro')).toHaveCount(0);
   const lines = () => page.getByTestId('ledger').locator('[data-slot=proof-line]');
   await expect(lines()).not.toHaveCount(0, { timeout: 3 * 60_000 });
   const baseline = await settled(page, memory);
@@ -264,19 +287,22 @@ test('a prover crash surfaces as an error and mining restarts on the next start'
   await page.getByTestId('stop').click();
 });
 
-test('the pop-out draws with the page fonts and its own loop', async ({ page, context }) => {
+test('the mini window: page fonts, its own loop, two lines that fit, open across pages; Start opens it when asked, and mines when refused', async ({
+  page,
+  context,
+}) => {
   const r = run();
   await bootPage(page, pageUrl(r));
   const supported = await page.evaluate(() => 'documentPictureInPicture' in window);
   test.skip(!supported, 'Document Picture-in-Picture is not available in this browser build');
-  await page.getByRole('link', { name: 'Settings' }).click();
-  await page.getByRole('switch', { name: 'Mini window' }).click();
-  await page.getByRole('link', { name: 'Mine' }).click();
-  const popped = context.waitForEvent('page');
+  let popped = context.waitForEvent('page');
   await page.getByTestId('pop-out').click();
-  const pip = await popped;
+  let pip = await popped;
   await pip.waitForLoadState();
+  // Headless, the window takes the context's viewport; a headed browser gives it the size asked for.
+  await pip.setViewportSize({ width: 360, height: 216 });
   await expect(pip.locator('[data-slot=score-loop][data-calm]')).toBeVisible();
+  await expect(page.getByTestId('pop-out')).toBeDisabled();
   // A loaded face, not `fonts.check`, which is true for a face that never loaded; and no failed font request.
   const fonts = await pip.evaluate(async () => {
     await document.fonts.ready;
@@ -290,5 +316,51 @@ test('the pop-out draws with the page fonts and its own loop', async ({ page, co
   });
   expect(fonts.failed).toEqual([]);
   expect(fonts.loaded).toBeGreaterThan(0);
+  // The user's numbers, then the network's: two rows, neither wider than the window.
+  const fit = await pip.evaluate(() => {
+    const footer = document.querySelector('[data-testid=pip-footer]') as HTMLElement;
+    const rows = Array.from(footer.children) as HTMLElement[];
+    return {
+      width: window.innerWidth,
+      page: document.documentElement.scrollWidth,
+      rows: rows.map((r) => [r.scrollWidth, r.clientWidth, r.getBoundingClientRect().right]),
+    };
+  });
+  console.log(`[pip] ${JSON.stringify(fit)}`);
+  expect(fit.width).toBe(360);
+  expect(fit.page).toBeLessThanOrEqual(fit.width);
+  expect(fit.rows).toHaveLength(2);
+  for (const [scroll, client, right] of fit.rows as number[][]) {
+    expect(scroll).toBeLessThanOrEqual(client as number);
+    expect(right).toBeLessThanOrEqual(fit.width);
+  }
+  // The shell owns the window: a page change neither closes it nor empties it.
+  await page.getByRole('link', { name: 'Wallet' }).click();
+  await expect(page).toHaveURL(/\/wallet$/);
+  await page.getByRole('link', { name: 'Mine' }).click();
+  await expect(pip.locator('[data-testid=pip-footer]')).toBeVisible();
+  expect(pip.isClosed()).toBe(false);
   await pip.close();
+  await expect(page.getByTestId('pop-out')).toBeEnabled();
+
+  // Asked for, the Start click opens it; mining starts either way.
+  await page.getByRole('link', { name: 'Settings' }).click();
+  await page.getByRole('switch', { name: /Open the mini window when mining starts/ }).click();
+  await page.getByRole('link', { name: 'Mine' }).click();
+  popped = context.waitForEvent('page');
+  await page.getByTestId('start').click();
+  pip = await popped;
+  await expect(page.getByTestId('phase')).toHaveText('mining');
+  await pip.getByRole('button', { name: 'Stop' }).click();
+  await expect(page.getByTestId('start')).toBeEnabled({ timeout: 2 * 60_000 });
+  await pip.close();
+  await page.evaluate(() => {
+    const api = (window as unknown as { documentPictureInPicture: { requestWindow: () => Promise<Window> } })
+      .documentPictureInPicture;
+    api.requestWindow = () => Promise.reject(new DOMException('refused', 'NotAllowedError'));
+  });
+  await page.getByTestId('start').click();
+  await expect(page.getByTestId('phase')).toHaveText('mining');
+  await expect(page.getByTestId('pop-out')).toBeEnabled();
+  await page.getByTestId('stop').click();
 });

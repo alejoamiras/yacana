@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mini window: nothing cut off</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#0a0a0b}
+.b{--ground:#0a0a0b;--raised:#111114;--panel:#17171b;--panel2:#1e1e24;--ink:#f2efe9;--ink2:rgba(242,239,233,.64);--ink3:rgba(242,239,233,.5);--ink4:rgba(242,239,233,.22);--line:rgba(242,239,233,.1);--line2:rgba(242,239,233,.18);--uv:#8c6bff;--uv2:#b39dff;--uvdim:rgba(140,107,255,.18);--ok:#58c98b;--warn:#e8b54d;--bad:#e5624f;background:#060607;color:var(--ink);font:15px/1.55 "Hanken Grotesk",ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;box-sizing:border-box;overflow:hidden}
+.b *{box-sizing:border-box}
+.b p{margin:0}
+.col{display:flex;flex-direction:column;gap:12px;min-width:0;align-items:flex-start}
+.tag{font:600 10.5px/1 "JetBrains Mono",monospace;letter-spacing:.1em;text-transform:uppercase;padding:5px 8px;border-radius:4px}
+.tag.now{color:var(--ink3);border:1px dashed var(--line2)}
+.tag.new{color:var(--ok);border:1px solid rgba(88,201,139,.5)}
+.tag.alt{color:var(--uv2);border:1px solid rgba(140,107,255,.5)}
+.sit{font:500 11.5px/1.4 "JetBrains Mono",monospace;color:var(--ink3);max-width:360px}
+.win{border:1px solid rgba(242,239,233,.22);border-radius:8px;overflow:hidden;background:var(--ground);box-shadow:0 10px 30px rgba(0,0,0,.5);flex:none}
+.bar{height:26px;display:flex;align-items:center;justify-content:space-between;padding:0 10px;background:#1b1b20;font:500 10.5px "JetBrains Mono",monospace;color:var(--ink3)}
+.in{padding:12px;display:flex;flex-direction:column;justify-content:space-between;height:calc(100% - 26px)}
+.top{display:flex;align-items:center;justify-content:space-between}
+.cap{font:500 10px/1.3 "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)}
+.btn{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:5px;border:1px solid var(--line2);background:transparent;color:var(--ink);font:600 11.5px "Hanken Grotesk",sans-serif}
+.strip{position:relative;height:48px;border-bottom:1px solid var(--line2)}
+.strip .l{position:absolute;left:0;right:0;top:14px;border-top:1px dashed rgba(179,157,255,.6)}
+.strip i{position:absolute;bottom:0;width:2px;background:rgba(242,239,233,.35);display:block}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font:400 10px/1.4 "JetBrains Mono",monospace;color:var(--ink2)}
+.row b{color:var(--ink);font-weight:500}
+.nowrap{white-space:nowrap}
+.tip{border-bottom:1px dotted var(--ink4)}
+.pill{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(140,107,255,.6);border-radius:4px;padding:2px 7px;font:500 10px/1.3 "JetBrains Mono",monospace;color:var(--uv2)}
+.pill i{width:5px;height:5px;background:var(--uv);display:inline-block}
+.big{font:600 19px/1 "Hanken Grotesk",sans-serif;letter-spacing:-.02em;color:var(--ink)}
+.uvc{color:var(--uv2)}.okc{color:var(--ok)}
+</style>
+</helmet>
+<div class="b" style="width: 1480px; height: 520px; padding: 32px 36px; display: grid; grid-template-columns: 380px 380px minmax(0, 1fr); gap: 40px;">
+<div class="col">
+<span class="tag now">today · 360 × 190</span>
+<div class="win" style="width: 360px; height: 190px;">
+<div class="bar"><span>yacana.network</span><span>×</span></div>
+<div class="in">
+<div class="top"><span style="display: flex; align-items: center; gap: 8px;"><svg width="18" height="18" viewBox="0 0 32 32"><rect x="5" y="23" width="22" height="3" rx="1.5" fill="#f2efe9"></rect><circle cx="16" cy="15" r="5" fill="#8c6bff"></circle></svg><span class="pill"><i></i>mining</span></span><button class="btn">Stop</button></div>
+<div class="strip"><div class="l"></div><i style="left:6%;height:30%"></i><i style="left:14%;height:55%"></i><i style="left:22%;height:20%"></i><i style="left:30%;height:40%"></i><i style="left:38%;height:12%"></i><i style="left:46%;height:62%"></i><i style="left:54%;height:26%"></i><i style="left:62%;height:35%"></i><i style="left:70%;height:18%"></i><i style="left:78%;height:48%"></i><i style="left:86%;height:22%"></i><i style="left:94%;height:33%"></i></div>
+<div class="row nowrap"><span><b class="big">11.8</b> proofs/min<span class="uvc"> · native</span></span><span>epoch 57 · <b>1</b> of 4 · <span class="tip">bar</span> 64.0</span><span class="okc">1 win · 4 tYACA</span></div>
+</div>
+</div>
+<p class="sit">One line that cannot wrap: the right end runs past the window. It grows with the epoch number, the wins and the difficulty.</p>
+</div>
+<div class="col">
+<span class="tag new">A · two lines · 360 × 216</span>
+<div class="win" style="width: 360px; height: 216px;">
+<div class="bar"><span>yacana.network</span><span>×</span></div>
+<div class="in">
+<div class="top"><span style="display: flex; align-items: center; gap: 8px;"><svg width="18" height="18" viewBox="0 0 32 32"><rect x="5" y="23" width="22" height="3" rx="1.5" fill="#f2efe9"></rect><circle cx="16" cy="15" r="5" fill="#8c6bff"></circle></svg><span class="pill"><i></i>mining</span></span><button class="btn">Stop</button></div>
+<div class="strip"><div class="l"></div><i style="left:6%;height:30%"></i><i style="left:14%;height:55%"></i><i style="left:22%;height:20%"></i><i style="left:30%;height:40%"></i><i style="left:38%;height:12%"></i><i style="left:46%;height:62%"></i><i style="left:54%;height:26%"></i><i style="left:62%;height:35%"></i><i style="left:70%;height:18%"></i><i style="left:78%;height:48%"></i><i style="left:86%;height:22%"></i><i style="left:94%;height:33%"></i></div>
+<div style="display: flex; flex-direction: column; gap: 3px;">
+<div class="row"><span><b class="big">11.8</b> proofs/min<span class="uvc"> · native</span></span><span class="okc">1 win · 4 tYACA</span></div>
+<div class="row"><span>epoch 57 · <b>1</b> of 4 wins · <span class="tip">difficulty</span> 64.0</span></div>
+</div>
+</div>
+</div>
+<p class="sit">Your numbers on the first line, the network’s on the second. Each line wraps rather than clips if it ever outgrows the width.</p>
+</div>
+<div class="col">
+<span class="tag alt">B · one line · 540 × 190</span>
+<div class="win" style="width: 540px; height: 190px;">
+<div class="bar"><span>yacana.network</span><span>×</span></div>
+<div class="in">
+<div class="top"><span style="display: flex; align-items: center; gap: 8px;"><svg width="18" height="18" viewBox="0 0 32 32"><rect x="5" y="23" width="22" height="3" rx="1.5" fill="#f2efe9"></rect><circle cx="16" cy="15" r="5" fill="#8c6bff"></circle></svg><span class="pill"><i></i>mining</span></span><button class="btn">Stop</button></div>
+<div class="strip"><div class="l"></div><i style="left:6%;height:30%"></i><i style="left:14%;height:55%"></i><i style="left:22%;height:20%"></i><i style="left:30%;height:40%"></i><i style="left:38%;height:12%"></i><i style="left:46%;height:62%"></i><i style="left:54%;height:26%"></i><i style="left:62%;height:35%"></i><i style="left:70%;height:18%"></i><i style="left:78%;height:48%"></i><i style="left:86%;height:22%"></i><i style="left:94%;height:33%"></i></div>
+<div class="row nowrap"><span><b class="big">11.8</b> proofs/min<span class="uvc"> · native</span></span><span>epoch 57 · <b>1</b> of 4 wins · <span class="tip">difficulty</span> 64.0</span><span class="okc">1 win · 4 tYACA</span></div>
+</div>
+</div>
+<p class="sit">With the new words one line needs about 540 px, and it still clips again as the numbers grow.</p>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1480,"height":520}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

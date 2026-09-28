@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Difficulty: the tiles</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#0a0a0b}
+.b{--ground:#0a0a0b;--raised:#111114;--panel:#17171b;--panel2:#1e1e24;--ink:#f2efe9;--ink2:rgba(242,239,233,.64);--ink3:rgba(242,239,233,.5);--ink4:rgba(242,239,233,.22);--line:rgba(242,239,233,.1);--line2:rgba(242,239,233,.18);--uv:#8c6bff;--uv2:#b39dff;--uvdim:rgba(140,107,255,.18);--ok:#58c98b;--warn:#e8b54d;background:var(--ground);color:var(--ink);font:15px/1.55 "Hanken Grotesk",ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;box-sizing:border-box;overflow:hidden}
+.b *{box-sizing:border-box}
+.b p{margin:0}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.tag{align-self:flex-start;font:600 10.5px/1 "JetBrains Mono",monospace;letter-spacing:.1em;text-transform:uppercase;padding:5px 8px;border-radius:4px}
+.tag.now{color:var(--ink3);border:1px dashed var(--line2)}
+.tag.new{color:var(--ok);border:1px solid rgba(88,201,139,.5)}
+.tile{border:1px solid var(--line);border-radius:8px;background:var(--raised);padding:16px 18px;min-width:0}
+.cap{font:500 11px/1.3 "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)}
+.aside{font:400 11px/1.3 "JetBrains Mono",monospace;letter-spacing:.04em;color:var(--ink3)}
+.th{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.chart{position:relative;height:210px;margin-left:22px}
+.chart .base{position:absolute;left:0;right:0;bottom:0;border-top:1px solid var(--line2)}
+.chart .line{position:absolute;left:0;right:0;top:62px;border-top:1px dashed rgba(179,157,255,.7)}
+.chart .lc{position:absolute;left:6px;top:44px;font:500 10.5px/1 "JetBrains Mono",monospace;color:var(--uv2)}
+.chart .ln{position:absolute;right:0;top:44px;font:600 10.5px/1 "JetBrains Mono",monospace;color:var(--uv2)}
+.chart .axis{position:absolute;left:-22px;bottom:0;height:100%;writing-mode:vertical-rl;transform:rotate(180deg);font:500 9.5px/1 "JetBrains Mono",monospace;color:var(--ink3);letter-spacing:.06em;text-align:center}
+.chart i{position:absolute;bottom:0;width:2px;background:rgba(242,239,233,.35);display:block}
+.chart i.w{background:var(--uv2)}
+.chart .ring{position:absolute;width:10px;height:10px;border-radius:50%;border:2px solid var(--uv2)}
+.chart .wl{position:absolute;font:600 10.5px/1 "JetBrains Mono",monospace;color:var(--uv2)}
+.hover{position:absolute;background:var(--panel);border:1px solid var(--line2);border-radius:6px;padding:7px 9px;font:500 10.5px/1.5 "JetBrains Mono",monospace;color:var(--ink2);white-space:nowrap}
+.hover b{color:var(--ink);font-weight:600}
+.rail{display:flex;gap:4px;margin:0 0 10px}
+.rail i{flex:1;height:6px;border-radius:2px;background:var(--panel2);display:block}
+.rail i.on{background:rgba(140,107,255,.55)}
+.kv{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding:7px 0;font-size:13px}
+.kv.first{border-top:0}
+.kv .k{color:var(--ink2);border-bottom:1px dotted var(--ink4)}
+.kv .k.plain{border-bottom:0}
+.kv .v{font-family:"JetBrains Mono",monospace;font-size:12.5px;white-space:nowrap}
+.kpi{display:flex;flex-direction:column;gap:4px}
+.kpi .v{font-size:34px;line-height:1;font-weight:600;letter-spacing:-.03em}
+.kpi .v small{font-size:13px;font-weight:500;color:var(--ink3);letter-spacing:0;margin-left:6px}
+.kpi .s{font-size:12.5px;color:var(--ink3)}
+.tipbox{background:var(--panel);border:1px solid var(--line2);border-radius:6px;padding:9px 11px;font-size:12.5px;line-height:1.45;color:var(--ink2)}
+</style>
+</helmet>
+<div class="b" style="width: 1280px; height: 940px; padding: 32px 36px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px;">
+<div class="col">
+<span class="tag now">today</span>
+<section class="tile">
+<div class="th"><span class="cap">live · last 3 min</span><span class="aside">11.8 proofs/min</span></div>
+<div class="chart">
+<span class="axis">score · log scale</span>
+<div class="base"></div><div class="line"></div>
+<span class="lc">the bar · reach it and you win · about 1 in 64 do</span><span class="ln">64.0</span>
+<i style="left:3%;height:22%"></i><i style="left:7%;height:9%"></i><i style="left:11%;height:31%"></i><i style="left:15%;height:14%"></i><i style="left:19%;height:6%"></i><i style="left:23%;height:40%"></i><i style="left:27%;height:18%"></i><i style="left:31%;height:11%"></i><i style="left:35%;height:27%"></i><i style="left:39%;height:8%"></i><i style="left:43%;height:52%"></i><i style="left:47%;height:16%"></i><i style="left:51%;height:24%"></i><i style="left:55%;height:12%"></i><i class="w" style="left:59%;height:78%"></i><i style="left:63%;height:20%"></i><i style="left:67%;height:7%"></i><i style="left:71%;height:35%"></i><i style="left:75%;height:13%"></i><i style="left:79%;height:29%"></i><i style="left:83%;height:10%"></i><i style="left:87%;height:46%"></i><i style="left:91%;height:17%"></i><i style="left:95%;height:23%"></i>
+<span class="ring" style="left: calc(59% - 4px); bottom: calc(78% - 5px);"></span><span class="wl" style="left: calc(59% + 10px); bottom: calc(78% - 4px);">★ 71.2 · a win</span>
+<div class="hover" style="left: 38%; top: 108px;"><b>#128 · score 23.4</b><br>below the bar · 3.41 s · 14:05:12</div>
+</div>
+</section>
+<div style="display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 14px; align-items: start;">
+<section class="tile">
+<div class="th"><span class="cap" style="border-bottom: 1px dotted rgba(242,239,233,.22);">epoch 57</span><span class="aside">opened 14:02:11</span></div>
+<div class="rail"><i class="on"></i><i></i><i></i><i></i></div>
+<div class="kv first"><span class="k">wins this epoch</span><span class="v">1 of 4</span></div>
+<div class="kv"><span class="k">the bar</span><span class="v">64.0</span></div>
+<div class="kv"><span class="k plain">open for</span><span class="v">2 min</span></div>
+<div class="kv"><span class="k">target length</span><span class="v">5 min</span></div>
+<div class="kv"><span class="k">next bar if it closed now</span><span class="v">×2.31</span></div>
+<div class="kv"><span class="k">reset if stuck</span><span class="v">in 18 min</span></div>
+</section>
+<div class="col">
+<div class="tile kpi"><span class="cap">best this epoch</span><span class="v">71.2<small>of 64.0</small></span><span class="s">1 win · 4 tYACA this session</span></div>
+<p class="tipbox">How long a round should take. Closed faster, the next bar rises; slower, it drops — by up to 4× either way.</p>
+</div>
+</div>
+</div>
+<div class="col">
+<span class="tag new">proposed</span>
+<section class="tile">
+<div class="th"><span class="cap">live · last 3 min</span><span class="aside">11.8 proofs/min</span></div>
+<div class="chart">
+<span class="axis">difficulty reached · log scale</span>
+<div class="base"></div><div class="line"></div>
+<span class="lc">difficulty 64.0 · reach it and you win · about 1 in 64 do</span><span class="ln">64.0</span>
+<i style="left:3%;height:22%"></i><i style="left:7%;height:9%"></i><i style="left:11%;height:31%"></i><i style="left:15%;height:14%"></i><i style="left:19%;height:6%"></i><i style="left:23%;height:40%"></i><i style="left:27%;height:18%"></i><i style="left:31%;height:11%"></i><i style="left:35%;height:27%"></i><i style="left:39%;height:8%"></i><i style="left:43%;height:52%"></i><i style="left:47%;height:16%"></i><i style="left:51%;height:24%"></i><i style="left:55%;height:12%"></i><i class="w" style="left:59%;height:78%"></i><i style="left:63%;height:20%"></i><i style="left:67%;height:7%"></i><i style="left:71%;height:35%"></i><i style="left:75%;height:13%"></i><i style="left:79%;height:29%"></i><i style="left:83%;height:10%"></i><i style="left:87%;height:46%"></i><i style="left:91%;height:17%"></i><i style="left:95%;height:23%"></i>
+<span class="ring" style="left: calc(59% - 4px); bottom: calc(78% - 5px);"></span><span class="wl" style="left: calc(59% + 10px); bottom: calc(78% - 4px);">★ 71.2 · a win</span>
+<div class="hover" style="left: 38%; top: 108px;"><b>#128 · reached 23.4</b><br>below the difficulty · 3.41 s · 14:05:12</div>
+</div>
+</section>
+<div style="display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 14px; align-items: start;">
+<section class="tile">
+<div class="th"><span class="cap" style="border-bottom: 1px dotted rgba(242,239,233,.22);">epoch 57</span><span class="aside">opened 14:02:11</span></div>
+<div class="rail"><i class="on"></i><i></i><i></i><i></i></div>
+<div class="kv first"><span class="k">wins this epoch</span><span class="v">1 of 4</span></div>
+<div class="kv"><span class="k">difficulty</span><span class="v">64.0</span></div>
+<div class="kv"><span class="k plain">open for</span><span class="v">2 min</span></div>
+<div class="kv"><span class="k">expected epoch time</span><span class="v">5 min</span></div>
+<div class="kv"><span class="k">next difficulty, if closed now</span><span class="v">147.8 (×2.31)</span></div>
+<div class="kv"><span class="k">reset if stuck</span><span class="v">in 18 min</span></div>
+</section>
+<div class="col">
+<div class="tile kpi"><span class="cap">best difficulty this epoch</span><span class="v">71.2<small>of 64.0</small></span><span class="s">1 win · 4 tYACA this session</span></div>
+<p class="tipbox">The network aims for 4 wins every 5 min. If an epoch closes faster, more people are mining than the difficulty assumed, so it rises for the next epoch; slower, and it falls. It moves at most 4× either way.</p>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":940}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

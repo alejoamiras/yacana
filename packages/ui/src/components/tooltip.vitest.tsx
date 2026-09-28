@@ -7,16 +7,16 @@ afterEach(cleanup);
 test('the word is dotted and focusable; focus opens the tip, blur closes it; no provider needed', async () => {
   render(
     <p>
-      the <Tip tip="The score a proof must reach to win.">bar</Tip> is 38.4
+      <Tip tip="About one proof in 38 wins.">difficulty</Tip> 38.4
     </p>,
   );
-  const word = screen.getByText('bar');
+  const word = screen.getByText('difficulty');
   expect(word.getAttribute('data-slot')).toBe('tip-trigger');
   expect(word.tabIndex).toBe(0);
   expect(word.className).toContain('decoration-dotted');
   expect(screen.queryByRole('tooltip')).toBeNull();
   await act(async () => word.focus());
-  expect(screen.getByRole('tooltip').textContent).toBe('The score a proof must reach to win.');
+  expect(screen.getByRole('tooltip').textContent).toBe('About one proof in 38 wins.');
   await act(async () => word.blur());
   expect(screen.queryByRole('tooltip')).toBeNull();
 });
@@ -27,14 +27,14 @@ test('in a second document the tip is portalled to the given container, never to
   const other = frame.contentDocument as Document;
   const host = other.body.appendChild(other.createElement('div'));
   render(
-    <Tip tip="The score a proof must reach to win." container={other.body}>
-      bar
+    <Tip tip="About one proof in 38 wins." container={other.body}>
+      difficulty
     </Tip>,
     { container: host },
   );
   const word = other.querySelector('[data-slot=tip-trigger]') as HTMLElement;
   await act(async () => word.focus());
-  expect(other.querySelector('[role=tooltip]')?.textContent).toBe('The score a proof must reach to win.');
+  expect(other.querySelector('[role=tooltip]')?.textContent).toBe('About one proof in 38 wins.');
   expect(document.querySelector('[role=tooltip]')).toBeNull();
   await act(async () => word.blur());
   expect(other.querySelector('[role=tooltip]')).toBeNull();

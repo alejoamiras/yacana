@@ -139,8 +139,9 @@ export const coolingDown = (t: Transport, now = Date.now()): boolean =>
 export function recordOutcome(o: NodeRequestOutcome): void {
   // A → B → A: an answer from the first visit to A passes the endpoint check but predates the reset.
   if (o.startedAt < resetAt) return;
-  // Optional work never opens a cooldown; once one is on, its answers count (it may be the recovery).
-  if (o.quiet && health.transport.kind === 'ok') return;
+  // Optional work never opens a cooldown nor touches one it predates (a slow optional read must not extend
+  // it); started after it, its answers count: it may be the recovery.
+  if (o.quiet && (health.transport.kind === 'ok' || o.startedAt < cooldownFrom)) return;
   const now = Date.now();
   let event = classify(o);
   // A success that started before the request that opened the cooldown says nothing about now.
@@ -310,15 +311,20 @@ export const subscribeNodeHealth = (fn: () => void): (() => void) => {
 /**
  * Resolves when the endpoint is usable again: at once when `ok`; at the deadline when no recovery
  * is out; when a recovery in flight settles (`ok` resolves everyone, a failure re-arms the wait).
+ * An abort of `signal` resolves it at once and leaves nothing armed.
  */
-export function waitTurn(): Promise<void> {
+export function waitTurn(signal?: AbortSignal): Promise<void> {
   return new Promise((resolve) => {
+    const done = () => {
+      off();
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', done);
+      resolve();
+    };
     const check = () => {
       const t = health.transport;
       if (t.kind === 'ok' || (Date.now() >= t.retryAt && !probing)) {
-        off();
-        clearTimeout(timer);
-        resolve();
+        done();
         return true;
       }
       return false;
@@ -334,6 +340,8 @@ export function waitTurn(): Promise<void> {
     const off = subscribeNodeHealth(() => {
       if (!check()) arm();
     });
+    if (signal?.aborted) return done();
+    signal?.addEventListener('abort', done);
     if (!check()) arm();
   });
 }

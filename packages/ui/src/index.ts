@@ -27,6 +27,7 @@ export {
   Header,
   type HeaderProps,
   type HeaderTab,
+  SubTabs,
 } from './components/header.tsx';
 export { HeroCard, type HeroTone } from './components/hero-card.tsx';
 export { HoldButton } from './components/hold-button.tsx';
@@ -62,6 +63,7 @@ export {
   SheetTitle,
   SheetTrigger,
 } from './components/sheet.tsx';
+export { type SiteTab, type StatsTab, siteTabs, statsTabs } from './components/site-tabs.ts';
 export { Skeleton } from './components/skeleton.tsx';
 export { type BarSegment, StackedBar } from './components/stacked-bar.tsx';
 export { type ChipTone, StatusChip } from './components/status-chip.tsx';

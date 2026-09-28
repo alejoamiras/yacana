@@ -2,8 +2,9 @@ import { act, cleanup, render } from '@testing-library/react';
 import type { ScoreLoopProps } from '@yacana/ui';
 import { createStore, Provider } from 'jotai';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { barCaption, LoopTile, PipView } from './features/LoopTile';
+import { LoopTile, PipView } from './features/LoopTile';
 import { initial } from './lib/reducer';
+import { difficultyCaption, epochTips, nextDifficulty } from './lib/words';
 import { epochAtom, minerAtom } from './state';
 
 // The chart itself is drawn on a canvas and tested in `ui`; here it only says what it was given.
@@ -40,7 +41,7 @@ describe("the claim's band reaches both charts", () => {
   };
   const controls = { controller: () => undefined, onStart: () => {} };
 
-  test('the tile names the axis and says what the bar means; the pop-out draws the same spans on its strip', () => {
+  test('the tile names the axis and says what the difficulty means; the pop-out draws the same spans and caption', () => {
     render(
       <Provider store={store()}>
         <LoopTile {...controls} />
@@ -49,9 +50,10 @@ describe("the claim's band reaches both charts", () => {
     );
     const [tile, pip] = given;
     expect(tile?.spans).toBe(spans);
-    expect(tile?.axisTitle).toBe('score · log scale');
-    expect(tile?.barCaption).toMatch(/^the bar · reach it and you win · about 1 in \d+ do$/);
+    expect(tile?.axisTitle).toBe('difficulty reached · log scale');
+    expect(tile?.barCaption).toBe('difficulty 64.0 · reach it and you win · about 1 in 64 do');
     expect(pip?.spans).toBe(spans);
+    expect(pip?.barCaption).toBe(tile?.barCaption);
     expect(pip?.height).toBe(48);
   });
 
@@ -66,20 +68,24 @@ describe("the claim's band reaches both charts", () => {
       { container: pip.document.body.appendChild(pip.document.createElement('div')) },
     );
     const word = pip.document.querySelector('[data-slot=tip-trigger]') as HTMLElement;
-    expect(word.textContent).toBe('bar');
+    expect(word.textContent).toBe('difficulty');
     await act(async () => word.focus());
-    expect(pip.document.querySelector('[role=tooltip]')?.textContent).toBe(
-      'The score a proof must reach to win.',
-    );
+    expect(pip.document.querySelector('[role=tooltip]')?.textContent).toBe('About one proof in 64 wins.');
     expect(document.querySelector('[role=tooltip]')).toBeNull();
     // Unmounted while its document still exists: React removes the portal from that body.
     cleanup();
     frame.remove();
   });
 
-  test('the odds are said only when they are odds', () => {
-    expect(barCaption(null)).toBeUndefined();
-    expect(barCaption(1.4)).toBe('the bar · reach it and you win');
-    expect(barCaption(38.4)).toBe('the bar · reach it and you win · about 1 in 38 do');
+  test('the odds are said only when they are odds; the tip and the next difficulty carry the live number', () => {
+    expect(difficultyCaption(null)).toBeUndefined();
+    expect(difficultyCaption(1.4)).toBe('difficulty 1.4 · reach it and you win');
+    expect(difficultyCaption(38.4)).toBe('difficulty 38.4 · reach it and you win · about 1 in 38 do');
+    const rules = { N: 4, EXPECTED_EPOCH_SECONDS: 300n, T_MAX: 1200n, REWARD: 1n };
+    expect(epochTips(rules, 64).difficulty).toBe(
+      'How hard a win is right now. At difficulty 64.0, about one proof in 64 wins.',
+    );
+    expect(epochTips(rules, 64).expected).toMatch(/^The network aims for 4 wins every 5 min\. /);
+    expect(nextDifficulty(64, 2.31)).toBe('147.8 (×2.31)');
   });
 });

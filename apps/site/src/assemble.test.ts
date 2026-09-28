@@ -101,16 +101,24 @@ describe('assembly', () => {
     expect(witnessFiles(join(repoDir, 'nowhere'))).toEqual([]);
   });
 
-  test('the rewrites are exact sources to directory targets: no splat, no .html', () => {
-    expect(REDIRECTS).toEqual([
-      '/mine/wallet /mine/ 200',
-      '/mine/settings /mine/ 200',
-      '/stats/verify /stats/ 200',
-      '/stats/bridge /stats/ 200',
-      '/verify /stats/ 200',
-    ]);
+  test('the rewrites are exact sources to directory targets, each with its trailing slash: no splat, no .html', () => {
+    expect(REDIRECTS).toEqual(
+      [
+        '/mine/wallet /mine/',
+        '/mine/settings /mine/',
+        '/mine/stats /mine/',
+        '/mine/stats/bridge /mine/',
+        '/mine/stats/verify /mine/',
+        '/stats/verify /stats/',
+        '/stats/bridge /stats/',
+        '/verify /stats/',
+      ].flatMap((rule) => {
+        const [path, to] = rule.split(' ');
+        return [`${path} ${to} 200`, `${path}/ ${to} 200`];
+      }),
+    );
     for (const rule of REDIRECTS) expect(rule).toMatch(/^\/[a-z/]+ \/(mine|stats)\/ 200$/);
-    // The old origin: the version's bookmarks from its apex days land on the one app.
+    // The old origin: the version's bookmarks from its apex days land on the one app, which has no stats.
     expect(OLD_REDIRECTS).toEqual([
       '/mine / 200',
       '/mine/ / 200',

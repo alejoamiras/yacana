@@ -1,12 +1,23 @@
 import { describe, expect, test } from 'bun:test';
 import { classifyClaimFailure, revertCause } from './claim-failure.ts';
 
-// The strings aztec.js 5.2.0 and the PXE produce (utils/node.js waitForTx; the tagging sync).
+// The strings aztec.js 5.2.0, the node and the PXE produce (utils/node.js waitForTx; the tagging sync). The
+// first two as the owner's ledger showed them (hashes shortened there), the third from a replay on the
+// isolated network.
 const FIXTURES: [string, ReturnType<typeof classifyClaimFailure>][] = [
+  [
+    'Block hash 0x2766a372…842993c6 not found when resolving query. If the node API has been queried with anchor block hash possibly a reorg has occurred.',
+    'anchor-pruned',
+  ],
+  ['no effects for 0x075d240a…e0e4d505', 'lost'],
+  [
+    'C++ simulation failed: AVM simulation failed: [R_NULLIFIER_INSERTION] UNRECOVERABLE ERROR! Nullifier collision: Attempted to emit duplicate siloed nullifier 0x2f592d1831b66d2d77abac2db2c392a4eab588c8a2ba6dabd074a3807adc1c25.',
+    'landed-elsewhere',
+  ],
+  ['Invalid tx: Existing nullifier', 'landed-elsewhere'],
   ['Invalid tx: Invalid expiration timestamp', 'expired'],
   ['Transaction 0x0a1b was dropped. Reason: Invalid expiration timestamp', 'expired'],
   ['Transaction 0x0a1b was dropped. Reason: Tx dropped by P2P node: include_by_timestamp passed', 'expired'],
-  ['Transaction 0x0a1b was dropped. Reason: Existing nullifier', 'other'],
   ['Transaction 0x0a1b was dropped. Reason: unknown', 'other'],
   ['Transaction 0x0a1b reverted: app_logic_reverted. Reason: Assertion failed: epoch closed', 'reverted'],
   ['Transaction 0x0a1b reverted: both_reverted. Reason: unknown', 'reverted'],

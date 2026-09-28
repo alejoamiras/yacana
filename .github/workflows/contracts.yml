@@ -28,6 +28,7 @@ jobs:
           - 'packages/ui/**'
           - 'apps/web-miner/**'
           - 'apps/web-stats/**'
+          - 'packages/stats-view/**'
           - 'apps/web-landing/**'
           - '!apps/web-miner/**/*.md'
           - 'yacana.params.json'

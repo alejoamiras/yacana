@@ -6,7 +6,7 @@ eli5_mode: artifact
 code_review: off
 hardening: none (no new trust boundary; the one permission-shaped change narrows what the page does unasked)
 budget: "recon 2 agents (1 reuse sweep; the test-impact sweep rerun by the driver); codex at high (GPT-6 Astra); one fable audit; code-review off (owner, 2026-09-20)"
-status: drafted 2026-09-20; round-1 audits folded (codex reject → reworked, fable conditional approve → conditions folded); the final codex pass rejected twice (round 1: ten findings; round 2: seven), all folded; round 3: conditional approve, its three conditions folded; **approved by the owner 2026-09-21** (defaults accepted, A7 replaced by an automated test on Presto's technique); implemented 2026-09-21, all phases ✓ (the evidence is in `lessons/phase-N.md`); delivered as stack #64 (#61–#63), unmerged, awaiting a rebase onto the monorepo layout — see Outcome
+status: drafted 2026-09-20; round-1 audits folded (codex reject → reworked, fable conditional approve → conditions folded); the final codex pass rejected twice (round 1: ten findings; round 2: seven), all folded; round 3: conditional approve, its three conditions folded; **approved by the owner 2026-09-21** (defaults accepted, A7 replaced by an automated test on Presto's technique); implemented 2026-09-21, all phases ✓ (the evidence is in `lessons/phase-N.md`); delivered as stack #64 (#61–#63), rebased onto the monorepo layout 2026-09-22, **merged 2026-09-23** — see Outcome
 created: 2026-09-20
 ---
 
@@ -18,7 +18,7 @@ every arc's codex loop and the cross-arc pass converged ("no new material findin
 tree found one consent leak (arc 2, fixed and reviewed) and two spec assumptions (`lessons/phase-8.md`).
 The monorepo-layout PRs #54–#59 landed under the stack while it awaited review; it was rebased onto that
 layout 2026-09-22 commit by commit, the fast layers and the whole sweep rerun green, and codex reviewed the
-rebase as a diff of diffs: "no new material findings" (`lessons/phase-8.md`). Not merged.
+rebase as a diff of diffs: "no new material findings" (`lessons/phase-8.md`). Merged by the owner 2026-09-23, bottom-up (`f32794f`, `4244b7d`, `9b190fa` on `main`); Workers Builds deployed it. Its `/goal` and `/loop` seeds are retired.
 
 # yacana-feedback-pass — the first users' feedback, built to the approved boards
 

@@ -20,7 +20,7 @@ const h = copy.hero;
 
 const mintedSub = (status: LiveStatus): string => {
   if (status.phase === 'ready')
-    return `${amount(status.live.supply / PARAMS.REWARD, 0)} claims · ${h.mintedSub}`;
+    return `${amount(status.live.supply / PARAMS.REWARD, 0)} wins · ${h.mintedSub}`;
   return status.phase === 'unlaunched' ? h.unlaunched : h.loading;
 };
 
@@ -97,7 +97,7 @@ function Numbers({ status, live }: { status: LiveStatus; live: Live | undefined 
         sub={open && live ? epochSub(open, live.block.timestamp) : ''}
       />
       <Kpi
-        label="bar"
+        label="difficulty"
         value={
           <span data-testid="live-difficulty">{open ? difficultyLabel(difficulty(open.target)) : '—'}</span>
         }

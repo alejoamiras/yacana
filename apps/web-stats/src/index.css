@@ -1,2 +1,3 @@
 @import "@yacana/ui/theme.css";
 @source "../../../packages/ui/src";
+@source "../../../packages/stats-view/src";

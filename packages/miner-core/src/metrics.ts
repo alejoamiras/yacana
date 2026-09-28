@@ -13,7 +13,7 @@ export const score = (digest: Fr): number => {
   return low === 0n ? Number.POSITIVE_INFINITY : TWO_128 / Number(low);
 };
 
-/** Expected proofs per winning ticket, 2^128 / target: "the bar". */
+/** Expected proofs per winning ticket, 2^128 / target. */
 export const difficulty = (target: bigint): number => TWO_128 / Number(target);
 
 /** Over the last RECENT prove durations (ms); 0 when idle. */
@@ -126,21 +126,21 @@ export function sentence(row: EpochRow, rules: EpochRules): string {
   const expected = minutes(Number(rules.EXPECTED_EPOCH_SECONDS));
   const kind = sentenceKind(row);
   if (kind === 'open')
-    return `Open with ${row.claims} of ${rules.N} claims; it closes at the ${ordinal(rules.N)} claim, expected about ${expected} after it opened.`;
+    return `Open with ${row.claims} of ${rules.N} wins; it closes at the ${ordinal(rules.N)} win, expected about ${expected} after it opened.`;
   const dur = minutes(row.duration as number);
   const retarget = row.retarget as number;
   const move = retarget < 1 ? `made ×${(1 / retarget).toFixed(2)} harder` : `eased ×${retarget.toFixed(2)}`;
   switch (kind) {
     case 'rolled':
-      return `Hashrate fell away after ${row.claims} ${row.claims === 1 ? 'claim' : 'claims'}. The epoch sat open past the ${Number(rules.T_MAX) / 60}-minute mark, when anyone may close it through the escape hatch; someone did at ${clock(row.openedAt + (row.duration as number))}, and the next epoch was ${move}.`;
+      return `Hashrate fell away after ${row.claims} ${row.claims === 1 ? 'win' : 'wins'}. The epoch sat open past the ${Number(rules.T_MAX) / 60}-minute mark, when anyone may close it through the escape hatch; someone did at ${clock(row.openedAt + (row.duration as number))}, and the next epoch was ${move}.`;
     case 'launch':
-      return `Epoch 0 opened at launch at difficulty ${difficulty(row.target).toFixed(1)}; ${rules.N} claims closed it in ${dur} against ${expected} expected, and the first retarget ${move} the next epoch.`;
+      return `Epoch 0 opened at launch at difficulty ${difficulty(row.target).toFixed(1)}; ${rules.N} wins closed it in ${dur} against ${expected} expected, and the first retarget ${move} the next epoch.`;
     case 'fast':
-      return `${rules.N} claims in ${dur} against ${expected} expected: the network was faster than the target assumed, so the next epoch was ${move}.`;
+      return `${rules.N} wins in ${dur} against ${expected} expected: the network was faster than the difficulty assumed, so the next epoch was ${move}.`;
     case 'slow':
-      return `${rules.N} claims took ${dur} against ${expected} expected: the next epoch was ${move}.`;
+      return `${rules.N} wins took ${dur} against ${expected} expected: the next epoch was ${move}.`;
     default:
-      return `${rules.N} claims in ${dur}, close to the ${expected} expected; the next epoch was ${move}.`;
+      return `${rules.N} wins in ${dur}, close to the ${expected} expected; the next epoch was ${move}.`;
   }
 }
 

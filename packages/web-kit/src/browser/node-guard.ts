@@ -14,7 +14,7 @@ export interface NodeRequestOutcome {
   latencyMs: number;
   /** The `Retry-After` header when the browser lets the page read it (it is not CORS-safelisted). */
   retryAfter: string | null;
-  /** Optional work (the stats page's background fill): the health store never opens a cooldown on it. */
+  /** Optional work (the public stats' fill, the hosted stats' reads): no cooldown opens or lasts on it. */
   quiet: boolean;
 }
 
@@ -130,6 +130,15 @@ export function allowCandidate(url: string, deadlineMs: number): () => void {
   };
 }
 
+/**
+ * On a request's `init`: optional work, reported flagged `quiet` on the node's path and the RPC's alike. Per
+ * request, unlike `quietNodeReads`, whose page-wide scope would also cover a claim sent while it is open.
+ */
+export const QUIET: unique symbol = Symbol.for('yacana.quiet-request');
+export type QuietInit = RequestInit & { [QUIET]?: true };
+const markedQuiet = (init: RequestInit | undefined): boolean =>
+  (init as QuietInit | undefined)?.[QUIET] === true;
+
 /** Runs `fn` with its node requests marked optional: their outcomes reach the store flagged `quiet`. */
 export async function quietNodeReads<T>(fn: () => Promise<T>): Promise<T> {
   const s = state();
@@ -239,11 +248,19 @@ async function nodeRequest(
   if (synthetic) return synthetic;
   // Quiet is decided at the start: a reader that gave up on this request (its own deadline) may
   // have left `quietNodeReads` before the body lands, and the outcome still belongs to optional work.
-  const r: Started = { endpoint, startedAt: performance.now(), quiet: s.quiet > 0, listeners: s.listeners };
+  const r: Started = {
+    endpoint,
+    startedAt: performance.now(),
+    quiet: s.quiet > 0 || markedQuiet(init),
+    listeners: s.listeners,
+  };
   return tracked(s, r, input, init, s.deadlineMs);
 }
 
-/** The Ethereum RPC's request: its deadline, reported to its listeners; the node's gate and quiet scope are not its. */
+/**
+ * The Ethereum RPC's request: its deadline, reported to its listeners, quiet when marked; the node's gate and
+ * quiet scope are not its.
+ */
 const ethRpcRequest = (
   s: GuardState,
   endpoint: string,
@@ -252,7 +269,7 @@ const ethRpcRequest = (
 ): Promise<Response> =>
   tracked(
     s,
-    { endpoint, startedAt: performance.now(), quiet: false, listeners: s.ethRpcListeners },
+    { endpoint, startedAt: performance.now(), quiet: markedQuiet(init), listeners: s.ethRpcListeners },
     input,
     init,
     s.ethRpcDeadlineMs,

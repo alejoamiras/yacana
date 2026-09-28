@@ -6,14 +6,16 @@ import { Mine } from './routes/Mine';
 import { bootAtom, claimsAtom, epochAtom, minerAtom, nowAtom, rulesAtom } from './state';
 
 afterEach(cleanup);
-// jsdom has no matchMedia; the score loop's reduced-motion hook reads it.
-beforeEach(() =>
+// jsdom has no matchMedia; the score loop's reduced-motion hook reads it. A returning visitor: the first
+// visit's strip is intro-strip.vitest.tsx's.
+beforeEach(() => {
   vi.stubGlobal('matchMedia', () => ({
     matches: false,
     addEventListener: () => {},
     removeEventListener: () => {},
-  })),
-);
+  }));
+  localStorage.setItem('yacana.intro', JSON.stringify({ dismissed: true }));
+});
 
 // The M1 frame's placement, as classes: the computed grid is asserted in the browser (miner.e2e.ts).
 describe('the cockpit grid', () => {
@@ -116,17 +118,17 @@ describe('the epoch tile and the ledger', () => {
     expect(getByText('your proofs')).toBeTruthy();
     expect(getByText('Your balance shows once you log in.')).toBeTruthy();
     expect(getByText('starts with mining')).toBeTruthy();
-    expect(getByText('the bar is 64.0 · about 64 proofs per win')).toBeTruthy();
+    expect(getByText('difficulty 64.0 · about 64 proofs per win')).toBeTruthy();
     // The rows in the visitor's words, each label a tip; the header word too.
     const labels = Array.from(
       getByTestId('rail').querySelectorAll('[data-slot=kv] > :first-child') as NodeListOf<HTMLElement>,
     ).map((l) => l.textContent);
     expect(labels).toEqual([
       'wins this epoch',
-      'the bar',
+      'difficulty',
       'open for',
-      'target length',
-      'next bar if it closed now',
+      'expected epoch time',
+      'next difficulty, if closed now',
       'reset if stuck',
     ]);
     expect(getByTestId('rail').querySelectorAll('[data-slot=tip-trigger]')).toHaveLength(6);

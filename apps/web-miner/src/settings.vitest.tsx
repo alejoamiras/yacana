@@ -3,6 +3,7 @@ import { ThemeProvider } from '@yacana/ui';
 import { createStore, Provider } from 'jotai';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import type { Connection } from './config';
+import { initialPresto, prestoAtom } from './presto';
 import { CONSENT_KEY } from './presto-consent';
 import { Settings } from './routes/Settings';
 import type { Session } from './session';
@@ -46,8 +47,7 @@ const session = () =>
     chooseBrowser: vi.fn(async () => {}),
   }) as unknown as Session;
 
-function mount(signedIn: boolean) {
-  const store = createStore();
+function mount(signedIn: boolean, store = createStore()) {
   if (signedIn)
     store.set(bootAtom, {
       phase: 'ready',
@@ -147,5 +147,47 @@ describe('Settings', () => {
     expect(screen.getByTestId('power-note').textContent).toBe(
       'Not in use while Presto proves; Presto’s own speed setting decides. Yacana falls back to these threads if Presto drops out.',
     );
+  });
+});
+
+describe('Settings: Presto found, and the mini window', () => {
+  test('Presto found by this page’s click: the slider locks with its sentence at once; absent unlocks it', () => {
+    const store = createStore();
+    const eligible = {
+      available: true,
+      needsDownload: false,
+      schemes: ['ultra_honk'],
+      protocol: 'https',
+    } as const;
+    store.set(prestoAtom, { ...initialPresto, consentRev: 0, status: eligible });
+    const { rerender } = mount(true, store);
+    expect(screen.getByTestId('presto-card').getAttribute('data-standing')).toBe('found');
+    expect(screen.getByRole('slider').hasAttribute('disabled')).toBe(true);
+    expect(screen.getByTestId('power-note').textContent).toBe(
+      'Not in use while Presto proves; Presto’s own speed setting decides. Yacana falls back to these threads if Presto drops out.',
+    );
+    store.set(prestoAtom, {
+      ...initialPresto,
+      consentRev: 0,
+      status: { available: false, reason: 'offline' },
+    });
+    rerender(
+      <Provider store={store}>
+        <ThemeProvider defaultTheme="dark">
+          <Settings connection={connection} controller={() => undefined} session={session()} />
+        </ThemeProvider>
+      </Provider>,
+    );
+    expect(screen.getByTestId('presto-card').getAttribute('data-standing')).toBe('absent');
+    expect(screen.getByRole('slider').hasAttribute('disabled')).toBe(false);
+  });
+
+  test('the mini window: one switch that opens it with the Start click, off by default, none without the API', () => {
+    mount(true);
+    const row = screen.getByRole('switch', { name: /Open the mini window when mining starts/ });
+    expect(row.getAttribute('aria-checked')).toBe('false');
+    // jsdom has no Document Picture-in-Picture.
+    expect(row.hasAttribute('disabled')).toBe(true);
+    expect(screen.queryByRole('switch', { name: /^Mini window/ })).toBeNull();
   });
 });

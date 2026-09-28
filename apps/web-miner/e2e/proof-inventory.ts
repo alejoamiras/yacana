@@ -27,10 +27,11 @@ export interface ProofMeter {
 export const INVENTORY: Readonly<Record<string, Readonly<Record<string, number>>>> = {
   'miner.e2e.ts': {
     'first visit creates an account, mines at the easy target, claims and shows the balance': 2,
+    'the first visit’s strip: shown to a new visitor, put away by its ×, still away after a reload': 0,
     'a poisoned CRS cache is purged before proving': 1,
     'three power changes keep mining, the ledger grows, memory stays bounded': 0,
     'a prover crash surfaces as an error and mining restarts on the next start': 0,
-    'the pop-out draws with the page fonts and its own loop': 0,
+    'the mini window: page fonts, its own loop, two lines that fit, open across pages; Start opens it when asked, and mines when refused': 0,
   },
   'passkey.e2e.ts': {
     'a passkey account: create, mine, claim, reload with one touch, the balance follows the account': 1,
@@ -56,9 +57,16 @@ export const INVENTORY: Readonly<Record<string, Readonly<Record<string, number>>
     'a live switch A → B while mining, a claim after it, and the banner on a dead node': 1,
     'another deployment’s node, or one that does not answer, is refused under the field; the node in use is kept': 0,
   },
-  // The real-proving canary: a tampered claim refused at proving, then the same claim minting restored.
+  // The real-proving canary: a tampered claim refused at proving, then the same claim minting restored;
+  // a pruned anchor, refused at simulation, then the claim's one proof.
   'canary.e2e.ts': {
     'a claim with a bound public input altered is refused at proving before it is sent; restored, the same claim mints': 1,
+    'a pruned anchor under the real prover: the win is proved again, sent once, mints, and mining resumes': 1,
+  },
+  // Each recovery proves its claim once: the pruned anchor fails before proving, the adopted claim is never sent again.
+  'claim-recovery.e2e.ts': {
+    'a pruned anchor: the same win is proved again, sent once, and minted': 1,
+    'a claim whose receipt comes back without its effects is found in its block: adopted, never sent again': 1,
   },
   // The claim is the page's, whichever prover found the ticket; its own proof goes to Presto too, or to
   // WASM when Presto is cut mid-proof or consent is withdrawn. The hard deployment's titles never win.
@@ -70,6 +78,13 @@ export const INVENTORY: Readonly<Record<string, Readonly<Record<string, number>>
     'use the browser: the next claim is proved in the page': 1,
     'Presto gone mid-proof: the claim’s transmit fails, the browser finishes it, nothing is sent twice': 1,
     'nothing answers: the billboard invites the install and the browser proves without the suffix': 0,
+  },
+  // The claim held while Stats first opens; a claim minted after the node switch. The tour may not win.
+  'stats-host.e2e.ts': {
+    'Stats inside the miner while it mines: the chunk refused, then loaded; its pages come and go without a reload, the mini window, the proofs or the guard moving; Space scrolls': 0,
+    'Stats opened during a claim reads nothing until it settles; an Ethereum switch leaves a bridge read held on the old RPC without effect': 1,
+    'a node switch while on Stats: the next runtime reads the new node, and nothing is blocked': 1,
+    'a direct visit to Stats before the preflight points the guard at the node: Stats waits for it, then reads': 0,
   },
   // The W claim for a balance, the exit's burn, the deposit's claim; the wallet cells prove nothing.
   'bridge-states.e2e.ts': {

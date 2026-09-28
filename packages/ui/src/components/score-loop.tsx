@@ -39,9 +39,9 @@ export interface ScoreLoopProps {
   winAt?: number | null;
   /** Calm: the claims of the window, on the samples' clock, drawn as bands under the ticks. */
   spans?: readonly ClaimSpan[];
-  /** Calm: the score axis's name, set vertically in the left margin. */
+  /** Calm: the axis's name, set vertically in the left margin. */
   axisTitle?: string;
-  /** Calm: what the bar is, written at its left end. */
+  /** Calm: what the difficulty line means, written at its left end. */
   barCaption?: string;
   spanMs?: number;
   /**
@@ -162,7 +162,7 @@ function drawBar(f: Frame, right: number, props: ScoreLoopProps, now: number, gl
   ctx.lineWidth = 1;
   ctx.fillStyle = f.p.uv2;
   ctx.textAlign = 'left';
-  ctx.fillText(`difficulty ${difficultyLabel(difficulty)} · the bar`, f.left + 6, y - 10);
+  ctx.fillText(`difficulty ${difficultyLabel(difficulty)}`, f.left + 6, y - 10);
 }
 
 /** One attempt of the grid rendering: a stem from the baseline and a dot, ringed for a win. */
@@ -205,7 +205,7 @@ function drawLabels(f: Frame, right: number, props: ScoreLoopProps) {
     ctx.fillStyle = win ? f.p.uv2 : f.p.ink;
     ctx.textAlign = 'right';
     const y = Math.max(f.pad - 6, yOf(f, f.scale(last.score)) - 12);
-    ctx.fillText(`${win ? 'clears the bar · ' : ''}score ${last.score.toFixed(1)}`, right, y);
+    ctx.fillText(`reached ${last.score.toFixed(1)}${win ? ' · a win' : ''}`, right, y);
   }
   ctx.fillStyle = f.p.ink3;
   ctx.textAlign = 'left';
@@ -246,7 +246,7 @@ function drawSteps(f: Frame, right: number, segments: readonly BarSegment[]) {
     ctx.globalAlpha = 1;
     if (f.h <= 80) continue;
     const epoch = to.epoch === undefined ? '' : `epoch ${to.epoch} · `;
-    const text = `${epoch}bar ${difficultyLabel(from.bar)} → ${difficultyLabel(to.bar)}`;
+    const text = `${epoch}difficulty ${difficultyLabel(from.bar)} → ${difficultyLabel(to.bar)}`;
     const width = ctx.measureText(text).width;
     const flip = x + 6 + width > right;
     const x0 = flip ? x - 6 - width : x + 6;
@@ -297,7 +297,11 @@ function drawCalmLines(f: Frame, right: number, props: ScoreLoopProps, now: numb
   // under the line, unless the bar is on the floor.
   const under = base - y >= 2.4 * f.fontPx;
   if (f.h > 80)
-    drawCaption(f, props.barCaption ?? 'the bar · clear it to win', under ? y + f.fontPx : y - f.fontPx);
+    drawCaption(
+      f,
+      props.barCaption ?? `difficulty ${difficultyLabel(difficulty)} · reach it and you win`,
+      under ? y + f.fontPx : y - f.fontPx,
+    );
   drawSteps(f, right, segments);
 }
 
@@ -703,9 +707,9 @@ function useScoreHover(enabled: boolean, samples: readonly Sample[], drawn: Reac
 const CARD_WIDTH = 212;
 
 const hoverLines = (s: Sample, difficulty: number | null): [string, string] => {
-  const head = `${s.n === undefined ? '' : `#${s.n} · `}score ${s.score.toFixed(1)}`;
+  const head = `${s.n === undefined ? '' : `#${s.n} · `}reached ${s.score.toFixed(1)}`;
   const tail = [
-    won(s, difficulty) ? 'a win' : 'below the bar',
+    won(s, difficulty) ? 'a win' : 'below the difficulty',
     s.proveMs === undefined ? null : `${(s.proveMs / 1000).toFixed(2)} s`,
     s.at === undefined ? null : new Date(s.at).toISOString().slice(11, 19),
   ];
@@ -779,7 +783,7 @@ export function ScoreLoop(props: ScoreLoopProps) {
         data-reduced={reduced || undefined}
         data-calm={props.calm || undefined}
         role="img"
-        aria-label={`score loop: ${props.samples.length} proofs in the last ${Math.round(span / 1000)} seconds, difficulty ${props.difficulty === null ? 'not read yet' : difficultyLabel(props.difficulty)}`}
+        aria-label={`${props.samples.length} proofs in the last ${Math.round(span / 1000)} seconds, difficulty ${props.difficulty === null ? 'not read yet' : difficultyLabel(props.difficulty)}`}
         className="block w-full outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
         style={{ height }}
         {...handlers}

@@ -52,6 +52,7 @@ export const nextVersionName = (canonical?: { version: bigint; index: bigint }):
 export interface ServedBuild {
   miner?: string;
   rollupVersion?: string;
+  commit?: string;
 }
 
 /** The deployment the site serves now, from its `/build.json`; null when unreadable. */
@@ -63,6 +64,10 @@ export async function servedBuild(): Promise<ServedBuild | null> {
     return null;
   }
 }
+
+/** Whether the site serves another build of the code than this tab's (its lazy chunks are gone); an unreadable file is not. */
+export const redeployed = (served: ServedBuild | null): boolean =>
+  !!served?.commit && served.commit !== import.meta.env.VITE_SOURCE_COMMIT;
 
 /** Whether the served build is another deployment than this tab's; an unreadable file is not. */
 export const staleTab = (

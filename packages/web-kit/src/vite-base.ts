@@ -129,24 +129,33 @@ function reportFile(name: string, chunks: Rollup.OutputChunk[]): string {
 }
 
 /**
- * With `YACANA_MODULE_REPORT=<dir>`, lists every module that went into this bundle, one repo-relative
- * id per line: what a page or the Worker actually carries, which a hash cannot say and a successful
- * build does not (the Node polyfills let a Node-only module bundle quietly). Emits nothing into the bundle.
+ * With `YACANA_MODULE_REPORT=<dir>` (relative to the repo root, whatever the build's cwd), lists every
+ * module that went into this bundle, one repo-relative id per line: what a page or the Worker actually
+ * carries, which a hash cannot say and a successful build does not (the Node polyfills let a Node-only
+ * module bundle quietly). Beside it, `.chunks.json`: each chunk's modules, static and dynamic imports
+ * and size, which is what says whether a module waits for a lazy load or rides the first paint. Emits
+ * nothing into the bundle.
  */
 const moduleReport = (name: string): Plugin => ({
   name: 'yacana-module-report',
   generateBundle(_options, bundle) {
-    const dir = process.env.YACANA_MODULE_REPORT;
-    if (!dir) return;
+    if (!process.env.YACANA_MODULE_REPORT) return;
+    const dir = resolve(repo, process.env.YACANA_MODULE_REPORT);
     const chunks = Object.values(bundle).filter((c): c is Rollup.OutputChunk => c.type === 'chunk');
-    const ids = chunks.flatMap((c) =>
-      Object.keys(c.modules).map((id) => id.replace(`${repo}/`, '').replace(/\?.*$/, '')),
-    );
+    const idsOf = (c: Rollup.OutputChunk) =>
+      Object.keys(c.modules).map((id) => id.replace(`${repo}/`, '').replace(/\?.*$/, ''));
+    const file = reportFile(name, chunks);
     mkdirSync(dir, { recursive: true });
-    writeFileSync(
-      resolve(dir, `${reportFile(name, chunks)}.txt`),
-      `${[...new Set(ids)].sort().join('\n')}\n`,
-    );
+    writeFileSync(resolve(dir, `${file}.txt`), `${[...new Set(chunks.flatMap(idsOf))].sort().join('\n')}\n`);
+    const graph = chunks.map((c) => ({
+      file: c.fileName,
+      entry: c.isEntry,
+      modules: idsOf(c).sort(),
+      imports: c.imports,
+      dynamicImports: c.dynamicImports,
+      bytes: Buffer.byteLength(c.code),
+    }));
+    writeFileSync(resolve(dir, `${file}.chunks.json`), `${JSON.stringify(graph, null, 1)}\n`);
   },
 });
 

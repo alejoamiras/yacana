@@ -3,7 +3,7 @@
 import type { ClaimStep, WinNote } from '@yacana/ui';
 import { clockMinutes } from '@yacana/web-kit/browser/format';
 import { PROVING, type ProverKind } from '../presto';
-import type { ClaimNote, ClaimProgress } from './reducer';
+import { type ClaimNote, type ClaimProgress, TRIES } from './reducer';
 
 /** The chip's word for a step: the reducer's `waiting` is the user's "in a block". */
 export const chipStep = (step: ClaimProgress['step']): ClaimStep =>
@@ -20,6 +20,31 @@ const running = (c: ClaimNote, nowMs: number, prover: ProverKind): string => {
   return PROVING[prover].claim;
 };
 
+const tryOf = (n: number | undefined): string =>
+  n !== undefined && n <= TRIES ? `try ${n} of ${TRIES}` : 'one more try';
+
+/** A failed claim's line while it is recovered: why, and what comes next. */
+const recovering = (c: ClaimNote): string | undefined => {
+  switch (c.recover) {
+    case 'anchor-pruned':
+      return `the node dropped the block it was reading · proving again, ${tryOf(c.attempt)}`;
+    case 'resend':
+      return `it didn’t land · sending again, ${tryOf(c.attempt)}`;
+    case 'reprove':
+      return `the claim failed · proving again, ${tryOf(c.attempt)}`;
+    case 'lost':
+      return 'the node lost sight of it · checking the chain for your claim';
+    case 'checking':
+      return 'checking the chain for your claim';
+    case 'spent':
+      return `couldn’t claim after ${TRIES} tries: the node keeps dropping blocks · the win stays claimable until epoch ${c.until} closes`;
+    case 'stopped':
+      return `stopped · the win stays claimable until epoch ${c.until} closes`;
+    default:
+      return undefined;
+  }
+};
+
 const ended = (c: ClaimNote): string => {
   switch (c.outcome) {
     case 'reverted':
@@ -30,10 +55,6 @@ const ended = (c: ClaimNote): string => {
             ? 'it reverted'
             : `it reverted (${c.reason})`
       } · the sponsor paid, your proof is unspent · re-syncing, about a minute`;
-    case 'refused':
-      return "didn't go out: the epoch closed before it was sent · nothing paid · mining continues";
-    case 'expired':
-      return `dropped: no block took it in ${c.ttlMinutes ?? 10} min · nothing paid · mining continues`;
     case 'delivery-blocked':
       return c.waitMinutes === undefined
         ? "didn't land: an earlier reverted claim blocks this account · re-syncing, about a minute"
@@ -41,9 +62,16 @@ const ended = (c: ClaimNote): string => {
     case 'other':
       return `claim failed: ${c.reason ?? 'unknown'} · mining paused`;
     default:
-      return 'not claimed: the epoch closed before the claim went out';
+      return `not claimed: the epoch closed before the claim ${c.sent ? 'landed' : 'went out'}`;
   }
 };
+
+/** A claim with no outcome yet: why it is tried again and what comes next, until an attempt is sent and its steps speak for it. */
+function openNote(c: ClaimNote, nowMs: number, prover: ProverKind): WinNote | undefined {
+  const recover = c.step === 'sent' || c.step === 'waiting' ? undefined : recovering(c);
+  if (recover) return { text: recover, tone: c.retry ? 'warn' : 'uv', ...(c.retry && { action: 'Retry' }) };
+  return c.step ? { text: running(c, nowMs, prover), tone: 'uv' } : undefined;
+}
 
 /** The note for the ledger; none once the claim minted (the ✓ line under it says so). `prover` is who proves the claim under way. */
 export function winNote(
@@ -52,7 +80,7 @@ export function winNote(
   prover: ProverKind = 'wasm',
 ): WinNote | undefined {
   if (!c || c.outcome === 'minted') return undefined;
-  if (c.outcome === undefined) return c.step ? { text: running(c, nowMs, prover), tone: 'uv' } : undefined;
+  if (c.outcome === undefined) return openNote(c, nowMs, prover);
   if (c.outcome === 'discarded') return { text: ended(c), tone: 'dim' };
   return { text: ended(c), tone: 'warn', ...(c.retry && { action: 'Retry' }) };
 }

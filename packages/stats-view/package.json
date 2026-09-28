@@ -1,0 +1,38 @@
+{
+  "name": "@yacana/stats-view",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The stats pages and the runtime that reads them, over a host's store, clients and router: the observatory, the bridge page and Verify",
+  "type": "module",
+  "exports": {
+    "./pages": "./src/pages.tsx",
+    "./runtime": "./src/runtime.ts",
+    "./state": "./src/state.ts"
+  },
+  "scripts": {
+    "test:components": "vitest run",
+    "typecheck": "tsc -b --force"
+  },
+  "dependencies": {
+    "@aztec/aztec.js": "5.2.0",
+    "@observablehq/plot": "0.6.17",
+    "@yacana/bridge": "workspace:*",
+    "@yacana/miner-core": "workspace:*",
+    "@yacana/ui": "workspace:*",
+    "@yacana/web-kit": "workspace:*",
+    "@yacana/work-circuit": "workspace:*",
+    "jotai": "^2",
+    "react": "^19.2.6"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6",
+    "@testing-library/react": "^16",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6",
+    "jsdom": "^28",
+    "react-dom": "^19.2.6",
+    "typescript": "~6",
+    "vitest": "^4"
+  }
+}

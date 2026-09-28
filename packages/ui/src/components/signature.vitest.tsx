@@ -53,7 +53,7 @@ describe('ProofLedger', () => {
       'failed',
       'epoch',
     ]);
-    expect(items[0]).toHaveTextContent(/#1302.*score 3\.9.*3\.26 s.*best this epoch/);
+    expect(items[0]).toHaveTextContent(/#1302.*reached 3\.9.*3\.26 s.*best this epoch/);
     expect(items[1]).toHaveTextContent('★');
     expect(items[1].querySelector('.sr-only')).toHaveTextContent('win');
     expect(items[1]).toHaveTextContent('a win · claim failed: x · mining paused · Retry');

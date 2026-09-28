@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mini window: the setting</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#0a0a0b}
+.b{--ground:#0a0a0b;--raised:#111114;--panel:#17171b;--panel2:#1e1e24;--ink:#f2efe9;--ink2:rgba(242,239,233,.64);--ink3:rgba(242,239,233,.5);--ink4:rgba(242,239,233,.22);--line:rgba(242,239,233,.1);--line2:rgba(242,239,233,.18);--uv:#8c6bff;--uv2:#b39dff;--uvdim:rgba(140,107,255,.18);--ok:#58c98b;background:var(--ground);color:var(--ink);font:15px/1.55 "Hanken Grotesk",ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased;box-sizing:border-box;overflow:hidden}
+.b *{box-sizing:border-box}
+.b p{margin:0}
+.col{display:flex;flex-direction:column;gap:12px;min-width:0}
+.tag{align-self:flex-start;font:600 10.5px/1 "JetBrains Mono",monospace;letter-spacing:.1em;text-transform:uppercase;padding:5px 8px;border-radius:4px}
+.tag.now{color:var(--ink3);border:1px dashed var(--line2)}
+.tag.new{color:var(--ok);border:1px solid rgba(88,201,139,.5)}
+.tag.alt{color:var(--uv2);border:1px solid rgba(140,107,255,.5)}
+.tile{border:1px solid var(--line);border-radius:8px;background:var(--raised);padding:14px 16px;min-width:0}
+.cap{font:500 11px/1.3 "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)}
+.th{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:6px;border:1px solid var(--line2);background:transparent;color:var(--ink);font:600 12.5px "Hanken Grotesk",sans-serif;white-space:nowrap}
+.btn.pri{background:var(--ink);color:var(--ground);border-color:var(--ink)}
+.q{width:20px;height:20px;border-radius:50%;border:1px solid var(--line2);background:none;color:var(--ink3);font:600 11px/1 "JetBrains Mono",monospace;padding:0}
+.set{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 0;border-top:1px solid var(--line)}
+.set.first{border-top:0}
+.set .l{display:flex;flex-direction:column;gap:2px}
+.set .t{font-size:13.5px}
+.set .h{font-size:11.5px;color:var(--ink3);line-height:1.4}
+.tog{width:34px;height:20px;border-radius:10px;background:var(--panel2);border:1px solid var(--line2);position:relative;flex:none}
+.tog::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--ink3)}
+.tog.on{background:var(--uv);border-color:var(--uv)}
+.tog.on::after{left:16px;background:#0a0a0b}
+.gone{font:500 11.5px/1.4 "JetBrains Mono",monospace;color:var(--ink4);text-decoration:line-through}
+.sit{font:500 11.5px/1.4 "JetBrains Mono",monospace;color:var(--ink3)}
+</style>
+</helmet>
+<div class="b" style="width: 1280px; height: 500px; padding: 28px 32px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px;">
+<div class="col">
+<span class="tag now">today</span>
+<section class="tile"><div class="th"><span style="display: flex; align-items: center; gap: 10px;"><span class="cap">live · last 3 min</span><button class="q" aria-label="How to read this">?</button></span><span style="display: flex; gap: 8px;"><button class="btn pri">Stop</button></span></div></section>
+<p class="sit">No Pop out button unless the setting is on.</p>
+<section class="tile">
+<p class="cap" style="margin-bottom: 4px;">alerts</p>
+<div class="set first"><span class="l"><span class="t">Notify on a win</span><span class="h">no amounts in the notification</span></span><span class="tog"></span></div>
+<div class="set"><span class="l"><span class="t">Sound on a win</span></span><span class="tog"></span></div>
+<div class="set"><span class="l"><span class="t">Report in the tab title and icon</span></span><span class="tog on"></span></div>
+<div class="set"><span class="l"><span class="t">Mini window</span><span class="h">picture-in-picture</span></span><span class="tog"></span></div>
+</section>
+</div>
+<div class="col">
+<span class="tag new">A · pop out always, the setting opens it on Start</span>
+<section class="tile"><div class="th"><span style="display: flex; align-items: center; gap: 10px;"><span class="cap">live · last 3 min</span><button class="q" aria-label="How to read this">?</button></span><span style="display: flex; gap: 8px;"><button class="btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 9V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10c0 1.1.9 2 2 2h4"></path><rect width="10" height="7" x="12" y="13" rx="2"></rect></svg>Pop out</button><button class="btn pri">Stop</button></span></div></section>
+<p class="sit">Pop out is always next to Start and Stop.</p>
+<section class="tile">
+<p class="cap" style="margin-bottom: 4px;">alerts</p>
+<div class="set first"><span class="l"><span class="t">Notify on a win</span><span class="h">no amounts in the notification</span></span><span class="tog"></span></div>
+<div class="set"><span class="l"><span class="t">Sound on a win</span></span><span class="tog"></span></div>
+<div class="set"><span class="l"><span class="t">Report in the tab title and icon</span></span><span class="tog on"></span></div>
+<div class="set"><span class="l"><span class="t">Open the mini window when mining starts</span><span class="h">your Start click opens it; browsers don’t let a page open it when you switch tabs</span></span><span class="tog on"></span></div>
+</section>
+</div>
+<div class="col">
+<span class="tag alt">B · pop out always, no setting</span>
+<section class="tile"><div class="th"><span style="display: flex; align-items: center; gap: 10px;"><span class="cap">live · last 3 min</span><button class="q" aria-label="How to read this">?</button></span><span style="display: flex; gap: 8px;"><button class="btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 9V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10c0 1.1.9 2 2 2h4"></path><rect width="10" height="7" x="12" y="13" rx="2"></rect></svg>Pop out</button><button class="btn pri">Stop</button></span></div></section>
+<p class="sit">Pop out is always next to Start and Stop.</p>
+<section class="tile">
+<p class="cap" style="margin-bottom: 4px;">alerts</p>
+<div class="set first"><span class="l"><span class="t">Notify on a win</span><span class="h">no amounts in the notification</span></span><span class="tog"></span></div>
+<div class="set"><span class="l"><span class="t">Sound on a win</span></span><span class="tog"></span></div>
+<div class="set"><span class="l"><span class="t">Report in the tab title and icon</span></span><span class="tog on"></span></div>
+<p class="gone" style="padding-top: 10px;">Mini window · picture-in-picture</p>
+</section>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":500}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

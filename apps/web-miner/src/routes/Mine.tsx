@@ -6,6 +6,7 @@ import { BalanceCard } from '../components/BalanceCard';
 import type { MinerController } from '../controller';
 import { BridgeProviders } from '../features/BridgeProviders';
 import { SendAheadDialog } from '../features/dialogs/SendAhead';
+import { IntroStrip } from '../features/IntroStrip';
 import { LedgerTile } from '../features/LedgerTile';
 import { KpiTiles, LoopTile } from '../features/LoopTile';
 import { MigrationCard, useMigrationShown } from '../features/MigrationCard';
@@ -13,6 +14,7 @@ import { NoticeCard } from '../features/NoticeCard';
 import { OldApp } from '../features/OldApp';
 import { RailTile } from '../features/RailTile';
 import { usePresto } from '../features/use-presto';
+import { introAtom } from '../intro';
 import { useTileLog } from '../lib/tile-log';
 import type { Session } from '../session';
 import { balanceAtom, bootAtom, bridgeSessionAtom, minerAtom } from '../state';
@@ -44,11 +46,12 @@ function GuidedPath({ session }: { session: Session }) {
 
 /** The right column is one flex column at `xl` so that, however tall it grows, the left column's rows stay packed. */
 const RIGHT = 'contents xl:flex xl:flex-col xl:gap-[14px] xl:col-start-4 xl:row-span-3';
-/** The last left row takes the slack; a card above the cockpit (a notice, the upgrade card) adds a row before it. */
+/** The last left row takes the slack; a card above the cockpit (the first visit's strip, a notice, the upgrade card) adds a row before it. */
 const ROWS = [
   'xl:grid-rows-[auto_auto_1fr]',
   'xl:grid-rows-[auto_auto_auto_1fr]',
   'xl:grid-rows-[auto_auto_auto_auto_1fr]',
+  'xl:grid-rows-[auto_auto_auto_auto_auto_1fr]',
 ];
 
 /**
@@ -70,13 +73,15 @@ export function Mine({
   const onError = useTileLog();
   const ready = useAtomValue(bootAtom).phase === 'ready';
   const notice = useAtomValue(minerAtom).notice;
+  const intro = useAtomValue(introAtom);
   const presto = usePresto(session);
   // The upgrade card mounts under the bridge's providers and draws nothing while the upgrade is quiet.
   const upgradeShown = useMigrationShown();
   const bridgeOpen = useAtomValue(bridgeSessionAtom) !== null;
   // The versioned origin is one page: nothing is mined there, so no cockpit.
   if (isOldRole()) return <OldApp session={session} />;
-  const above = (notice ? 1 : 0) + (upgradeShown && bridgeOpen && session && ready ? 1 : 0);
+  const above = (intro ? 1 : 0) + (notice ? 1 : 0) + (upgradeShown && bridgeOpen && session && ready ? 1 : 0);
+  const start = onStart ?? (() => controller()?.start());
   return (
     <div
       className={cn(
@@ -86,6 +91,7 @@ export function Mine({
       data-signed-out={ready ? undefined : ''}
       data-testid="cockpit"
     >
+      {intro && <IntroStrip onStart={start} className="md:col-span-2 xl:col-span-4" />}
       {notice && (
         <div className="md:col-span-2 xl:col-span-4">
           <NoticeCard notice={notice} />
@@ -93,11 +99,7 @@ export function Mine({
       )}
       {session && ready && <GuidedPath session={session} />}
       <TileBoundary name="loop" onError={onError} className="md:col-span-2 xl:col-span-3">
-        <LoopTile
-          controller={controller}
-          onStart={onStart ?? (() => controller()?.start())}
-          className="md:col-span-2 xl:col-span-3"
-        />
+        <LoopTile controller={controller} onStart={start} className="md:col-span-2 xl:col-span-3" />
       </TileBoundary>
       <div className={RIGHT} data-testid="right-column">
         <TileBoundary name="balance" onError={onError} className="md:order-3">

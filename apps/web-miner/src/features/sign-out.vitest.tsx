@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import type { MinerController } from '../controller';
 import type { MasterRecord } from '../keys/store';
 import { initial, type MinerState } from '../lib/reducer';
+import { consent } from '../presto-consent';
 import { minerAtom, nowAtom } from '../state';
 import { canSignOut, SignOutDialog } from './SignOutDialog';
 import { useHotkeys } from './use-page-behaviour';
@@ -109,7 +110,7 @@ describe('the Space shortcut beside the hold', () => {
     const start = vi.fn();
     const controller = () => ({ start, stop: vi.fn() }) as unknown as MinerController;
     function Page() {
-      useHotkeys(controller, start);
+      useHotkeys(controller, start, consent);
       return (
         <>
           <HoldButton onConfirm={() => {}} data-testid="hold">

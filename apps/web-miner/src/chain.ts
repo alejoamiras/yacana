@@ -10,6 +10,7 @@ import type { Gas } from '@aztec/stdlib/gas';
 import { type TxEffect, TxStatus } from '@aztec/stdlib/tx';
 import type { EmbeddedWallet } from '@aztec/wallets/embedded';
 import { buildClaim } from '@yacana/miner-core/claim';
+import { NO_EFFECTS } from '@yacana/miner-core/claim-failure';
 import { readOpenEpoch, readRules } from '@yacana/miner-core/epoch';
 import type { EpochInfo } from './lib/reducer';
 import type { ProverSaid, SentTx, Turn } from './wallet';
@@ -94,13 +95,17 @@ export interface ClaimSent {
 
 const CLAIM_WAIT_S = 900;
 
-/** Proves the claim in-page and hands it to the node; inclusion is a separate wait. */
+/**
+ * Proves the claim in-page and hands it to the node; inclusion is a separate wait. `sent` hears the
+ * transaction as it leaves, before the node answers (only where the wallet takes turns): a send the
+ * node then refuses, or whose answer is lost, is still known.
+ */
 export async function sendClaim(
   d: Deployment,
   from: AztecAddress,
   fee: Fee,
   c: ClaimArgs,
-  said?: ProverSaid,
+  own: { said?: ProverSaid; sent?: (tx: SentTx) => void } = {},
 ): Promise<ClaimSent> {
   const interaction = buildClaim(d.miner, {
     epoch: c.epoch,
@@ -110,8 +115,10 @@ export async function sendClaim(
     proofFields: c.proofFields.map((f) => Fr.fromString(f)),
     recipient: c.recipient,
   });
+  const { sent: onSent, said } = own;
   const { txHash } = await turnOf(d)(() => interaction.send({ from, fee: fee as never, wait: NO_WAIT }), {
     said,
+    ...(onSent && { hook: async (tx: SentTx) => onSent(tx) }),
   });
   const sent = d.lastSent();
   return {
@@ -124,7 +131,7 @@ export async function sendClaim(
         waitForStatus: TxStatus.PROPOSED,
       });
       const receipt = await d.node.getTxReceipt(txHash, { includeTxEffect: true });
-      if (!receipt.txEffect) throw new Error(`no effects for ${txHash.toString()}`);
+      if (!receipt.txEffect) throw new Error(`${NO_EFFECTS} ${txHash.toString()}`);
       return { block: Number(receipt.blockNumber ?? 0), effect: receipt.txEffect };
     },
   };

@@ -7,13 +7,17 @@ import { useHotkeys } from './features/use-page-behaviour';
 import type { SlotView } from './keys/slot';
 import type { MasterRecord } from './keys/store';
 import { initialSteps, type OpeningStep } from './opening-steps';
+import { initialPresto, prestoAtom } from './presto';
+import { consent } from './presto-consent';
 import { Mine } from './routes/Mine';
 import type { Session } from './session';
+import { settingsAtom } from './settings';
 import {
   type AccountError,
   bootAtom,
   epochAtom,
   mineIntentAtom,
+  minerAtom,
   nowAtom,
   rulesAtom,
   signInAtom,
@@ -367,7 +371,7 @@ describe('the page hotkeys', () => {
     const start = vi.fn();
     const controller = () => ({ start, stop: vi.fn(), reconfigure: vi.fn() }) as unknown as MinerController;
     function Keys({ enabled }: { enabled: boolean }) {
-      useHotkeys(controller, start, enabled);
+      useHotkeys(controller, start, consent, enabled);
       return null;
     }
     const { rerender } = render(
@@ -384,5 +388,71 @@ describe('the page hotkeys', () => {
     );
     fireEvent.keyDown(window, { key: ' ' });
     expect(start).toHaveBeenCalledTimes(1);
+  });
+
+  test('Space stops wherever the button says Stop: an attempt on its way, a claim in flight', () => {
+    const start = vi.fn();
+    const stop = vi.fn();
+    const controller = () => ({ start, stop, reconfigure: vi.fn() }) as unknown as MinerController;
+    function Keys() {
+      useHotkeys(controller, start, consent);
+      return null;
+    }
+    const store = createStore();
+    const fore = {
+      lineId: 1,
+      epoch: 3n,
+      attempts: 1,
+      kind: 'anchor-pruned',
+      sent: false,
+      auto: true,
+      held: false,
+      more: false,
+    } as const;
+    store.set(minerAtom, { ...store.get(minerAtom), recovery: { fore, watching: false, checks: 0 } });
+    render(
+      <Provider store={store}>
+        <Keys />
+      </Provider>,
+    );
+    fireEvent.keyDown(window, { key: ' ' });
+    store.set(minerAtom, { ...store.get(minerAtom), phase: 'claiming' });
+    fireEvent.keyDown(window, { key: ' ' });
+    expect([stop.mock.calls.length, start.mock.calls.length]).toEqual([2, 0]);
+  });
+
+  test('[ and ] move the threads only while the slider is shown: found under consent, they change nothing', () => {
+    const reconfigure = vi.fn();
+    const controller = () => ({ start: vi.fn(), stop: vi.fn(), reconfigure }) as unknown as MinerController;
+    function Keys() {
+      useHotkeys(controller, vi.fn(), consent);
+      return null;
+    }
+    Object.defineProperty(navigator, 'hardwareConcurrency', { value: 12, configurable: true });
+    const store = createStore();
+    store.set(settingsAtom, { threads: 5 });
+    const eligible = {
+      available: true,
+      needsDownload: false,
+      schemes: ['ultra_honk'],
+      protocol: 'https',
+    } as const;
+    store.set(prestoAtom, { ...initialPresto, consentRev: 0, status: eligible });
+    render(
+      <Provider store={store}>
+        <Keys />
+      </Provider>,
+    );
+    fireEvent.keyDown(window, { key: '[' });
+    expect(store.get(settingsAtom).threads).toBe(5);
+    expect(reconfigure).not.toHaveBeenCalled();
+    store.set(prestoAtom, {
+      ...initialPresto,
+      consentRev: 0,
+      status: { available: false, reason: 'offline' },
+    });
+    fireEvent.keyDown(window, { key: '[' });
+    expect(store.get(settingsAtom).threads).toBe(4);
+    expect(reconfigure).toHaveBeenCalledWith(4);
   });
 });

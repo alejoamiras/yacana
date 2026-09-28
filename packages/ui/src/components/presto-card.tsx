@@ -48,7 +48,7 @@ function words(standing: PrestoStanding, site: string, needsLook: boolean): Word
     case 'checking':
       return { title: 'Presto', line: 'looking on this computer…' };
     case 'found':
-      return { title: 'Presto · found', line: 'proves when you start' };
+      return { title: 'Presto · found', line: 'proves when you start · its own speed setting decides' };
     case 'remembered':
       return needsLook
         ? {

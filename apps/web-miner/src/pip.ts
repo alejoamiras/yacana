@@ -1,12 +1,19 @@
-// A Document Picture-in-Picture window (Chromium): the page's styles are carried over, the caller
-// renders into its body. Closing it, or the page, ends it.
+// A Document Picture-in-Picture window (Chromium): the page's styles are carried over, the shell
+// renders into its body (`PipHost`). Closing it, or the page, ends it.
+import { atom, type createStore } from 'jotai';
+
+type Store = ReturnType<typeof createStore>;
+
 export interface PipApi {
   requestWindow(o: { width: number; height: number }): Promise<Window>;
 }
 
 export const pipSupported = (w: Window = window): boolean => 'documentPictureInPicture' in w;
 
-export const PIP_SIZE = { width: 360, height: 190 };
+export const PIP_SIZE = { width: 360, height: 216 };
+
+/** The open mini window; whatever route the page shows, `PipHost` renders into it. */
+export const pipWindowAtom = atom<Window | null>(null);
 
 /**
  * Copies the page's styles into the pop-out. Linked stylesheets are re-linked by URL so their relative
@@ -30,10 +37,56 @@ export function copyStyles(from: Document, to: Document): void {
   to.documentElement.className = from.documentElement.className;
 }
 
-export async function openPip(w: Window = window): Promise<Window> {
+/**
+ * Follows the window's life from before it is published, so a close that comes first is not missed:
+ * `pagehide` clears the atom, and the page's theme class is carried over while it stays open.
+ */
+function track(store: Store, from: Document, pip: Window): void {
+  const theme = new MutationObserver(() => {
+    pip.document.documentElement.className = from.documentElement.className;
+  });
+  theme.observe(from.documentElement, { attributes: true, attributeFilter: ['class'] });
+  pip.addEventListener(
+    'pagehide',
+    () => {
+      theme.disconnect();
+      if (store.get(pipWindowAtom) === pip) store.set(pipWindowAtom, null);
+    },
+    { once: true },
+  );
+}
+
+let pending: Promise<Window | null> | null = null;
+
+/**
+ * Opens the mini window, or resolves to the one already open or being opened. Call it synchronously
+ * from a click: the browser opens it only inside a user activation, so outside one (and on a refusal
+ * or a browser without the API) it resolves to null and never throws.
+ */
+export function openPip(store: Store, w: Window = window): Promise<Window | null> {
+  const open = store.get(pipWindowAtom);
+  if (open && !open.closed) return Promise.resolve(open);
+  if (open) store.set(pipWindowAtom, null);
+  if (pending) return pending;
   const api = (w as unknown as { documentPictureInPicture?: PipApi }).documentPictureInPicture;
-  if (!api) throw new Error('Document Picture-in-Picture is not available in this browser');
-  const pip = await api.requestWindow(PIP_SIZE);
-  copyStyles(w.document, pip.document);
-  return pip;
+  if (!api || w.navigator.userActivation?.isActive === false) return Promise.resolve(null);
+  let request: Promise<Window>;
+  try {
+    request = api.requestWindow(PIP_SIZE);
+  } catch {
+    return Promise.resolve(null);
+  }
+  pending = request
+    .then((pip) => {
+      if (pip.closed) return null;
+      copyStyles(w.document, pip.document);
+      track(store, w.document, pip);
+      store.set(pipWindowAtom, pip);
+      return pip;
+    })
+    .catch(() => null);
+  void pending.finally(() => {
+    pending = null;
+  });
+  return pending;
 }

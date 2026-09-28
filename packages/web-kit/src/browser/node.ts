@@ -1,6 +1,7 @@
 // The node as a setting: what a pasted URL must be, how a candidate is checked before it is used,
 // and the one handle every holder of the node keeps so the node can change under them.
 import { createAztecNodeClient } from '@aztec/aztec.js/node';
+import { jsonStringify } from '@aztec/foundation/json-rpc';
 import { makeFetch } from '@aztec/foundation/json-rpc/client';
 import {
   assertDeployment,
@@ -9,7 +10,7 @@ import {
   type StorageLayout,
 } from '@yacana/miner-core/reader';
 import type { SiteMode } from '../config.ts';
-import { allowCandidate } from './node-guard.ts';
+import { allowCandidate, QUIET, type QuietInit } from './node-guard.ts';
 
 export type Node = ReturnType<typeof createAztecNodeClient>;
 
@@ -32,6 +33,38 @@ export function parseNodeUrl(text: string, mode: SiteMode): URL {
 
 /** A client that fails in one deadline: the SDK's default retries retryable failures three times. */
 export const nodeClient = (url: string): Node => createAztecNodeClient(url, {}, makeFetch([], false));
+
+/**
+ * A client for optional reads beside the page's own: each request quiet (it never opens nor extends a
+ * cooldown), sent once `turn` resolves and abandoned `deadlineMs` after it leaves, no retries. The SDK's
+ * transport builds each `init` itself and takes neither mark nor signal, so this one mirrors it with both.
+ */
+export const quietNodeClient = (url: string, deadlineMs: number, turn?: () => Promise<void>): Node =>
+  createAztecNodeClient(
+    url,
+    {},
+    async (host: string, body: unknown, extraHeaders: Record<string, string> = {}) => {
+      await turn?.();
+      const init: QuietInit = {
+        method: 'POST',
+        body: jsonStringify(body),
+        headers: { 'content-type': 'application/json', ...extraHeaders },
+        signal: AbortSignal.timeout(deadlineMs),
+        [QUIET]: true,
+      };
+      const res = await fetch(host, init);
+      const text = await res.text();
+      let json: { error?: { message?: string } } | undefined;
+      try {
+        json = JSON.parse(text);
+      } catch {
+        throw new Error(res.ok ? `Failed to parse body as JSON: ${text}` : res.statusText);
+      }
+      if (!res.ok)
+        throw new Error(`Error ${res.status} from server ${host}: ${json?.error?.message ?? text}`);
+      return { response: json, headers: res.headers };
+    },
+  );
 
 export interface NodeProbe {
   chainId: bigint;

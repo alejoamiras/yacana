@@ -83,7 +83,9 @@ test('the argument in order, the hero tile from the chain, the ledger empty, not
   const net = watch(page, r);
   await page.goto(pageUrl(r));
   const ids = await page.locator('main > section').evaluateAll((els) => els.map((e) => e.id));
-  expect(ids).toEqual(['hero', 'money', 'chain', 'how', 'verify', 'ask']);
+  expect(ids).toEqual(['hero', 'money', 'chain', 'how', 'why', 'verify', 'ask']);
+  await expect(page.getByTestId('why-loop')).toBeVisible();
+  await expect(page.getByTestId('why-steps')).toBeHidden();
   await expect(page.getByTestId('live-minted')).toHaveText('0');
   await expect(page.getByTestId('live-epoch')).toHaveText('0 of 4');
   await expect(page.getByTestId('live-block').getByRole('link')).toHaveAttribute('href', /\/blocks\/\d+$/);
@@ -204,6 +206,8 @@ test('a phone reads, shares the miner link and mines nothing', async ({ page }) 
   await expect(page.getByTestId('hero-live')).toHaveCount(0);
   await expect(page.getByTestId('hero-mine')).toHaveCount(0);
   await expect(page.getByTestId('ledger-public')).toBeVisible();
+  await expect(page.getByTestId('why-steps')).toBeVisible();
+  await expect(page.getByTestId('why-loop')).toBeHidden();
 });
 
 test('the bar: the shared brand with its version, the sections, Stats and Mine, testnet said quietly', async ({
@@ -217,9 +221,11 @@ test('the bar: the shared brand with its version, the sections, Stats and Mine, 
     'Money',
     'Chain',
     'How',
+    'Why',
     'Verify',
   ]);
   await expect(bar.getByTestId('bar-stats')).toHaveAttribute('href', /\/stats\/$/);
   await expect(bar.getByTestId('bar-mine')).toHaveAttribute('href', /\/mine\/$/);
+  await expect(bar.getByTestId('bar-mine')).toHaveText('Open the miner');
   await expect(bar.locator('[data-slot=badge][data-variant=net]')).toHaveText('testnet');
 });

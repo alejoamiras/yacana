@@ -7,7 +7,7 @@ export function PreflightTile({ rows }: { rows: PreflightRow[] }) {
       <h2 className="label-mono mb-3">preflight</h2>
       <Preflight rows={rows} />
       <p className="mt-4 text-xs text-ink-2">
-        The proving keys (20 MB) download in the background and are checked against their pinned hashes.
+        The proving keys download in the background and are checked against their pinned hashes.
       </p>
     </Tile>
   );

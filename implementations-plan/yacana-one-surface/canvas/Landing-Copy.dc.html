@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Landing: copy edits</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#0a0a0b}
+.b{--ground:#0a0a0b;--raised:#111114;--panel:#17171b;--ink:#f2efe9;--ink2:rgba(242,239,233,.64);--ink3:rgba(242,239,233,.5);--ink4:rgba(242,239,233,.22);--line:rgba(242,239,233,.1);--line2:rgba(242,239,233,.18);--uv2:#b39dff;--ok:#58c98b;--warn:#e8b54d;background:var(--ground);color:var(--ink);font:15px/1.55 "Hanken Grotesk",ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased;box-sizing:border-box;overflow:hidden}
+.b *{box-sizing:border-box}
+.b p{margin:0}
+.hd,.row{display:grid;grid-template-columns:150px minmax(0,1fr) minmax(0,1fr) 250px;gap:24px}
+.hd{font:500 11px/1.3 "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);padding-bottom:10px;border-bottom:1px solid var(--line2)}
+.hd .p{color:var(--ok)}
+.row{padding:12px 0;border-bottom:1px solid var(--line);font-size:13.5px;line-height:1.5}
+.w{font:500 11.5px/1.5 "JetBrains Mono",monospace;color:var(--ink3)}
+.t{color:var(--ink3)}
+.p{color:var(--ink)}
+.y{font-size:12.5px;line-height:1.45;color:var(--ink3)}
+.alt{display:block;margin-top:6px;color:var(--ink2)}
+.new{color:var(--uv2)}
+.kept{color:var(--ink2)}
+</style>
+</helmet>
+<div class="b" style="width: 1280px; height: 1900px; padding: 32px 40px; display: flex; flex-direction: column;">
+<div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+<p style="font-size: 26px; font-weight: 600; letter-spacing: -.02em;">The landing, line by line</p>
+<p style="font-size: 14px; color: var(--ink2); max-width: 900px;">Your calls applied: the hero stays, no download size anywhere, no testnet talk. New: the flywheel section, its anchor and one question.</p>
+</div>
+<div class="hd"><span>section</span><span>today</span><span class="p">proposed</span><span>why</span></div>
+<div class="row"><span class="w">hero · headline</span><span class="t">Bitcoin made money need no bank. YACA makes it need no witness.</span><span class="kept">Kept as it is.</span><span class="y">Your call.</span></div>
+<div class="row"><span class="w">hero · subhead</span><span class="t">Proof-of-work money on Aztec, mined in your browser: earned by anyone, private to everyone.</span><span class="p">Proof-of-work money on Aztec, mined in your browser: earned by anyone, private from everyone.</span><span class="y">“Private to everyone” reads as visible to everyone.</span></div>
+<div class="row"><span class="w">hero · reassurance</span><span class="t">An Aztec-standards token: private notes, private transfers, no gas on testnet. Mining needs a desktop browser; 20 MB once.</span><span class="p">A standard Aztec token: private notes, private transfers, no gas on testnet. Mining needs a desktop browser.</span><span class="y">No download size anywhere.</span></div>
+<div class="row"><span class="w">hero · live strip</span><span class="t">what a proof has to clear<span class="alt">the bar over the last six epochs · a dot per accepted claim, spread across its epoch</span><span class="alt">4 claims close an epoch, then the bar moves</span></span><span class="p">how hard a win is now<span class="alt">difficulty over the last six epochs · a dot per win, spread across its epoch</span><span class="alt">4 wins close an epoch, then difficulty adjusts</span></span><span class="y">The miner’s words.</span></div>
+<div class="row"><span class="w">bar · anchors</span><span class="t">Money · Chain · How · Verify</span><span class="p new">Money · Chain · How · Why · Verify</span><span class="y">Reaches the new section.</span></div>
+<div class="row"><span class="w">money · lede</span><span class="t">4 tYACA per accepted proof, 4 claims every five minutes, forever. No premine, no admin key, no special hardware.</span><span class="p">4 tYACA per winning proof, 4 wins every five minutes, forever. No premine, no admin key, no special hardware.</span><span class="y">One word for one thing: a win.</span></div>
+<div class="row"><span class="w">chain · body</span><span class="t">A claim writes a nullifier, a note hash and a counter. Not the recipient, not the secret, not how many proofs it took. A public withdraw shows its amount and address, which is why it is a choice.</span><span class="p">Anyone can see that a coin was mined. Nobody can see who mined it, who holds it or how many proofs it took. On chain, a claim is a nullifier, a note hash and a counter. A public withdraw shows its amount and address, which is why it is a choice.</span><span class="y">The plain sentence first, the mechanism after.</span></div>
+<div class="row"><span class="w">how · heading</span><span class="t">Prove. Score. Claim.</span><span class="p">Prove. Hash. Claim.</span><span class="y">“Score” leaves the miner.</span></div>
+<div class="row"><span class="w">how · step 2</span><span class="t">The proof gets a score against the bar<span class="alt">Poseidon2 over the whole proof. The bar moves every epoch, by at most ×4, so that 4 claims take about 5 minutes.</span></span><span class="p">Its hash has to beat the difficulty<span class="alt">Poseidon2 hashes the whole proof into a ticket. About one ticket in D beats difficulty D, and the difficulty moves every epoch, by at most 4×, so that 4 wins take about 5 minutes.</span></span><span class="y">The fragment never said what the hash is for.</span></div>
+<div class="row"><span class="w">new · why proving</span><span class="t">—</span><span class="p new">The flywheel section, A or B from the flywheel row, between How and Verify.</span><span class="y">Says what mining is for.</span></div>
+<div class="row"><span class="w">faq · how is it mined?</span><span class="t">Your browser proves a fixed circuit per nonce; a ticket below the target wins, and the claim is a private transaction that mints 4 tYACA. 4 claims close an epoch and the bar moves. No address on the claim, no sponsor’s view of who won.</span><span class="p">Your browser proves a fixed circuit per nonce; a proof whose hash beats the difficulty wins, and the claim is a private transaction that mints 4 tYACA. 4 wins close an epoch and difficulty adjusts. No address on the claim, no sponsor’s view of who won.</span><span class="y">Target, bar and claims were three words for two things.</span></div>
+<div class="row"><span class="w">faq · new question</span><span class="t">—</span><span class="p new">Why is the work a proof?<span class="alt">Because the race to prove faster is worth having. Mining runs Barretenberg, the prover behind every Aztec transaction. Miners earn more by proving faster, and speedups that land in Barretenberg make private transactions faster and cheaper for everyone. The difficulty adjusts, so faster proving never mints more than the schedule.</span></span><span class="y">The flywheel, for readers who go straight to the questions.</span></div>
+<div class="row"><span class="w">miner · preflight</span><span class="t">The proving keys (20 MB) download in the background and are checked against their pinned hashes.</span><span class="p">The proving keys download in the background and are checked against their pinned hashes.</span><span class="y">No download size anywhere.</span></div>
+<div class="row"><span class="w">unchanged</span><span class="t">How · steps 1 and 3, the money table, Verify, “A tab is enough.”, the footer, the FAQ panels</span><span class="p">Unchanged.</span><span class="y">They read well and use no bar or score words.</span></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

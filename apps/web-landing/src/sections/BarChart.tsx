@@ -22,7 +22,7 @@ const ticks = (hiLog2: number): number[] => {
 export const shown = (rows: readonly EpochRow[]): EpochRow[] => rows.slice(-SHOWN);
 
 /**
- * The bar per epoch as a step line on log₂, one dot per accepted claim spread evenly across its
+ * Difficulty per epoch as a step line on log₂, one dot per win spread evenly across its
  * epoch's width. Storage keeps a count per epoch, not claim times: the dots say how many, not when.
  */
 export function BarChart({ rows, open }: { rows: readonly EpochRow[]; open: number }) {
@@ -48,7 +48,7 @@ export function BarChart({ rows, open }: { rows: readonly EpochRow[]; open: numb
       viewBox={`0 0 ${W} ${H}`}
       className="block w-full font-mono text-[10px] text-ink-3"
       role="img"
-      aria-label={`the bar over the last ${drawn.length} epochs, a dot per accepted claim`}
+      aria-label={`difficulty over the last ${drawn.length} epochs, a dot per win`}
       data-testid="hero-chart"
     >
       {ticks(hi).map((t) => (

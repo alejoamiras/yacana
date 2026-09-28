@@ -96,6 +96,7 @@ import {
   bootAtom,
   bridgeAtom,
   bridgeSessionAtom,
+  endpointsAtom,
   epochAtom,
   logAtom,
   mineIntentAtom,
@@ -234,6 +235,7 @@ export class Session {
     watchLna(store, deps.permissions ?? globalThis.navigator?.permissions);
     store.sub(lnaAtom, () => this.onLnaChange());
     this.ethRpc = connection.ethRpcUrl;
+    this.publishEndpoints(false);
     // The guard admits the RPC in use from the first request. L1 is the record's: a build without a
     // portal never asks it, unless an e2e page pins an RPC of its own.
     if (bridgeRecord() || ethRpcPinnedByQuery()) {
@@ -775,6 +777,7 @@ export class Session {
       throw new Error('The browser refused to save the setting; free some site storage and try again.');
     this.ethRpc = url;
     setEthRpcEndpoint(url, ETH_RPC_DEADLINE_MS);
+    this.publishEndpoints(false);
     resetEthRpcHealth();
     resetL1();
     void this.l1?.switched();
@@ -834,6 +837,7 @@ export class Session {
     const pre = this.pre;
     const publicOnly = !this.controller;
     this.switchingUrl = url;
+    this.publishEndpoints(true);
     this.switching = (async () => {
       // Signed out, the public poll is the only reader: drained before the swap (a read out on the old
       // node is waited for and lands nowhere), the epoch it guarded against regressing cleared; it
@@ -866,8 +870,15 @@ export class Session {
         if (publicOnly) pre.publicEpoch.start();
         this.switching = undefined;
         this.switchingUrl = undefined;
+        this.publishEndpoints(false);
       });
     return this.switching;
+  }
+
+  /** The guard's two slots as they stand, for the views that read beside the page (a switch in flight, or not). */
+  private publishEndpoints(switching: boolean): void {
+    const nodeUrl = this.pre?.switchable.current() ?? this.connection.nodeUrl;
+    this.store.set(endpointsAtom, { nodeUrl, ethRpcUrl: this.ethRpc, switching });
   }
 
   /**

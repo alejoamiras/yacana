@@ -134,8 +134,7 @@ function Recovery({ session, account }: { session: Session; account: string }) {
     }
   };
   return (
-    <span className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-mono text-2xs text-ink-3">
-      advanced ·
+    <span className="flex flex-wrap items-center gap-x-2 gap-y-1.5 font-mono text-2xs text-ink-3">
       <Button
         size="sm"
         variant="link"
@@ -145,6 +144,7 @@ function Recovery({ session, account }: { session: Session; account: string }) {
       >
         save a recovery file
       </Button>
+      <span aria-hidden>·</span>
       <label className="cursor-pointer underline underline-offset-3 hover:text-ink">
         restore from a file
         <input
@@ -155,7 +155,12 @@ function Recovery({ session, account }: { session: Session; account: string }) {
           data-testid="recovery-input"
         />
       </label>
-      {note && <span data-testid="recovery-note">{note}</span>}
+      {note && (
+        <>
+          <span aria-hidden>·</span>
+          <span data-testid="recovery-note">{note}</span>
+        </>
+      )}
     </span>
   );
 }
