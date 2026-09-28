@@ -4,14 +4,21 @@ import { createStore } from 'jotai';
 import type { Started } from '../src/boot.ts';
 import { type Consent, createConsent } from '../src/presto-consent.ts';
 import { Session } from '../src/session.ts';
-import { bootAtom, epochAtom, mineIntentAtom } from '../src/state.ts';
+import { bootAtom, type Endpoints, endpointsAtom, epochAtom, mineIntentAtom } from '../src/state.ts';
 
 // The attempt bookkeeping (generation, cancel, supersession) with the ceremony and the wallet-level
 // work both faked: the wallet's own stop-on-abort lives in startSession and is covered by the E2E.
 const fakePre = () => {
   const calls = { start: 0, stop: 0, used: [] as string[] };
   const publicEpoch = { start: () => calls.start++, stop: () => calls.stop++, tick: async () => {} };
-  const switchable = { use: (url: string) => calls.used.push(url), current: () => 'https://a.example/rpc' };
+  let current = 'https://a.example/rpc';
+  const switchable = {
+    use: (url: string) => {
+      calls.used.push(url);
+      current = url;
+    },
+    current: () => current,
+  };
   return { pre: { publicEpoch, switchable } as never, calls };
 };
 
@@ -88,6 +95,20 @@ describe('a node switch around the attempt', () => {
     expect(ceremonies).toBe(1);
     expect(pre.calls.used).toEqual(['https://b.example/rpc']);
     expect(store.get(bootAtom).phase).toBe('ready');
+  });
+
+  test('the endpoints the views follow: switching while the swap runs, the node it ended on, an RPC change at once', async () => {
+    const { store, session } = harness(async () => started());
+    await session.ready;
+    const seen: (Endpoints | null)[] = [];
+    store.sub(endpointsAtom, () => seen.push(store.get(endpointsAtom)));
+    await session.switchNode('https://b.example/rpc');
+    await session.switchEthRpc('https://rpc-2.example/');
+    expect(seen.map((e) => [e?.nodeUrl, e?.ethRpcUrl, e?.switching])).toEqual([
+      ['https://a.example/rpc', undefined, true],
+      ['https://b.example/rpc', undefined, false],
+      ['https://b.example/rpc', 'https://rpc-2.example/', false],
+    ]);
   });
 
   test('signed out, the public poll stops across the swap, the epoch is cleared, and it restarts on the new node', async () => {

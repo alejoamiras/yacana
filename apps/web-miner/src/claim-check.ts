@@ -77,12 +77,13 @@ export async function absentAt(d: Deployment, nullifier: string, tip: Tip): Prom
 export async function canMint(d: Deployment, epoch: bigint, tip: Tip): Promise<boolean | 'unknown'> {
   try {
     const layout = d.miner.artifact.storageLayout;
-    const [open, retired] = await Promise.all([
-      d.node.getPublicStorageAt(tip, d.miner.address, fixedSlot(layout, 'open_epoch')),
-      d.node.getPublicStorageAt(tip, d.miner.address, fixedSlot(layout, 'retired')),
-    ]);
-    if (!retired.isZero() || open.toBigInt() > epoch) return false;
-    return open.toBigInt() === epoch ? true : 'unknown';
+    const slots = [fixedSlot(layout, 'open_epoch'), fixedSlot(layout, 'retired')] as const;
+    const at = (slot: Fr) => d.node.getPublicStorageAt(tip, d.miner.address, slot);
+    // Both settle before any answer: one given up on its sibling's failure would outlive the check.
+    const [open, retired] = await Promise.allSettled([at(slots[0]), at(slots[1])]);
+    if (open.status === 'rejected' || retired.status === 'rejected') return 'unknown';
+    if (!retired.value.isZero() || open.value.toBigInt() > epoch) return false;
+    return open.value.toBigInt() === epoch ? true : 'unknown';
   } catch {
     return 'unknown';
   }

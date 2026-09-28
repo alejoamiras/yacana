@@ -9,7 +9,7 @@ import { createStore } from 'jotai';
 import type { PublicClient } from 'viem';
 import type { BridgeSnapshot } from '../src/bridge-beat';
 import type { Reader } from '../src/chain';
-import { createStatsRuntime, type StatsRuntime, type StatsSources } from '../src/runtime';
+import { createStatsRuntime, POLL_MS, type StatsRuntime, type StatsSources } from '../src/runtime';
 import { bridgeAtom, type Fixed, fixedAtom, historyAtom, statusAtom } from '../src/state';
 
 interface GuardView {
@@ -395,6 +395,43 @@ describe('the stats runtime', () => {
     } finally {
       resetNodeHealth();
     }
+  });
+
+  test("a boot failing with the node's health ok (a quiet read) keeps its error up and tries again a poll later", async () => {
+    resetNodeHealth();
+    const f = fakes();
+    f.hold.open = later<Reader>();
+    const { rt, store } = make(f);
+    // The poll-long wait, shortened: everything else keeps its time.
+    const setTimer = globalThis.setTimeout;
+    globalThis.setTimeout = ((cb: () => void, ms?: number) =>
+      setTimer(cb, ms === POLL_MS ? 50 : ms)) as typeof setTimeout;
+    try {
+      rt.start();
+      await until(() => f.log.includes('open'));
+      const held = f.hold.open;
+      f.hold.open = undefined;
+      held.reject(new Error('503'));
+      await until(() => store.get(statusAtom).phase === 'error');
+      const shown: string[] = [];
+      store.sub(statusAtom, () => shown.push(store.get(statusAtom).phase));
+      await until(() => store.get(statusAtom).phase === 'ready');
+      expect([count(f.log, 'open'), shown]).toEqual([2, ['ready']]);
+    } finally {
+      globalThis.setTimeout = setTimer;
+    }
+    const g = fakes();
+    g.hold.open = later<Reader>();
+    const second = make(g);
+    const waiting = await armedDuring(async () => {
+      second.rt.start();
+      await until(() => g.log.includes('open'));
+      g.hold.open?.reject(new Error('503'));
+      await until(() => second.store.get(statusAtom).phase === 'error');
+      second.rt.stop();
+      await pause();
+    });
+    expect(waiting).toEqual(NOTHING);
   });
 
   test('a fill page queued behind a poll does not start after a dispose or a yield that came meanwhile', async () => {

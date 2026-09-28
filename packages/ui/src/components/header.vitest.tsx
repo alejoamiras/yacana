@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, test, vi } from 'vitest';
-import { AccountChip, Brand, Gear, Header } from './header.tsx';
+import { AccountChip, Brand, Gear, Header, SubTabs } from './header.tsx';
 import { Icon } from './icons.tsx';
 
 afterEach(cleanup);
@@ -46,6 +46,25 @@ describe('Header', () => {
     expect(stats).toHaveTextContent('Stats ↗');
     expect(nav.querySelectorAll('a')).toHaveLength(3);
     expect(screen.getByTestId('right')).toBeInTheDocument();
+  });
+
+  test('SubTabs: the current page marked, a plain click kept in-app, the host’s line at the right', () => {
+    const onSelect = vi.fn();
+    render(
+      <SubTabs
+        aria-label="Stats pages"
+        tabs={[
+          { label: 'Overview', href: '/stats/', current: true },
+          { label: 'Bridge', href: '/stats/bridge', onSelect },
+        ]}
+        aside={<span data-testid="aside">mining here</span>}
+      />,
+    );
+    const nav = screen.getByRole('navigation', { name: 'Stats pages' });
+    expect(screen.getByRole('link', { name: 'Overview' })).toHaveAttribute('aria-current', 'page');
+    fireEvent.click(screen.getByRole('link', { name: 'Bridge' }));
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(nav).toContainElement(screen.getByTestId('aside'));
   });
 
   test('Brand alone, the account chip and the gear', () => {

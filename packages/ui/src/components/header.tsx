@@ -138,6 +138,41 @@ export function Header({
   );
 }
 
+/** The row under the bar: a section's pages as small tabs, and the host's own line at its right. */
+export function SubTabs({
+  tabs,
+  aside,
+  className,
+  ...props
+}: React.ComponentProps<'nav'> & { tabs: readonly HeaderTab[]; aside?: React.ReactNode }) {
+  return (
+    <nav
+      data-slot="sub-tabs"
+      className={cn('flex items-center gap-1.5 border-b border-line px-5 py-2.5', className)}
+      {...props}
+    >
+      {tabs.map((t) => (
+        <a
+          key={t.href}
+          href={t.href}
+          aria-current={t.current ? 'page' : undefined}
+          data-testid={t.testId}
+          onClick={select(t.onSelect)}
+          className={cn(
+            'rounded-[5px] border border-transparent px-2.5 py-[7px] font-mono text-xs leading-none font-medium text-ink-2 hover:text-ink',
+            t.current && 'border-line-2 bg-panel text-ink',
+          )}
+        >
+          {t.label}
+        </a>
+      ))}
+      {aside !== undefined && (
+        <span className="ml-auto font-mono text-[11.5px] font-medium text-uv-2">{aside}</span>
+      )}
+    </nav>
+  );
+}
+
 /** The account's dot: one gradient for every account, drawn from the tokens. */
 export function Avatar({ className }: { className?: string }) {
   return (

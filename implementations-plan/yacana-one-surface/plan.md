@@ -6,7 +6,7 @@ eli5_mode: artifact
 code_review: off
 hardening: none (no new trust boundary; the hosted Stats reads only what the miner's guard already admits — the realm it joins is recorded in §4)
 budget: "recon 3 agents (Stats mapper, miner sweep, landing and Stats sweep); codex at high (GPT-6 Astra); the Claude leg on Opus 5.5 (the owner prefers it to Fable); code-review off (owner, 2026-09-23)"
-status: approved by the owner 2026-09-23 with conditions (§2 "At approval"); codex final pass approve (round 3); Opus conditional approve, folded
+status: approved by the owner 2026-09-23 with conditions (§2 "At approval"); codex final pass approve (round 3); Opus conditional approve, folded; implemented 2026-09-24 (P1–P8 ✓), delivered as five stacked PRs
 created: 2026-09-23
 ---
 
@@ -637,7 +637,7 @@ delayed boot, a late poll and a late bridge read publish nothing; A → B → A 
 
 ### Arc 4b — the miner hosts Stats
 
-**P8 · Routes, runtime, guard, bar, chunk.** §3.4. Gate: fast layers; a `routes` spec (the six routes round-trip;
+**P8 · Routes, runtime, guard, bar, chunk. ✓** §3.4. Gate: fast layers; a `routes` spec (the six routes round-trip;
 under the old role the stats paths resolve to `mine`);
 an `assemble` spec (`REDIRECTS` has the three stats rewrites, `OLD_REDIRECTS` none); a guard spec (a marked request is
 quiet while an unmarked one alongside is not; a marked request's failure opens no cooldown; a marked Ethereum request
@@ -646,7 +646,8 @@ failure that started before a cooldown does not extend it; the probe started aft
 (`switching` disposes the runtime synchronously, shown or hidden; when it ends — success, rollback, the same pair —
 a fresh runtime starts at once if Stats is showing, at the next showing otherwise); a `siteTabs` spec;
 `YACANA_MODULE_REPORT=<dir> bun run --cwd apps/web-miner build` then `bun apps/web-miner/scripts/check-chunks.ts <dir>`;
-`e2e/stats-host.e2e.ts` (`cockpit`): while mining, open Stats → Bridge → Verify → back — proofs keep counting, the page
+`e2e/stats-host.e2e.ts` (`cockpit`; runs in `bridge`, whose build has the portal the RPC case needs —
+lessons/phase-8.md): while mining, open Stats → Bridge → Verify → back — proofs keep counting, the page
 never reloads (a window marker survives), the mini window stays open, the guard's slots unchanged, back/forward
 restore the sub-page, a tile's Tailwind class has its computed style, Space scrolls the page; a node switch while on
 Stats → the new runtime reads the new node without leaving Stats, no blocked-endpoint error; an RPC switch with a hosted bridge read held

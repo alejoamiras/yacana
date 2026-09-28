@@ -1,5 +1,4 @@
 import {
-  DEFAULT_LIMITS,
   fixedSlot,
   readGenesis,
   readLatestBlock,
@@ -22,8 +21,8 @@ export function assertOpenEpoch(open: number): number {
 async function readMinerFlows(r: Reader): Promise<Fixed['miner']> {
   if (!r.minerLayout.exited_total || !r.minerLayout.claimed_from_l1_total) return undefined;
   const [exited, claimedFromL1] = await Promise.all([
-    readSlot(r.node, r.miner, fixedSlot(r.minerLayout, 'exited_total'), DEFAULT_LIMITS),
-    readSlot(r.node, r.miner, fixedSlot(r.minerLayout, 'claimed_from_l1_total'), DEFAULT_LIMITS),
+    readSlot(r.node, r.miner, fixedSlot(r.minerLayout, 'exited_total'), r.limits),
+    readSlot(r.node, r.miner, fixedSlot(r.minerLayout, 'claimed_from_l1_total'), r.limits),
   ]);
   return { exited: exited.toBigInt(), claimedFromL1: claimedFromL1.toBigInt() };
 }
@@ -31,10 +30,10 @@ async function readMinerFlows(r: Reader): Promise<Fixed['miner']> {
 /** Beat one: the open epoch's number and the latest block, with the supply, the genesis and the bridge counters (fixed slots). */
 export async function readFixed(r: Reader): Promise<Fixed> {
   const [open, block, supply, genesis, miner] = await Promise.all([
-    readOpenEpochNumber(r.node, r.miner, r.minerLayout),
+    readOpenEpochNumber(r.node, r.miner, r.minerLayout, r.limits),
     readLatestBlock(r.node),
-    readTotalSupply(r.node, r.token, r.tokenLayout),
-    readGenesis(r.node, r.miner, r.minerLayout),
+    readTotalSupply(r.node, r.token, r.tokenLayout, r.limits),
+    readGenesis(r.node, r.miner, r.minerLayout, r.limits),
     readMinerFlows(r),
   ]);
   return {

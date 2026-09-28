@@ -139,8 +139,9 @@ export const coolingDown = (t: Transport, now = Date.now()): boolean =>
 export function recordOutcome(o: NodeRequestOutcome): void {
   // A → B → A: an answer from the first visit to A passes the endpoint check but predates the reset.
   if (o.startedAt < resetAt) return;
-  // Optional work never opens a cooldown; once one is on, its answers count (it may be the recovery).
-  if (o.quiet && health.transport.kind === 'ok') return;
+  // Optional work never opens a cooldown nor touches one it predates (a slow optional read must not extend
+  // it); started after it, its answers count: it may be the recovery.
+  if (o.quiet && (health.transport.kind === 'ok' || o.startedAt < cooldownFrom)) return;
   const now = Date.now();
   let event = classify(o);
   // A success that started before the request that opened the cooldown says nothing about now.

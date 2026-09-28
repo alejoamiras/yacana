@@ -48,6 +48,9 @@ test('one origin, three apps: every path serves its app under the same headers; 
   expect(csp).not.toContain(new URL(r.nodeUrl).origin);
   for (const path of [
     '/mine/wallet',
+    '/mine/stats',
+    '/mine/stats/bridge',
+    '/mine/stats/verify',
     '/stats?epoch=0',
     '/stats/bridge',
     '/verify',
@@ -71,6 +74,19 @@ test('one origin, three apps: every path serves its app under the same headers; 
   await page.getByTestId('sign-in-balance').click();
   await expect(page.getByTestId('key-screen')).toBeVisible();
   expect(await page.evaluate(() => crossOriginIsolated)).toBe(true);
+
+  // The miner's own Stats: each path is its page, served by the miner's app, cross-origin isolated.
+  for (const [path, shown] of [
+    ['/mine/stats', 'stats'],
+    ['/mine/stats/bridge', 'no-bridge'],
+    ['/mine/stats/verify', 'verify'],
+    ['/mine/stats/', 'stats'],
+  ] as const) {
+    await page.goto(`${r.baseURL}${path}${query(r)}`);
+    await expect(page.getByTestId(shown), path).toBeVisible({ timeout: 2 * 60_000 });
+    expect(new URL(page.url()).pathname, path).toBe(path);
+    expect(await page.evaluate(() => crossOriginIsolated), path).toBe(true);
+  }
 
   await page.goto(`${r.baseURL}/stats${query(r)}&epoch=0`);
   await expect(page.getByTestId('detail')).toContainText('epoch 0');

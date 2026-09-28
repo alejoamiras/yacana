@@ -36,7 +36,7 @@ import {
   txProvingAtom,
 } from './presto';
 import { settingsAtom } from './settings';
-import { balanceAtom, claimsAtom, epochAtom, logAtom, minerAtom } from './state';
+import { balanceAtom, claimReadsAtom, claimsAtom, epochAtom, logAtom, minerAtom } from './state';
 import type { FromWorker, MineJob, ToWorker } from './worker-protocol';
 
 type Store = ReturnType<typeof createStore>;
@@ -204,6 +204,8 @@ export class MinerController {
   private watches: WinRecord[] = [];
   private checking: Promise<void> | undefined;
   private recheck = false;
+  /** Reads the claim path started still out, past their deadline too: the node still serves them. */
+  private claimReads = 0;
   private recoveryTimer: ReturnType<typeof setTimeout> | undefined;
   private readonly recoveryDelay: (ms: number) => number;
   /** Bumped by a switch and by dispose: a check begun before either acts on nothing it read. */
@@ -519,6 +521,7 @@ export class MinerController {
       // await it, so accumulate rather than overwrite. Settled entries drop out on their own.
       const tracked = read.catch(() => {});
       this.inflightRead = Promise.all([this.inflightRead, tracked]).then(() => {});
+      if (this.onClaimPath()) this.countRead(tracked);
       return deadline(read, this.readDeadlineMs);
     });
     this.refreshing = run.catch(() => {});
@@ -960,7 +963,24 @@ export class MinerController {
   /** A read that cannot answer in time is `unknown`, like one that fails; the drain still waits for it. */
   private read<T>(p: Promise<T>): Promise<T | 'unknown'> {
     this.inflightRead = Promise.all([this.inflightRead, p.catch(() => {})]).then(() => {});
+    this.countRead(p);
     return deadline(p, this.readDeadlineMs).catch(() => 'unknown' as const);
+  }
+
+  /** A read of the claim path holds hosted Stats until it settles, not until its deadline. */
+  private countRead(p: Promise<unknown>): void {
+    this.claimReads++;
+    this.sayReading();
+    const settled = () => {
+      this.claimReads--;
+      this.sayReading();
+    };
+    p.then(settled, settled);
+  }
+
+  /** The claim path reads the chain while a check runs and until the last read it started ends. */
+  private sayReading(): void {
+    this.store.set(claimReadsAtom, this.checking !== undefined || this.claimReads > 0);
   }
 
   /** One check of every recorded win, one check at a time; the drain of a switch waits for it. */
@@ -974,10 +994,12 @@ export class MinerController {
       .catch(() => {})
       .finally(() => {
         this.checking = undefined;
+        this.sayReading();
         if (!this.recheck) return;
         this.recheck = false;
         void this.check();
       });
+    this.sayReading();
     return this.checking;
   }
 
@@ -1233,11 +1255,18 @@ export class MinerController {
    * it; both phases settle to idle (recovered / paused / prover-dead).
    */
   async claimSettled(): Promise<void> {
-    const busy = () => {
-      const phase = this.store.get(minerAtom).phase;
-      return phase === 'claiming' || phase === 'recovering';
-    };
-    while (busy()) await new Promise((r) => setTimeout(r, 100));
+    while (this.claimPhase()) await new Promise((r) => setTimeout(r, 100));
+  }
+
+  /** A claim is being sent, or the rebuild after a lost race runs. */
+  private claimPhase(): boolean {
+    const { phase } = this.store.get(minerAtom);
+    return phase === 'claiming' || phase === 'recovering';
+  }
+
+  /** The claim path: a check, a claim or its rebuild, or a read of the rebuilt view until one succeeds. */
+  private onClaimPath(): boolean {
+    return this.checking !== undefined || this.claimPhase() || this.unread;
   }
 
   /** The switch is over (rebuilt or failed): the poll may read again. */

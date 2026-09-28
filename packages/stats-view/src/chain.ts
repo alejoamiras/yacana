@@ -2,8 +2,10 @@
 import { AztecAddress } from '@aztec/aztec.js/addresses';
 import {
   assertDeployment,
+  DEFAULT_LIMITS,
   expectedFromStrings,
   type Node,
+  type ReadLimits,
   type SlotLoader,
   type StorageLayout,
 } from '@yacana/miner-core/reader';
@@ -20,10 +22,15 @@ export interface Reader {
   minerLayout: StorageLayout;
   tokenLayout: StorageLayout;
   load: SlotLoader;
+  limits: ReadLimits;
 }
 
 /** The boot check through the host's client, then the layouts the reads need. */
-export async function openReader(connection: Connection, node: Node): Promise<Reader> {
+export async function openReader(
+  connection: Connection,
+  node: Node,
+  limits: ReadLimits = DEFAULT_LIMITS,
+): Promise<Reader> {
   const layout = await fetchLayouts();
   const expected = expectedDeployment();
   await assertDeployment(
@@ -46,5 +53,6 @@ export async function openReader(connection: Connection, node: Node): Promise<Re
     minerLayout: layout.miner,
     tokenLayout: layout.token,
     load: chunkLoader(),
+    limits,
   };
 }

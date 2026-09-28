@@ -1,6 +1,6 @@
 import { AztecAddress } from '@aztec/aztec.js/addresses';
 import { Fr } from '@aztec/aztec.js/fields';
-import { CHUNK, type EpochRow, type SlotTable } from '@yacana/miner-core/reader';
+import { CHUNK, DEFAULT_LIMITS, type EpochRow, type SlotTable } from '@yacana/miner-core/reader';
 import { describe, expect, test } from 'vitest';
 import type { Reader } from './chain';
 import { createFill, type FillDeps, type FillState, readTo } from './history-fill';
@@ -169,6 +169,7 @@ describe('the history fill', () => {
       node,
       miner: AztecAddress.fromBigIntUnsafe(1n),
       load,
+      limits: DEFAULT_LIMITS,
     } as unknown as Reader;
     const rows = await readWindowRows(r, 100, 147, 1000);
     expect(rows.map((x) => x.epoch)).toEqual(range(100, 148));

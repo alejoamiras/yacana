@@ -66,6 +66,11 @@ export interface Rules {
 
 export const bootAtom = atom<Boot>({ phase: 'preflight', rows: [] });
 export const minerAtom = atom<MinerState>(initial);
+/**
+ * The claim path's reads are out: a recorded win's check from its start, and every read a check, a claim
+ * or its rebuild started until that read settles, however long after its deadline.
+ */
+export const claimReadsAtom = atom(false);
 export const epochAtom = atom<EpochInfo | null>(null);
 export const rulesAtom = atom<Rules | null>(null);
 export const balanceAtom = atom<bigint | null>(null);
@@ -90,6 +95,15 @@ export const signInAtom = atom(false);
 /** Start mining opened the dialog: mining starts once the account is ready, then the intent is spent. */
 export const mineIntentAtom = atom(false);
 export const nowAtom = atom(Date.now());
+
+/** The node and the Ethereum RPC the guard admits, and whether a node switch is moving them. */
+export interface Endpoints {
+  nodeUrl: string;
+  ethRpcUrl: string;
+  switching: boolean;
+}
+/** Null until the session exists; a view reading beside the page's own follows it (hosted Stats). */
+export const endpointsAtom = atom<Endpoints | null>(null);
 
 /** The open account's crossings, newest first; empty until the bridge session lists them. */
 export const journalAtom = atom<Crossing[]>([]);

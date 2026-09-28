@@ -295,20 +295,26 @@ test('the bridge page: this version registered and live on the portal, its turns
   );
 });
 
-test('the header: Stats · Bridge · Verify · Mine ↗, the version by the logo, testnet said quietly', async ({
+test('the header: Mine · Wallet · Stats, the stats pages under it, the version by the logo, testnet said quietly', async ({
   page,
 }) => {
   const r = run();
   await mockNode(page, r);
   await page.goto(pageUrl(r, '', { node: MOCK_NODE_ORIGIN }));
-  const nav = page.getByRole('navigation', { name: 'stats' });
-  await expect(nav.getByRole('link')).toHaveText(['Stats', 'Bridge', 'Verify', 'Mine ↗']);
+  const nav = page.getByRole('navigation', { name: 'stats', exact: true });
+  await expect(nav.getByRole('link')).toHaveText(['Mine', 'Wallet', 'Stats']);
   await expect(nav.getByRole('link', { name: 'Stats' })).toHaveAttribute('aria-current', 'page');
+  // The miner's pages are plain links on this origin: mining lives there, in this tab once opened.
   await expect(page.getByTestId('nav-mine')).toHaveAttribute('href', '/mine/');
-  await expect(page.getByTestId('nav-mine')).toHaveAttribute('target', '_blank');
+  await expect(page.getByTestId('nav-wallet')).toHaveAttribute('href', '/mine/wallet');
+  await expect(page.getByTestId('nav-mine')).not.toHaveAttribute('target', '_blank');
+  const sub = page.getByRole('navigation', { name: 'Stats pages' });
+  await expect(sub.getByRole('link')).toHaveText(['Overview', 'Bridge', 'Verify']);
+  await expect(sub.getByRole('link', { name: 'Overview' })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByTestId('brand-version')).toHaveText(/^V\d+$/);
   await expect(page.locator('[data-slot=badge][data-variant=net]')).toHaveText('testnet');
-  await page.getByRole('link', { name: 'Bridge' }).click();
-  await expect(nav.getByRole('link', { name: 'Bridge' })).toHaveAttribute('aria-current', 'page');
+  await sub.getByRole('link', { name: 'Bridge' }).click();
+  await expect(sub.getByRole('link', { name: 'Bridge' })).toHaveAttribute('aria-current', 'page');
+  await expect(nav.getByRole('link', { name: 'Stats' })).toHaveAttribute('aria-current', 'page');
   await expect(page).toHaveTitle('Yacana · Bridge');
 });

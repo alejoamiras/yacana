@@ -20,7 +20,7 @@ import { createStore } from 'jotai';
 import type { Deployment, Fee } from '../src/chain.ts';
 import { MinerController, type Rebound } from '../src/controller.ts';
 import { winNote } from '../src/lib/claim-copy.ts';
-import { balanceAtom, claimsAtom, minerAtom } from '../src/state.ts';
+import { balanceAtom, claimReadsAtom, claimsAtom, minerAtom } from '../src/state.ts';
 import type { SentTx, TurnOwn } from '../src/wallet.ts';
 import type { FromWorker, ToWorker } from '../src/worker-protocol.ts';
 
@@ -245,6 +245,38 @@ describe('lost-race recovery', () => {
     controller.dispose();
   });
 
+  test('a rebuilt view’s reads past their deadline hold hosted reads until each ends, Start’s retry too', async () => {
+    const holds: (() => void)[] = [];
+    const balance = () =>
+      new Promise<bigint>((r) => {
+        holds.push(() => r(9n));
+      });
+    const controller = await boot(
+      fakeDeployment(5n, () => Promise.reject(REVERTED)),
+      async () => ({
+        deployment: fakeDeployment(balance, () => Promise.reject(BLOCKED)),
+        fee,
+        rebuilt: true,
+      }),
+      50,
+    );
+    worker.emit(winner);
+    await settle(() => store.get(minerAtom).notice?.kind === 'failed');
+    // The rebuild is over and gave its read up; the node still serves it.
+    expect(store.get(minerAtom).phase).toBe('idle');
+    expect(store.get(claimReadsAtom)).toBe(true);
+    holds[0]?.();
+    await settle(() => !store.get(claimReadsAtom));
+    // Start reads the rebuilt view again from idle; given up at its deadline, it holds them the same way.
+    controller.start();
+    await settle(() => holds.length === 2);
+    await sleep(100);
+    expect(store.get(claimReadsAtom)).toBe(true);
+    holds[1]?.();
+    await settle(() => !store.get(claimReadsAtom));
+    controller.dispose();
+  });
+
   test('a read that outlives its deadline writes nothing over a newer one', async () => {
     let calls = 0;
     // Read 0 (boot) answers at once; read 1 answers late with a stale balance; read 2 at once.
@@ -277,7 +309,7 @@ type Plan = { gate?: Promise<void> } & (
   | { receipts: Receipt[]; expiresAt?: number }
 );
 
-type Read = 'getTxReceipt' | 'findLeavesIndexes' | 'getPublicStorageAt';
+type Read = 'getTxReceipt' | 'findLeavesIndexes' | 'getPublicStorageAt' | 'balance';
 /** A read, or a read pinned to one tip. */
 type NodeRead = Read | `${Read}@${'latest' | 'checkpointed'}`;
 
@@ -474,7 +506,16 @@ class FakeNode {
           claim: (_epoch: bigint, nonce: bigint) => ({ send: () => this.submit(nonce) }),
         },
       },
-      token: { methods: { balance_of_private: () => sim(5n) } },
+      token: {
+        methods: {
+          balance_of_private: () => ({
+            simulate: async () => {
+              await this.gate('balance');
+              return { result: 5n };
+            },
+          }),
+        },
+      },
       lastSent: () => this.last,
       turn: <T>(op: () => Promise<T>, own?: TurnOwn) => {
         this.holder = own;
@@ -592,12 +633,16 @@ describe('claim recovery', () => {
     async () => {
       node.plans = [{ before: PRUNED }, { before: PRUNED }, { before: PRUNED }, { receipts: [{ block: 5 }] }];
       const c = await boot();
+      const checking: boolean[] = [];
+      store.sub(claimReadsAtom, () => checking.push(store.get(claimReadsAtom)));
       const id = win();
       await settle(() => textOf(id) === spent);
       expect(actionOf(id)).toBe('Retry');
       const reads = node.storageReads;
       await sleep(200);
       expect(node.storageReads).toBeGreaterThan(reads);
+      // Each check says so while it reads, and only then: hosted reads hold for it.
+      expect(checking.slice(0, 4)).toEqual([true, false, true, false]);
       expect([node.attempts, node.sent.length, mines(), phase()]).toEqual([3, 0, 1, 'idle']);
       expect(textOf(id)).toBe(spent);
       expect(await c.retryPendingClaim()).toBe(true);
@@ -1360,8 +1405,38 @@ describe('claim recovery', () => {
       });
       await sleep(150);
       expect(drained).toBe(false);
+      // The check gave the held read up; the node still serves it, so hosted reads still hold.
+      expect(store.get(claimReadsAtom)).toBe(true);
       release();
       await drain;
+      expect(store.get(claimReadsAtom)).toBe(false);
+      c.dispose();
+    },
+    T,
+  );
+
+  test(
+    'an adoption’s refresh past its deadline holds hosted reads until the balance read itself ends',
+    async () => {
+      node.plans = [{ receipts: [{ block: 5 }, 'pending'] }];
+      const c = await boot({ deadline: 50 });
+      const id = win();
+      await settle(() => textOf(id) === lostLine);
+      const release = node.hold('balance');
+      node.script(hashOf(1), [{ block: 6 }]);
+      await settle(() => node.waiting.has('balance'));
+      c.pause('switch');
+      let drained = false;
+      const drain = c.drain().then(() => {
+        drained = true;
+      });
+      await sleep(150);
+      // The adoption gave its refresh up and the check ended; the node still serves the balance read.
+      expect(drained).toBe(false);
+      expect(store.get(claimReadsAtom)).toBe(true);
+      release();
+      await drain;
+      expect(store.get(claimReadsAtom)).toBe(false);
       c.dispose();
     },
     T,

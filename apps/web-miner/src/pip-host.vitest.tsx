@@ -3,6 +3,7 @@ import { createStore, Provider } from 'jotai';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { PipHost } from './features/PipHost';
 import { openPip, type PipApi, pipWindowAtom } from './pip';
+import { pathFor, routeFromPath } from './routes';
 import { bootAtom, epochAtom, mineIntentAtom, signInAtom } from './state';
 
 // The strip is a canvas, tested in `ui`.
@@ -76,7 +77,9 @@ describe('PipHost', () => {
     expect(pip.document.body.children).toHaveLength(0);
   });
 
-  test("Start in the window is the cockpit's: signed out it asks for the account; off while one opens", async () => {
+  test("Start in the window is the cockpit's: signed out it asks for the account on Mine; off while one opens", async () => {
+    // Stats has no sign-in: the Start taken over it goes to Mine, where the dialog is.
+    history.pushState(null, '', pathFor('stats'));
     const store = createStore();
     store.set(bootAtom, { phase: 'signedOut' } as never);
     const onStart = vi.fn();
@@ -95,6 +98,7 @@ describe('PipHost', () => {
       true,
       1,
     ]);
+    expect(routeFromPath(location.pathname)).toBe('mine');
     act(() => store.set(bootAtom, { phase: 'opening', steps: [] }));
     expect(start.disabled).toBe(true);
   });

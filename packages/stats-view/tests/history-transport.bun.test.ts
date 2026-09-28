@@ -6,7 +6,7 @@ import { describe, expect, test } from 'bun:test';
 import { AztecAddress } from '@aztec/aztec.js/addresses';
 import { Fr } from '@aztec/aztec.js/fields';
 import { createAztecNodeClient } from '@aztec/aztec.js/node';
-import { CHUNK, type SlotTable } from '@yacana/miner-core/reader';
+import { CHUNK, DEFAULT_LIMITS, type SlotTable } from '@yacana/miner-core/reader';
 import type { Reader } from '../src/chain';
 import { readWindowRows } from '../src/read-window';
 
@@ -52,6 +52,7 @@ describe('a page of history on the wire', () => {
         node,
         miner: AztecAddress.fromBigIntUnsafe(1n),
         load: async () => table,
+        limits: DEFAULT_LIMITS,
       } as unknown as Reader;
       const rows = await readWindowRows(r, 100, 147, 1000);
       expect(rows).toHaveLength(49);

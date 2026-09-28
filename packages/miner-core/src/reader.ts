@@ -127,6 +127,7 @@ export type SlotLoader = (chunk: number) => Promise<SlotTable>;
 export interface ReadLimits {
   /** Reads in flight at once. */
   concurrency: number;
+  /** Each read's deadline from when it is asked for; `Infinity` for none, where the client bounds its requests. */
   timeoutMs: number;
   /** Epochs per `readEpochs` call. */
   maxEpochs: number;
@@ -182,11 +183,14 @@ export function slotTableFromJson(text: string, chunk: number): SlotTable {
   return { first: j.first, epochs: hexes(j.epochs), claims: hexes(j.claims) };
 }
 
+// A timer armed with `Infinity` fires at once: an infinite deadline arms none.
 const withTimeout = <T>(p: Promise<T>, ms: number, what: string): Promise<T> =>
-  new Promise((resolve, reject) => {
-    const t = setTimeout(() => reject(new Error(`${what}: no answer in ${ms / 1000} s`)), ms);
-    p.then(resolve, reject).finally(() => clearTimeout(t));
-  });
+  Number.isFinite(ms)
+    ? new Promise((resolve, reject) => {
+        const t = setTimeout(() => reject(new Error(`${what}: no answer in ${ms / 1000} s`)), ms);
+        p.then(resolve, reject).finally(() => clearTimeout(t));
+      })
+    : p;
 
 /**
  * `fn` over `items`, at most `concurrency` calls of it in flight, results in order. The first

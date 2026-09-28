@@ -18,4 +18,5 @@
 /e2e/replay/.run.json
 /e2e/replay/.dist/
 /e2e/replay/.vite.log
+/e2e/replay/.modules/
 /playwright-report/

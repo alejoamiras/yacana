@@ -2,7 +2,7 @@
 // and the clock. It never points the fetch guard anywhere: the host sets the endpoints and hands it the
 // clients. While stopped it arms nothing and starts nothing (a batch of reads already out runs to its end);
 // after dispose() nothing it started publishes or persists.
-import type { Node } from '@yacana/miner-core/reader';
+import type { Node, ReadLimits } from '@yacana/miner-core/reader';
 import { type Connection, expectedDeployment, firstEpoch } from '@yacana/web-kit/browser/connection';
 import { endpointFingerprint, quietNodeReads } from '@yacana/web-kit/browser/node-guard';
 import { nodeHealth, waitTurn } from '@yacana/web-kit/browser/node-health';
@@ -46,6 +46,8 @@ export interface StatsRuntimeOptions {
   onFresh?: () => void;
   /** While true no read starts; one asked for meanwhile waits for it to clear. */
   yieldTo?: () => boolean;
+  /** Every node read's limits; the reader's own when absent. */
+  limits?: ReadLimits;
 }
 
 export interface StatsRuntime {
@@ -61,7 +63,7 @@ export interface StatsRuntime {
 
 /** What an instance reads through; the spec hands it fakes. */
 export interface StatsSources {
-  open: (connection: Connection, node: Node) => Promise<Reader>;
+  open: (connection: Connection, node: Node, limits?: ReadLimits) => Promise<Reader>;
   reads: (r: Reader) => BeatReads;
   bridge: (eth: PublicClient) => (() => Promise<BridgeSnapshot>) | null;
 }
@@ -84,6 +86,19 @@ const YIELD_RECHECK_MS = 1000;
 const SLOW_MS = 300;
 
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
+/** Resolves after `ms`, or at once when `signal` aborts; nothing stays armed after either. */
+const sleep = (ms: number, signal: AbortSignal): Promise<void> =>
+  new Promise((resolve) => {
+    if (signal.aborted) return resolve();
+    const done = () => {
+      clearTimeout(timer);
+      signal.removeEventListener('abort', done);
+      resolve();
+    };
+    const timer = setTimeout(done, ms);
+    signal.addEventListener('abort', done);
+  });
 
 /** The browser's storage, or nothing where it throws (a locked-down context): the cache is optional. */
 const storage = (): StorageLike | null => {
@@ -351,18 +366,19 @@ class Instance implements StatsRuntime {
 
   /**
    * Each step goes on only while the instance is started and current; a start() after a stop picks the
-   * boot up again. A boot that fails because the node is throttled or silent waits for its turn and retries.
+   * boot up again. A boot that fails tries again: after the node's turn when it is throttled or silent, else
+   * a poll later — a quiet read's failure leaves the node's health ok.
    */
   private async bootSteps(): Promise<void> {
     this.key ??= await this.cacheKeyFor();
     if (!(await this.free())) return;
     try {
       if (!this.reader) {
-        this.put(statusAtom, { phase: 'loading', step: 'checking the deployment' });
-        this.reader = await this.sources.open(this.o.connection, this.o.node);
+        this.step('checking the deployment');
+        this.reader = await this.sources.open(this.o.connection, this.o.node, this.o.limits);
         if (!(await this.free())) return;
       }
-      this.put(statusAtom, { phase: 'loading', step: 'reading the chain' });
+      this.step('reading the chain');
       const fixed = await bootBeats(this.sources.reads(this.reader), this.publish, firstEpoch());
       this.booted = true;
       this.put(statusAtom, { phase: 'ready' });
@@ -371,10 +387,15 @@ class Instance implements StatsRuntime {
       this.cadence(false);
     } catch (e) {
       this.put(statusAtom, { phase: 'error', message: message(e) });
-      if (nodeHealth().transport.kind === 'ok') return;
-      await waitTurn(this.running.signal);
+      if (nodeHealth().transport.kind === 'ok') await sleep(POLL_MS, this.running.signal);
+      else await waitTurn(this.running.signal);
       if (this.live()) return this.bootSteps();
     }
+  }
+
+  /** A boot step shows unless an attempt's error does: that one stays until an attempt succeeds. */
+  private step(step: string): void {
+    if (this.o.store.get(statusAtom).phase !== 'error') this.put(statusAtom, { phase: 'loading', step });
   }
 
   private async readBridge(): Promise<void> {

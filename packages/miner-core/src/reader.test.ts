@@ -138,6 +138,8 @@ describe('readEpochs', () => {
     await expect(
       readEpochs(slow, miner, { from: 0, to: 1 }, load, { limits: { ...DEFAULT_LIMITS, timeoutMs: 10 } }),
     ).rejects.toThrow(/no answer/);
+    const unbounded = { ...DEFAULT_LIMITS, timeoutMs: Number.POSITIVE_INFINITY };
+    expect(await readEpochs(slow, miner, { from: 0, to: 1 }, load, { limits: unbounded })).toHaveLength(2);
     expect(await readGenesis(node, miner, layout)).toEqual({ target: 0n, seed: 0n, launchAt: 0 });
     expect(await epochExists(node, miner, 0, load)).toBe(true);
     expect(assertTimestamp('t', 8_640_000_000_000n)).toBe(8_640_000_000_000n);

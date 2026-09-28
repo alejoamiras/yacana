@@ -188,6 +188,29 @@ describe('node guard', () => {
     expect(seen).toEqual([true, false, true]);
   });
 
+  test('the quiet mark makes its own request quiet, not one beside it, on the node and the RPC alike', async () => {
+    const node: boolean[] = [];
+    const rpc: boolean[] = [];
+    const offNode = guard.onNodeResponse((o) => node.push(o.quiet));
+    const offRpc = guard.onEthRpcResponse((o) => rpc.push(o.quiet));
+    const RPC = 'https://rpc.example/';
+    const marked = { [guard.QUIET]: true } as RequestInit;
+    guard.setEthRpcEndpoint(RPC, 1_000);
+    try {
+      await Promise.all(
+        [fetch(NODE, marked), fetch(NODE), fetch(RPC, marked), fetch(RPC)].map(async (r) => (await r).text()),
+      );
+    } finally {
+      offNode();
+      offRpc();
+      guard.setEthRpcEndpoint(null, 1_000);
+    }
+    expect([node.sort(), rpc.sort()]).toEqual([
+      [false, true],
+      [false, true],
+    ]);
+  });
+
   test('outcomes name the status once the body landed, a timeout and a network failure', async () => {
     const seen: (number | string)[] = [];
     const off = guard.onNodeResponse((o) => seen.push(o.status));

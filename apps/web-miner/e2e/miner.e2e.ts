@@ -167,8 +167,10 @@ test('first visit creates an account, mines at the easy target, claims and shows
   // ten seconds after the last one.
   await expect(page.getByTestId('mint-line')).toHaveText('', { timeout: 15_000 });
   expect(await tileHeight()).toBe(balanceHeight);
-  // The nav reaches the stats app on the same origin.
-  await expect(page.getByTestId('nav-stats')).toHaveAttribute('href', /\/stats\/$/);
+  // The bar's Stats is this app's own page: its route under the app's base, never the new tab an external
+  // Stats opens.
+  await expect(page.getByTestId('nav-stats')).toHaveAttribute('href', /\/stats$/);
+  await expect(page.getByTestId('nav-stats')).not.toHaveAttribute('target');
   // At this easy target more than one claim can have minted before Stop landed: what the first visit
   // holds is whatever it claimed, and the second visit must add exactly one more.
   const minted = Number(await page.getByTestId('claims').textContent());

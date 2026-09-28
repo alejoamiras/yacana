@@ -5,7 +5,13 @@
 import { createPublicClient, type Hex, http } from 'viem';
 import type { SiteMode } from '../config.ts';
 import { parseNodeUrl } from './node.ts';
-import { allowCandidate, type NodeRequestOutcome, onEthRpcResponse } from './node-guard.ts';
+import {
+  allowCandidate,
+  type NodeRequestOutcome,
+  onEthRpcResponse,
+  QUIET,
+  type QuietInit,
+} from './node-guard.ts';
 
 /** The same rule as a node URL: https, a local http only outside production, no credentials, no fragment. */
 export const parseEthRpcUrl = (text: string, mode: SiteMode): URL => parseNodeUrl(text, mode);
@@ -18,6 +24,22 @@ export interface EthRpcProbe {
 
 /** A client that fails in one deadline: viem's default retries a failed request three times. */
 export const ethRpcClient = (url: string) => createPublicClient({ transport: http(url, { retryCount: 0 }) });
+
+/** For optional reads: every request quiet (RPC health never hears of it), given up after `timeoutMs`. */
+export const quietEthRpcClient = (url: string, timeoutMs: number) =>
+  createPublicClient({
+    transport: http(url, {
+      retryCount: 0,
+      timeout: timeoutMs,
+      fetchOptions: { [QUIET]: true } as QuietInit,
+      // viem's own timeout ends when the headers arrive: this signal also bounds the body.
+      fetchFn: (input, init) =>
+        fetch(input, {
+          ...init,
+          signal: AbortSignal.any([AbortSignal.timeout(timeoutMs), ...(init?.signal ? [init.signal] : [])]),
+        }),
+    }),
+  });
 
 /**
  * Whether `url` serves the portal's chain and knows the portal, through a lease on the guard so a
@@ -89,7 +111,9 @@ export function nextEthRpcHealth(h: EthRpcHealth, o: NodeRequestOutcome, now: nu
 export function startEthRpcHealth(): void {
   if (listening) return;
   listening = true;
-  onEthRpcResponse((o) => set(nextEthRpcHealth(health, o, Date.now())));
+  onEthRpcResponse((o) => {
+    if (!o.quiet) set(nextEthRpcHealth(health, o, Date.now()));
+  });
 }
 
 /** A new RPC starts with no history. */
