@@ -14,6 +14,25 @@ const lottery = PARAMS.REVEAL_WINDOW_SECONDS > 0n;
 const MINUTES = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
 const minutesWord = MINUTES[epochMinutes] ?? String(epochMinutes);
 
+const WHY_STEPS = [
+  { n: 'earn', title: 'Miners want more wins', body: 'More proofs a minute, more draws.' },
+  {
+    n: 'optimize',
+    title: 'So they prove faster',
+    body: 'Native provers like Presto, leaner WASM, better hardware.',
+  },
+  {
+    n: 'upstream',
+    title: 'Barretenberg gets faster',
+    body: 'Speedups that land upstream reach every Aztec prover.',
+  },
+  {
+    n: 'grow',
+    title: 'Aztec gets cheaper to use',
+    body: 'Quicker private transactions draw more people, and more miners.',
+  },
+] as const;
+
 export const REPO = 'https://github.com/alejoamiras/yacana';
 export const LINKS = {
   github: REPO,
@@ -24,7 +43,7 @@ export const LINKS = {
 export const commitUrl = (sha: string): string => `${REPO}/commit/${sha}`;
 
 /** Section ids, in page order; the bar's anchors and the tests' expectations. */
-export const SECTIONS = ['hero', 'money', 'chain', 'how', 'verify', 'ask'] as const;
+export const SECTIONS = ['hero', 'money', 'chain', 'how', 'why', 'verify', 'ask'] as const;
 export type SectionId = (typeof SECTIONS)[number];
 
 export const copy = {
@@ -33,16 +52,16 @@ export const copy = {
       { id: 'money', label: 'Money' },
       { id: 'chain', label: 'Chain' },
       { id: 'how', label: 'How' },
+      { id: 'why', label: 'Why' },
       { id: 'verify', label: 'Verify' },
     ] satisfies { id: SectionId; label: string }[],
-    mine: 'Mine on testnet',
+    mine: 'Open the miner',
     stats: 'Stats',
   },
   hero: {
     headline: 'Bitcoin made money need no bank. YACA makes it need no witness.',
-    subhead: 'Proof-of-work money on Aztec, mined in your browser: earned by anyone, private to everyone.',
-    reassurance:
-      'An Aztec-standards token: private notes, private transfers, no gas on testnet. Mining needs a desktop browser; 20 MB once.',
+    subhead: 'Proof-of-work money on Aztec, mined in your browser: earned by anyone, private from everyone.',
+    reassurance: 'A standard Aztec token: private notes, private transfers. Mining needs a desktop browser.',
     mobile: 'Mining needs a desktop browser. Send yourself the link, or watch the network from here.',
     share: 'Send me the link',
     copied: 'link copied',
@@ -53,15 +72,15 @@ export const copy = {
     noHistory: 'no closed epoch yet',
     unlaunched: 'epoch 0 has not opened yet',
     mintedSub: 'by browsers',
-    barSub: 'what a proof has to clear',
-    caption: 'the bar over the last six epochs · a dot per accepted claim, spread across its epoch',
-    captionShort: 'the bar over every epoch so far · a dot per accepted claim, spread across its epoch',
-    rule: `${PARAMS.N} claims close an epoch, then the bar moves`,
+    barSub: 'how hard a win is now',
+    caption: 'difficulty over the last six epochs · a dot per win, spread across its epoch',
+    captionShort: 'difficulty over every epoch so far · a dot per win, spread across its epoch',
+    rule: `${PARAMS.N} wins close an epoch, then difficulty adjusts`,
     allStats: 'all stats →',
   },
   money: {
     heading: 'Nobody prints it. Nobody sees who has it.',
-    lede: `${reward} ${symbol} per accepted proof, ${PARAMS.N} claims every ${minutesWord} minutes, forever. No premine, no admin key, no special hardware.`,
+    lede: `${reward} ${symbol} per winning proof, ${PARAMS.N} wins every ${minutesWord} minutes, forever. No premine, no admin key, no special hardware.`,
     table: {
       columns: ['Bitcoin', 'Zcash', symbol],
       rows: [
@@ -91,7 +110,7 @@ export const copy = {
   },
   chain: {
     heading: 'Public: that a coin was mined. Private: the notes and the transfers.',
-    body: 'A claim writes a nullifier, a note hash and a counter. Not the recipient, not the secret, not how many proofs it took. A public withdraw shows its amount and address, which is why it is a choice.',
+    body: 'Anyone can see that a coin was mined. Nobody can see who mined it, who holds it or how many proofs it took. On chain, a claim is a nullifier, a note hash and a counter. A public withdraw shows its amount and address, which is why it is a choice.',
     ledger: {
       public: 'public · one claim, as recorded',
       nullifier: 'a nullifier',
@@ -107,7 +126,7 @@ export const copy = {
   },
   how: {
     label: 'how it works',
-    heading: 'Prove. Score. Claim.',
+    heading: 'Prove. Hash. Claim.',
     steps: [
       {
         n: 'prove',
@@ -115,9 +134,9 @@ export const copy = {
         body: 'A 150k-gate Noir circuit, proved by Barretenberg in WASM, a few seconds each. The work is the proof itself; there is nothing to buy and nothing to install.',
       },
       {
-        n: 'score',
-        title: 'The proof gets a score against the bar',
-        body: `Poseidon2 over the whole proof. The bar moves every epoch, by at most ×4, so that ${PARAMS.N} claims take about ${epochMinutes} minutes.`,
+        n: 'hash',
+        title: 'Its hash has to beat the difficulty',
+        body: `Poseidon2 hashes the whole proof into a ticket. About one ticket in D beats difficulty D, and the difficulty moves every epoch, by at most 4×, so that ${PARAMS.N} wins take about ${epochMinutes} minutes.`,
       },
       {
         n: 'claim',
@@ -125,6 +144,15 @@ export const copy = {
         body: `The claim checks the proof inside a private Aztec function and mints ${reward} ${symbol} to an account only you hold. A nullifier makes sure it can be claimed once.`,
       },
     ],
+  },
+  why: {
+    label: 'why proving',
+    heading: 'The race to mine is a race to make Aztec fast.',
+    lede: 'Mining runs Barretenberg, the prover behind every Aztec transaction. Miners earn more by proving faster, and every speedup that lands in Barretenberg makes Aztec faster and cheaper for everyone.',
+    steps: WHY_STEPS,
+    core: `The difficulty keeps issuance at ${PARAMS.N} wins every ${epochMinutes} min, however fast proving gets.`,
+    /** The ring as a screen reader hears it: every step whole, in ring order. */
+    loop: `A loop in four steps. ${WHY_STEPS.map((s, i) => `${i + 1}, ${s.n}: ${s.title}. ${s.body}`).join(' ')} Then back to ${WHY_STEPS[0].n}.`,
   },
   verify: {
     heading: 'See for yourself.',
@@ -187,7 +215,7 @@ export const copy = {
     questions: [
       {
         q: 'How is it mined?',
-        a: `Your browser proves a fixed circuit per nonce; a ticket below the target wins, and the claim is a private transaction that mints ${reward} ${symbol}. ${PARAMS.N} claims close an epoch and the bar moves. No address on the claim, no sponsor's view of who won.`,
+        a: `Your browser proves a fixed circuit per nonce; a proof whose hash beats the difficulty wins, and the claim is a private transaction that mints ${reward} ${symbol}. ${PARAMS.N} wins close an epoch and difficulty adjusts. No address on the claim, no sponsor's view of who won.`,
       },
       {
         q: 'How does the everyday bridge work?',

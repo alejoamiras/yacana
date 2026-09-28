@@ -30,7 +30,7 @@ import { PipHost } from './features/PipHost';
 import { PreflightTile } from './features/PreflightTile';
 import { PrestoBanner } from './features/PrestoBanner';
 import { SignInDialog } from './features/SignInDialog';
-import { useHotkeys, usePauses, useResumeOnOpen } from './features/use-page-behaviour';
+import { useHotkeys, useIntroEnds, usePauses, useResumeOnOpen } from './features/use-page-behaviour';
 import { pillStatus } from './lib/status';
 import { minerTabs, oldTabs } from './lib/tabs';
 import { prestoAtom } from './presto';
@@ -153,6 +153,7 @@ export function App({ connection, session }: { connection: Connection; session: 
   useHotkeys(controller, onStart, session.consent, !dialogShowing);
   usePauses(controller, settings);
   useResumeOnOpen(onStart);
+  useIntroEnds();
   if (!isDesktop(window)) return <DesktopOnly />;
   const open = boot.phase === 'ready';
   const chain = open || boot.phase === 'signedOut' || boot.phase === 'opening';

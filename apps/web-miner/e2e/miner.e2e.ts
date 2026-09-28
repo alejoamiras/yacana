@@ -66,6 +66,8 @@ test('first visit creates an account, mines at the easy target, claims and shows
   const r = run();
   const memory = rssWatcher();
   await bootPage(page, pageUrl(r));
+  // The first visit's strip has its own title; the frame below is the cockpit's own.
+  await page.getByTestId('intro-dismiss').click();
   expect(await page.evaluate(() => crossOriginIsolated)).toBe(true);
   await expect(page.getByTestId('balance')).toHaveText('0');
   await expect(page.getByTestId('balance').locator('xpath=..')).toHaveText(/^0\s*tYACA$/);
@@ -195,6 +197,22 @@ test('first visit creates an account, mines at the easy target, claims and shows
   expect(memory.peakMiB()).toBeGreaterThan(0);
 });
 
+test('the first visit’s strip: shown to a new visitor, put away by its ×, still away after a reload', async ({
+  page,
+}) => {
+  page.on('pageerror', (e) => console.log(`[page error] ${e.message}`));
+  await page.goto(pageUrl(run()));
+  await expect(page.getByTestId('cockpit')).toBeVisible({ timeout: BOOT_MS });
+  const strip = page.getByTestId('intro');
+  await expect(strip).toContainText('Yacana is private money, mined by proving.');
+  await expect(strip.getByRole('link', { name: /How it works/ })).toHaveAttribute('target', '_blank');
+  await page.getByTestId('intro-dismiss').click();
+  await expect(strip).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByTestId('epoch')).not.toBeEmpty({ timeout: BOOT_MS });
+  await expect(strip).toHaveCount(0);
+});
+
 test('a poisoned CRS cache is purged before proving', async ({ page }) => {
   const r = run();
   // bb.js prefers its idb-keyval cache (32 MiB of uncompressed G1 points) over any download; fill it
@@ -224,8 +242,11 @@ test('three power changes keep mining, the ledger grows, memory stays bounded', 
   // The hard deployment: no win, so no claim proof (≈ 2 GB on its own) muddies the measurement.
   await bootPage(page, pageUrl(r, { miner: r.hardMiner, token: r.hardToken }));
   const memory = rssWatcher();
+  // The first visit's strip stays through the account's opening and leaves once mining runs.
+  await expect(page.getByTestId('intro')).toBeVisible();
   await page.getByTestId('start').click();
   await expect(page.getByTestId('phase')).toHaveText('mining');
+  await expect(page.getByTestId('intro')).toHaveCount(0);
   const lines = () => page.getByTestId('ledger').locator('[data-slot=proof-line]');
   await expect(lines()).not.toHaveCount(0, { timeout: 3 * 60_000 });
   const baseline = await settled(page, memory);

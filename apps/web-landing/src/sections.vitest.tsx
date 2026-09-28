@@ -9,6 +9,7 @@ import type { Live } from './live';
 import { BarChart, shown } from './sections/BarChart';
 import { LedgerPublic } from './sections/Chain';
 import { countdown, launchPhase } from './sections/Launch';
+import { Why } from './sections/Why';
 
 const recorded = JSON.parse(
   (await import('../../../deployments/testnet.example-claim.json?raw')).default,
@@ -58,7 +59,7 @@ const ready = { phase: 'ready' as const, live, unreachable: false };
 const loading = { phase: 'loading' as const };
 
 describe('the landing', () => {
-  test('the six sections in order, each with its heading; the hero tile reads the chain', () => {
+  test('the seven sections in order, each with its heading; the hero tile reads the chain', () => {
     render(<App live={ready} launch={loading} />);
     const ids = Array.from(document.querySelectorAll('main > section')).map((s) => s.id);
     expect(ids).toEqual([...SECTIONS]);
@@ -67,6 +68,7 @@ describe('the landing', () => {
       copy.money.heading,
       copy.chain.heading,
       copy.how.heading,
+      copy.why.heading,
       copy.verify.heading,
       copy.ask.heading,
     ])
@@ -78,7 +80,7 @@ describe('the landing', () => {
       'https://testnet.aztecscan.xyz/blocks/10',
     );
     expect(screen.getByTestId('live-minted').textContent).toBe('16');
-    expect(screen.getByText('4 claims · by browsers')).toBeTruthy();
+    expect(screen.getByText('4 wins · by browsers')).toBeTruthy();
     expect(screen.getByTestId('live-open').textContent).toBe('1');
     expect(screen.getByTestId('live-epoch').textContent).toBe('1 of 4');
     expect(screen.getByText('open 1 min · expected 5 min')).toBeTruthy();
@@ -114,7 +116,7 @@ describe('the landing', () => {
 });
 
 describe('the hero tile and the ledger', () => {
-  test('the bar chart: a step per epoch, a dot per accepted claim spread across it, the open epoch named', () => {
+  test('the bar chart: a step per epoch, a dot per win spread across it, the open epoch named', () => {
     const { container } = render(<BarChart rows={live.rows} open={1} />);
     expect(container.querySelectorAll('circle')).toHaveLength(5);
     const xs = Array.from(container.querySelectorAll('circle[data-claim="0"]')).map((c) =>
@@ -184,6 +186,35 @@ describe('the hero tile and the ledger', () => {
     expect(screen.queryByTestId('hero-live')).toBeNull();
     expect(screen.getByTestId('share')).toBeTruthy();
     mobile = false;
+  });
+});
+
+describe('the flywheel', () => {
+  test('the ring from md up, its steps in ring order and named so in its label; below md the same steps as a list', () => {
+    render(<Why />);
+    const order = copy.why.steps.map((s) => s.n);
+    expect(order).toEqual(['earn', 'optimize', 'upstream', 'grow']);
+    const ring = screen.getByTestId('why-loop');
+    expect(ring.getAttribute('role')).toBe('img');
+    expect([...(ring.parentElement?.classList ?? [])]).toEqual(
+      expect.arrayContaining(['hidden', 'md:block']),
+    );
+    // The sentence at the centre is read as text, beside the image rather than inside it.
+    expect(ring.textContent).not.toContain(copy.why.core);
+    expect(ring.parentElement?.textContent).toContain(copy.why.core);
+    expect(Array.from(ring.querySelectorAll('[data-step]'), (e) => e.getAttribute('data-step'))).toEqual(
+      order,
+    );
+    // The label carries every step whole, in ring order: the list that reads them is hidden from md up.
+    const label = ring.getAttribute('aria-label') ?? '';
+    const at = copy.why.steps.flatMap((s) => [s.n, s.title, s.body]).map((t) => label.indexOf(t));
+    expect(at.every((i, k) => i >= 0 && (k === 0 || i > (at[k - 1] as number)))).toBe(true);
+    const list = screen.getByTestId('why-steps');
+    expect(list.className).toContain('md:hidden');
+    expect(Array.from(list.querySelectorAll('li h3'), (h) => h.textContent)).toEqual(
+      copy.why.steps.map((s) => s.title),
+    );
+    expect(screen.queryAllByTestId('rule-diagram')).toHaveLength(0);
   });
 });
 

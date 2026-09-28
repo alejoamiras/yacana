@@ -55,6 +55,10 @@ export const faq = {
       questions: [
         linked('How is it mined?'),
         {
+          q: 'Why is the work a proof?',
+          a: 'Because the race to prove faster is worth having. Mining runs Barretenberg, the prover behind every Aztec transaction. Miners earn more by proving faster, and speedups that land in Barretenberg make private transactions faster and cheaper for everyone. The difficulty adjusts, so faster proving never mints more than the schedule.',
+        },
+        {
           q: 'What does the chain see?',
           a: 'A claim writes a nullifier, a note hash and a counter. Not who claimed, not how much they hold, not how many proofs it took.',
         },

@@ -27,6 +27,7 @@ export interface ProofMeter {
 export const INVENTORY: Readonly<Record<string, Readonly<Record<string, number>>>> = {
   'miner.e2e.ts': {
     'first visit creates an account, mines at the easy target, claims and shows the balance': 2,
+    'the first visit’s strip: shown to a new visitor, put away by its ×, still away after a reload': 0,
     'a poisoned CRS cache is purged before proving': 1,
     'three power changes keep mining, the ledger grows, memory stays bounded': 0,
     'a prover crash surfaces as an error and mining restarts on the next start': 0,

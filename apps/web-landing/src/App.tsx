@@ -20,6 +20,7 @@ import { Hero } from './sections/Hero';
 import { Launch } from './sections/Launch';
 import { Money } from './sections/Money';
 import { Verify } from './sections/Verify';
+import { Why } from './sections/Why';
 import { isFaqPath, type LaunchStatus, type LiveStatus, launchMode, migrationRecord } from './state';
 
 /** The one line every page carries while a migration is announced, the FAQ one link away. */
@@ -91,6 +92,9 @@ export function App({
             </TileBoundary>
             <TileBoundary name="how">
               <How />
+            </TileBoundary>
+            <TileBoundary name="why">
+              <Why />
             </TileBoundary>
             <TileBoundary name="verify">
               <Verify />

@@ -1,9 +1,8 @@
-// What the page does on its own: keyboard, the battery and hidden-tab pauses, resume on open.
-
 import { clampThreads } from '@yacana/ui';
 import { useAtomValue, useStore } from 'jotai';
 import { useEffect } from 'react';
 import type { MinerController } from '../controller';
+import { INTRO_KEY, introAtom, parseIntro } from '../intro';
 import { offersStop } from '../lib/reducer';
 import { lnaAtom, prestoAtom, prestoDecides } from '../presto';
 import type { Consent } from '../presto-consent';
@@ -105,6 +104,26 @@ export function usePauses(controller: () => MinerController | undefined, setting
     });
     return () => battery?.removeEventListener('chargingchange', apply);
   }, [controller, settings.pauseOnBattery]);
+}
+
+/** Mining that runs puts the first visit's strip away for good, whichever page it starts on; so does another tab. */
+export function useIntroEnds() {
+  const store = useStore();
+  useEffect(() => {
+    const end = () => {
+      if (store.get(minerAtom).phase === 'mining' && store.get(introAtom)) store.set(introAtom);
+    };
+    const elsewhere = (e: StorageEvent) => {
+      if (e.key === INTRO_KEY && parseIntro(e.newValue) && store.get(introAtom)) store.set(introAtom);
+    };
+    end();
+    const off = store.sub(minerAtom, end);
+    window.addEventListener('storage', elsewhere);
+    return () => {
+      off();
+      window.removeEventListener('storage', elsewhere);
+    };
+  }, [store]);
 }
 
 /** After the first Start the page may resume by itself; never on a first visit. The session's Start, so its refusals hold. */

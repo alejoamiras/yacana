@@ -6,14 +6,16 @@ import { Mine } from './routes/Mine';
 import { bootAtom, claimsAtom, epochAtom, minerAtom, nowAtom, rulesAtom } from './state';
 
 afterEach(cleanup);
-// jsdom has no matchMedia; the score loop's reduced-motion hook reads it.
-beforeEach(() =>
+// jsdom has no matchMedia; the score loop's reduced-motion hook reads it. A returning visitor: the first
+// visit's strip is intro-strip.vitest.tsx's.
+beforeEach(() => {
   vi.stubGlobal('matchMedia', () => ({
     matches: false,
     addEventListener: () => {},
     removeEventListener: () => {},
-  })),
-);
+  }));
+  localStorage.setItem('yacana.intro', JSON.stringify({ dismissed: true }));
+});
 
 // The M1 frame's placement, as classes: the computed grid is asserted in the browser (miner.e2e.ts).
 describe('the cockpit grid', () => {
