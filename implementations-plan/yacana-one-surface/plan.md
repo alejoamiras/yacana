@@ -568,7 +568,7 @@ the two-line footer fits 360 px with no horizontal overflow (measured in the win
 
 ### Arc 2 — claims that recover by themselves
 
-**P4 · Classify, record, reconcile, schedule.** §3.2. Gate: fast layers; `claim-failure.test.ts` with the owner's two
+**P4 · Classify, record, reconcile, schedule. ✓** §3.2. Gate: fast layers; `claim-failure.test.ts` with the owner's two
 messages and the captured duplicate-nullifier refusal; `reducer.test.ts` for the schedule (attempts, gaps, deferral on
 pause and switch, the three-tries line, Stop while an attempt is scheduled, `adopted` beside a newer claim leaving its
 `phase`, `job` and `claim` alone); `tests/recovery.bun.test.ts` on a fake node with SDK-shaped receipts and block

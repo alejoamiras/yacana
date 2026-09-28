@@ -72,8 +72,9 @@ describe('the replay lane took exactly the tests it was given', () => {
       expect(replayed, title).toContain(title);
     }
     // Every original test is somewhere, exactly once; the canary, the bridge shard's test, the node's
-    // behind case, the refused node, Presto cut mid-proof and the three consent titles are the additions.
-    expect(sharded.length + MOVED_TO_REPLAY.length).toBe(19 + 1 + 1 + 2 + 1 + 3);
+    // behind case, the refused node, Presto cut mid-proof, the three consent titles and the three claim
+    // recoveries are the additions.
+    expect(sharded.length + MOVED_TO_REPLAY.length).toBe(19 + 1 + 1 + 2 + 1 + 3 + 3);
     expect(new Set([...sharded, ...replayed]).size).toBe(sharded.length + replayed.length);
   });
 });

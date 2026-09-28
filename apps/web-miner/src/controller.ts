@@ -2,7 +2,7 @@
 // chain-view reset after a lost race.
 import type { AztecAddress } from '@aztec/aztec.js/addresses';
 import { Fr } from '@aztec/aztec.js/fields';
-import { type TxEffect, TxHash } from '@aztec/stdlib/tx';
+import type { TxEffect } from '@aztec/stdlib/tx';
 import {
   claimFailureMessage,
   classifyClaimFailure,
@@ -24,8 +24,9 @@ import {
 import type { createStore } from 'jotai';
 import { type Deployment, type Fee, readBalance, readEpoch, sendClaim, sendRoll } from './chain';
 import { chime } from './chime';
+import { absentAt, canMint, carrier, fate, type Landed, mintedBy, tipAt } from './claim-check';
 import { amount } from './lib/format';
-import { type Command, type Event, type MinerState, reduce } from './lib/reducer';
+import { type Command, type Event, reduce, type Verdict } from './lib/reducer';
 import {
   type ConsentHooks,
   type PrestoEndpoint,
@@ -88,7 +89,53 @@ export interface MinerOptions {
   /** Rebuilds the key's chain view (wallet, account, deployment) after a lost race. */
   recover?: () => Promise<Rebound>;
   readDeadlineMs?: number;
+  /** How long a recovery wait of `ms` really lasts: tests shorten it. */
+  recoveryDelay?: (ms: number) => number;
 }
+
+type Ticket = {
+  epoch: bigint;
+  nonce: bigint;
+  out: string;
+  proofFields: string[];
+  digest: string;
+  secretId: number;
+  prover: ProverKind;
+};
+
+/**
+ * One send of a claim: past `expiresAt` (unix s, chain time) no block can take it. Null when the wallet
+ * did not see it leave: live while pending, watched until it lands or reverts.
+ */
+interface Submission {
+  hash: string;
+  expiresAt: number | null;
+}
+
+/**
+ * A win that failed to claim, kept apart from its secret (`secrets`): `ticket` while it can still mint,
+ * null once its sends are only watched. Sends are append-only: no later failure erases one.
+ */
+interface WinRecord {
+  ticket: Ticket | null;
+  lineId: number | null;
+  epoch: bigint;
+  digest: string;
+  prover: ProverKind;
+  /** Siloed, as the nullifier tree holds it. */
+  nullifier: string;
+  attempts: number;
+  submissions: Submission[];
+  /** Decided at the checkpointed tip; a send still live is watched for a late revert. */
+  notMinted?: true;
+}
+
+type Landing =
+  | { kind: 'minted'; landed: Landed }
+  | { kind: 'reverted'; hash: string }
+  | { kind: 'open'; live: boolean; unknown: boolean };
+
+const REWARD = `${amount(PARAMS.REWARD, PARAMS.DECIMALS)} ${PARAMS.TOKEN_SYMBOL}`;
 
 /** What the E2E checks about the last minted claim: the effect as read, and the expected nullifier. */
 export interface LastClaim {
@@ -149,24 +196,21 @@ export class MinerController {
 
   private secrets = new Map<number, string>();
   private nextNonce = new Map<string, bigint>();
-  private pending: {
-    epoch: bigint;
-    nonce: bigint;
-    out: string;
-    proofFields: string[];
-    digest: string;
-    secretId: number;
-    prover: ProverKind;
-  } | null = null;
+  /** The Worker's winner, until the claim it starts takes it. */
+  private pending: Ticket | null = null;
+  /** The win claimed now or waited on: mining waits while its ticket can still mint. */
+  private fore: WinRecord | null = null;
+  /** Wins that can no longer mint whose sends may still land or revert. */
+  private watches: WinRecord[] = [];
+  private checking: Promise<void> | undefined;
+  private recheck = false;
+  private recoveryTimer: ReturnType<typeof setTimeout> | undefined;
+  private readonly recoveryDelay: (ms: number) => number;
+  /** Bumped by a switch and by dispose: a check begun before either acts on nothing it read. */
+  private holds = 0;
   private timer: ReturnType<typeof setInterval> | undefined;
   /** The e2e canary's fault: the next claim goes out with a bound public input altered. */
   private tamperNext = false;
-  /**
-   * A ticket whose claim failed for an unclassified reason (or the canary's tampered one, as it was
-   * before the fault), kept while that failure is the last thing that happened: Retry sends it again.
-   * `txHash` when the failure came after the send, so Retry first asks whether it landed after all.
-   */
-  private retained: (NonNullable<MinerController['pending']> & { txHash?: string }) | null = null;
   private pauseTimer: ReturnType<typeof setTimeout> | undefined;
   private domain: string | undefined;
   private prover: Prover;
@@ -175,7 +219,7 @@ export class MinerController {
   /** Bumped per user Stop: work queued behind a Start (the Presto probe) checks it before acting. */
   private stops = 0;
   private refreshing: Promise<void> = Promise.resolve();
-  /** The real chain read behind the latest refresh, settled past the deadline: what a switch drains. */
+  /** The chain reads behind the refreshes and the checks, settled past their deadlines: what a switch drains. */
   private inflightRead: Promise<void> = Promise.resolve();
   /** True from the drain through the rebuild of a node switch: the poll must not read across it. */
   private switching = false;
@@ -192,7 +236,6 @@ export class MinerController {
   private unsubscribeHealth: (() => void) | undefined;
   /** Bumped when the chain view starts being replaced: a read begun on the old one publishes nothing. */
   private views = 0;
-  private retrying: Promise<boolean> | undefined;
   /** When the chain view was last rebuilt; a block that survives a rebuild gets the pause instead. */
   private rebuiltAt: number | null = null;
   /** A rebuilt view that has not been read yet: Start reads it before anything mines. */
@@ -201,8 +244,12 @@ export class MinerController {
   /** Why mining is paused by the page itself (not the user); it resumes when the reason clears. */
   private pausedBy = new Set<PauseReason>();
   private resumeWhenClear = false;
-  /** Stop pressed while a claim was in flight: the claim finishes, mining does not resume after it. */
-  private stopAfterClaim = false;
+  /** A Stop since the last start: nothing the page runs by itself resumes mining; only Start clears it. */
+  private stopped = false;
+  /** The rebuild under way follows a watched win's revert that interrupted no mining: its end resumes none. */
+  private idleRebuild = false;
+  /** A resume whose read failed, as the `stops` count it was owed at: the next good poll carries it out. */
+  private resumeOnRead: number | null = null;
   private retired = false;
   lastClaim: LastClaim | undefined;
 
@@ -219,6 +266,7 @@ export class MinerController {
     this.rollupVersion = o.rollupVersion;
     this.recover = o.recover;
     this.readDeadlineMs = o.readDeadlineMs ?? READ_DEADLINE_MS;
+    this.recoveryDelay = o.recoveryDelay ?? ((ms) => ms);
     this.prover = this.attach();
   }
 
@@ -347,9 +395,11 @@ export class MinerController {
   /** Ends the timers and the Worker; the page (or a failed boot) owns nothing of this afterwards. */
   dispose() {
     this.disposed = true;
+    this.holds++;
     if (this.timer) clearInterval(this.timer);
     this.unsubscribeHealth?.();
     if (this.pauseTimer) clearTimeout(this.pauseTimer);
+    clearTimeout(this.recoveryTimer);
     this.generations++;
     this.prover.worker.terminate();
     this.clearPrestoView();
@@ -361,24 +411,30 @@ export class MinerController {
     this.stop();
   }
 
-  /** Under a page-side pause the intent is kept: mining starts when the last reason clears. */
-  start() {
-    if (this.retired) return;
-    this.stopAfterClaim = false;
+  /**
+   * Under a page-side pause the intent is kept: mining starts when the last reason clears. `user` is a
+   * Start the user asked for: with a win waiting it is one more attempt; the page's own restarts leave it.
+   */
+  start(user = true) {
+    if (this.retired || this.disposed) return;
+    this.stopped = false;
+    this.idleRebuild = false;
     if (this.pausedBy.size) {
       this.resumeWhenClear = true;
+      // The release restarts nothing a win waits on: the user's Start is heard now, its attempt waits for the release.
+      if (user && this.store.get(minerAtom).recovery.fore) this.dispatch({ type: 'retry', at: Date.now() });
       return;
     }
     if (this.unread) return void this.readRebuilt();
     const epoch = this.store.get(epochAtom);
-    if (epoch) this.dispatch({ type: 'start', epoch, at: Date.now(), t: performance.now() });
+    if (epoch) this.dispatch({ type: 'start', epoch, user, at: Date.now(), t: performance.now() });
   }
 
-  /** Idle now; during a claim the phase stays `claiming` (the submission cannot be abandoned) and mining does not resume after it. */
+  /** Idle now; during a claim the phase stays `claiming` (the submission cannot be abandoned). Nothing in flight resumes mining. */
   stop() {
     this.stops++;
     this.resumeWhenClear = false;
-    if (this.store.get(minerAtom).phase === 'claiming') this.stopAfterClaim = true;
+    this.stopped = true;
     this.dispatch({ type: 'stop' });
   }
 
@@ -438,14 +494,16 @@ export class MinerController {
     this.pausedBy.add(reason);
     if (phase === 'idle') return;
     if (phase === 'mining') this.dispatch({ type: 'stop' });
-    this.resumeWhenClear = !this.stopAfterClaim;
+    this.resumeWhenClear = this.resumes();
   }
 
   release(reason: PauseReason) {
     this.pausedBy.delete(reason);
-    if (this.pausedBy.size || !this.resumeWhenClear) return;
+    if (this.pausedBy.size) return;
+    this.dispatch({ type: 'unblocked' });
+    if (!this.resumeWhenClear) return;
     this.resumeWhenClear = false;
-    this.start();
+    this.start(false);
   }
 
   /**
@@ -477,6 +535,7 @@ export class MinerController {
       this.lastRead = Date.now();
       markRead(this.lastRead);
       void this.sampleTip();
+      this.resumeAfterRead();
       if (!this.offline) return;
       this.offline = false;
       this.log('node reachable again');
@@ -551,10 +610,9 @@ export class MinerController {
     switch (c.type) {
       case 'mine': {
         const secret = newEpochSecret().toString();
-        // Only the current secret is kept: a past epoch's tickets are worthless.
+        // Only the current secret is kept: mining resumes only once no win waits on its own.
         this.secrets.clear();
         this.secrets.set(c.secretId, secret);
-        this.retained = null;
         const key = `${c.epoch}:${c.secretId}`;
         const job: MineJob = {
           epoch: c.epoch,
@@ -580,7 +638,38 @@ export class MinerController {
         this.log(`discarded a winning ticket: ${c.reason}`);
         this.pending = null;
         return;
+      case 'retry-in':
+        return this.arm(c.ms);
+      case 'check':
+        void this.check();
+        return;
+      case 'resume':
+        return this.resume();
     }
+  }
+
+  /**
+   * Mining goes on after a settled win, on the epoch open now: only after a good read (the atom may still
+   * hold the epoch that closed), and never after a Stop since the last start — a Retry claims the win, only
+   * Start mines again.
+   */
+  private resume() {
+    if (this.stopped) return;
+    const stops = this.stops;
+    void this.refresh().then(
+      () => {
+        if (stops === this.stops) this.start(false);
+      },
+      () => {
+        this.resumeOnRead = stops;
+      },
+    );
+  }
+
+  private resumeAfterRead() {
+    const owed = this.resumeOnRead;
+    this.resumeOnRead = null;
+    if (owed === this.stops) this.start(false);
   }
 
   /**
@@ -625,7 +714,9 @@ export class MinerController {
           secretId: m.secretId,
           prover: m.prover,
         };
+        // The claim it starts takes the ticket at once; a winner the reducer turned away leaves none behind.
         this.dispatch({ type: 'winner', epoch: m.epoch, secretId: m.secretId, at: Date.now() });
+        this.pending = null;
         return;
       case 'stopped':
         this.nextNonce.set(`${m.epoch}:${m.secretId}`, m.nextNonce);
@@ -690,73 +781,85 @@ export class MinerController {
     this.reconfigure(this.threads, null);
   }
 
-  private async submit() {
+  /** The win the next attempt is for: the Worker's fresh winner becomes the one mining waits on. */
+  private async recordFor(): Promise<WinRecord | null> {
     const p = this.pending;
-    const secret = p && this.secrets.get(p.secretId);
-    if (!p || !secret) return this.dispatch({ type: 'failed', error: 'no pending ticket' });
+    if (!p) return this.fore;
     this.pending = null;
-    // The tampered claim keeps its ticket: the canary resubmits it with the input restored.
-    let restore: NonNullable<MinerController['pending']> | null = null;
+    const lineId = this.store.get(minerAtom).claim?.lineId ?? null;
+    const nullifier = (await ticketNullifier(Fr.fromString(p.digest), this.d.miner.address)).toString();
+    this.fore = {
+      ticket: p,
+      lineId,
+      epoch: p.epoch,
+      digest: p.digest,
+      prover: p.prover,
+      nullifier,
+      attempts: 0,
+      submissions: [],
+    };
+    return this.fore;
+  }
+
+  /** Each send with the expiry its transaction carries: the browser's clock cannot stand in for the chain's. */
+  private recordSend(rec: WinRecord, hash: string, expiresAt: number | undefined) {
+    if (rec.submissions.some((s) => s.hash === hash)) return;
+    rec.submissions.push({ hash, expiresAt: expiresAt ?? null });
+  }
+
+  /** One attempt: the fresh win's first, or the waiting win's next. */
+  private async submit() {
+    const rec = await this.recordFor();
+    const ticket = rec?.ticket;
+    const secret = ticket && this.secrets.get(ticket.secretId);
+    if (!rec || !ticket || !secret) return this.dispatch({ type: 'failed', error: 'no pending ticket' });
+    rec.attempts++;
+    let out = ticket.out;
     if (this.tamperNext) {
       // The lowest bit of `out`: the ticket, the epoch and the nullifier stay valid, only the proof's
-      // public inputs no longer match it — which simulation cannot see and real proving must.
-      restore = { ...p };
-      p.out = `0x${(BigInt(p.out) ^ 1n).toString(16).padStart(64, '0')}`;
+      // public inputs no longer match it — which simulation cannot see and real proving must. The
+      // record keeps the ticket as it was, so a Retry sends it restored.
+      out = `0x${(BigInt(out) ^ 1n).toString(16).padStart(64, '0')}`;
       this.tamperNext = false;
       this.log('e2e: this claim goes out with a bound public input altered');
     }
-    this.log(`claiming in epoch ${p.epoch}: proving the claim in-page…`);
-    let txHash: string | undefined;
-    const sentBefore = this.d.lastSent();
+    this.log(`claiming in epoch ${ticket.epoch}, attempt ${rec.attempts}: proving the claim in-page…`);
     this.store.set(txProvingAtom, null);
     try {
-      const args = { ...p, secret, recipient: this.account };
-      const sent = await sendClaim(this.d, this.account, this.fee, args, (prover) =>
-        this.store.set(txProvingAtom, prover),
-      );
-      txHash = sent.txHash;
+      const args = { ...ticket, out, secret, recipient: this.account };
+      const sent = await sendClaim(this.d, this.account, this.fee, args, {
+        said: (prover) => this.store.set(txProvingAtom, prover),
+        sent: (tx) => this.recordSend(rec, tx.txHash, tx.expiresAt),
+      });
+      this.recordSend(rec, sent.txHash, sent.expiresAt);
       const ttl = sent.expiresAt
         ? `expires ${new Date(sent.expiresAt * 1000).toISOString().slice(11, 19)}`
         : 'expiry unknown';
       this.log(`claim ${short(sent.txHash)} sent (${ttl})`);
       this.dispatch({ type: 'sent', txHash: sent.txHash, expiresAt: sent.expiresAt, at: Date.now() });
       const { block, effect } = await sent.wait();
-      await this.minted(p, sent.txHash, block, effect);
+      await this.minted(rec, sent.txHash, block, effect);
     } catch (e) {
-      // A send that failed after the wallet handed a transaction to the node: the hash it observed
-      // going out is reconciled by a Retry before anything is sent again (`adopt` checks it is this claim's).
-      const observed = this.d.lastSent();
-      const hash = txHash ?? (observed && observed !== sentBefore ? observed.txHash : undefined);
-      // An unclassified failure keeps the ticket for Retry; the canary's tampered claim, as it was.
-      this.retained = restore ?? (classifyClaimFailure(e) === 'other' ? { ...p, txHash: hash } : null);
-      await this.claimFailed(e, p.epoch);
+      await this.attemptFailed(rec, e);
     } finally {
       this.store.set(txProvingAtom, null);
     }
   }
 
   /** The claim is in a block: its marks, the balance, the ledger's ✓, the device's record of it. */
-  private async minted(
-    p: NonNullable<MinerController['pending']>,
-    txHash: string,
-    block: number,
-    effect: TxEffect,
-  ) {
+  private async minted(rec: WinRecord, txHash: string, block: number, effect: TxEffect) {
+    if (this.fore === rec) this.fore = null;
     const before = this.store.get(epochAtom)?.claims ?? 0;
     this.dispatch({ type: 'included', block, at: Date.now() });
-    const marks = await claimMarks(effect, p.digest, this.d.miner.address, p.prover);
+    const marks = await claimMarks(effect, rec.digest, this.d.miner.address, rec.prover);
     this.lastClaim = marks;
     await this.refresh();
-    const reward = `${amount(PARAMS.REWARD, PARAMS.DECIMALS)} ${PARAMS.TOKEN_SYMBOL}`;
-    this.log(`claim mined in block ${block}: +${reward}`);
-    this.store.set(claimsAtom, (c) => [
-      ...c,
-      { epoch: p.epoch, block, at: Date.now(), txHash, nullifier: marks.nullifier, settled: 'pending' },
-    ]);
+    this.log(`claim mined in block ${block}: +${REWARD}`);
+    this.remember(rec.epoch, block, txHash, marks.nullifier);
     this.dispatch({
       type: 'claimed',
       block,
-      reward,
+      reward: REWARD,
       txHash,
       nullifier: marks.nullifier,
       noteHash: marks.noteHash,
@@ -768,98 +871,270 @@ export class MinerController {
     this.resumeAfterClaim();
   }
 
+  /** The device's record of a win, once per nullifier. */
+  private remember(epoch: bigint, block: number, txHash: string, nullifier: string) {
+    this.store.set(claimsAtom, (c) =>
+      c.some((x) => x.nullifier === nullifier)
+        ? c
+        : [...c, { epoch, block, at: Date.now(), txHash, nullifier, settled: 'pending' }],
+    );
+  }
+
   /**
-   * The retained claim again (the ledger's Retry; the canary's control): false unless that failure is
-   * what the page is idle on. A claim that was sent is reconciled first: in a block after all, it is
-   * minted, not sent twice; reverted there, it takes the revert's recovery; still pending, or a node
-   * that cannot say, keeps it for a later Retry. One at a time: a second Retry would adopt it twice.
+   * An attempt that did not mint. A revert or a blocked delivery ends the win (its other sends stay
+   * watched); anything else keeps it waiting for a check, whatever this attempt's failure says.
    */
+  private async attemptFailed(rec: WinRecord, e: unknown) {
+    const kind = classifyClaimFailure(e);
+    if (kind === 'reverted' || kind === 'delivery-blocked') {
+      // A revert is the send just made; a blocked delivery failed before sending.
+      const reverted = kind === 'reverted' ? rec.submissions.at(-1)?.hash : undefined;
+      this.end(rec, reverted);
+      return this.claimFailed(e, rec.epoch);
+    }
+    this.fore = rec;
+    const message = claimFailureMessage(e);
+    this.log(`claim failed (${kind}, attempt ${rec.attempts}): ${message}`);
+    this.dispatch({
+      type: 'failed',
+      error: message,
+      kind,
+      epoch: rec.epoch,
+      attempt: rec.attempts,
+      sent: rec.submissions.length > 0,
+      watching: this.watches.length > 0,
+      at: Date.now(),
+    });
+  }
+
+  /** A revert or a blocked delivery ends the win: its secret goes, and its sends but `gone` are watched until dead or landed. */
+  private end(rec: WinRecord, gone?: string) {
+    if (rec.ticket) this.secrets.delete(rec.ticket.secretId);
+    this.forget(rec);
+    const submissions = rec.submissions.filter((s) => s.hash !== gone);
+    if (submissions.length) this.watches.push({ ...rec, ticket: null, submissions });
+  }
+
+  /** The ticket can no longer mint: its secret goes, and the win is watched, sent or not, until the checkpointed tip decides it. */
+  private letGo(rec: WinRecord): WinRecord {
+    if (rec.ticket) this.secrets.delete(rec.ticket.secretId);
+    this.forget(rec);
+    const w = { ...rec, ticket: null };
+    this.watches.push(w);
+    return w;
+  }
+
+  private forget(rec: WinRecord) {
+    if (this.fore === rec) this.fore = null;
+    this.watches = this.watches.filter((w) => w !== rec);
+  }
+
+  /** The ledger's Retry (and the canary's control): one more attempt of the waiting win, after a check. */
   retryPendingClaim(): Promise<boolean> {
-    // The whole of it is a tracked operation: a switch's drain waits for it and refuses it meanwhile.
-    this.retrying ??= this.track(() => this.retryOnce())
-      .catch(() => false)
-      .finally(() => {
-        this.retrying = undefined;
-      });
-    return this.retrying;
-  }
-
-  private async retryOnce(): Promise<boolean> {
-    const claim = this.retained;
-    if (this.retired || claim === null || this.store.get(minerAtom).phase !== 'idle') return false;
-    const { txHash, ...ticket } = claim;
-    if (txHash) {
-      const fate = await this.fate(txHash);
-      // The page moved on while the node was asked (Start, a switch, another claim): the answer is stale.
-      if (this.retained !== claim || this.store.get(minerAtom).phase !== 'idle' || this.disposed)
-        return false;
-      if (fate === 'unknown') {
-        this.log(`claim ${short(txHash)}: the node cannot say yet whether it landed; kept for another Retry`);
-        return false;
-      }
-      if (fate === 'reverted') {
-        this.retained = null;
-        await this.claimFailed(new Error(`claim ${short(txHash)} reverted in a block`), ticket.epoch);
-        return true;
-      }
-      if (fate !== 'dropped') return this.adopt(claim, txHash, fate.block, fate.effect);
-    }
-    // Sent again only idle and unpaused, with its secret current and its epoch still open.
-    if (this.disposed || this.pausedBy.size) return false;
-    if (!retryEligible(claim, this.secrets, 'idle', this.store.get(epochAtom)?.epoch)) return false;
-    this.retained = null;
-    this.pending = ticket;
-    this.log('the retained claim goes out again');
+    if (this.retired || !this.fore || this.store.get(minerAtom).phase !== 'idle')
+      return Promise.resolve(false);
     this.dispatch({ type: 'retry', at: Date.now() });
-    return true;
+    return Promise.resolve(true);
+  }
+
+  /** The recovery's one timer: each arming replaces the last. */
+  private arm(ms: number) {
+    clearTimeout(this.recoveryTimer);
+    if (this.disposed) return;
+    this.recoveryTimer = setTimeout(
+      () => this.dispatch({ type: 'due', blocked: this.blocked() }),
+      this.recoveryDelay(ms),
+    );
+  }
+
+  /** A pause, a switch or a rebuild holds the node: a check waits for its end (`unblocked`, `recovered`). */
+  private blocked(): boolean {
+    return (
+      this.pausedBy.size > 0 ||
+      this.switching ||
+      this.disposed ||
+      this.store.get(minerAtom).phase === 'recovering'
+    );
+  }
+
+  /** A read that cannot answer in time is `unknown`, like one that fails; the drain still waits for it. */
+  private read<T>(p: Promise<T>): Promise<T | 'unknown'> {
+    this.inflightRead = Promise.all([this.inflightRead, p.catch(() => {})]).then(() => {});
+    return deadline(p, this.readDeadlineMs).catch(() => 'unknown' as const);
+  }
+
+  /** One check of every recorded win, one check at a time; the drain of a switch waits for it. */
+  private check(): Promise<void> {
+    if (this.checking) {
+      // The check running may have read before what asks now (a release, a Retry): one more follows it.
+      this.recheck = true;
+      return this.checking;
+    }
+    this.checking = this.track(() => this.checkAll())
+      .catch(() => {})
+      .finally(() => {
+        this.checking = undefined;
+        if (!this.recheck) return;
+        this.recheck = false;
+        void this.check();
+      });
+    return this.checking;
+  }
+
+  private async checkAll() {
+    if (this.blocked()) return;
+    const holds = this.holds;
+    const stale = () => holds !== this.holds || this.disposed;
+    const watches = [...this.watches];
+    // The waiting win's own attempt, while it runs, answers for it.
+    const fore = this.store.get(minerAtom).phase === 'claiming' ? null : this.fore;
+    const verdict = fore ? await this.inspect(fore, stale) : undefined;
+    // A win let go is no longer the controller's: the reducer hears it whatever came meanwhile.
+    const released = verdict === 'closed' || verdict === 'not-minted';
+    for (const w of watches) {
+      if (stale()) break;
+      await this.watch(w, stale);
+    }
+    if (stale() && !released) return;
+    this.dispatch({
+      type: 'checked',
+      ...(verdict !== undefined && verdict !== 'done' && { verdict }),
+      watching: this.watches.length > 0,
+      blocked: this.blocked(),
+      at: Date.now(),
+    });
+  }
+
+  /** Whether a send of the win landed: by its own receipt, else by the block holding its nullifier. */
+  private async landing(rec: WinRecord): Promise<Landing> {
+    const fates = await Promise.all(rec.submissions.map((s) => this.read(fate(this.d, s.hash))));
+    for (const [i, f] of fates.entries()) {
+      const landed = mintedBy(f, rec.submissions[i]?.hash ?? '', rec.nullifier);
+      if (landed) return { kind: 'minted', landed };
+    }
+    const where = await this.read(carrier(this.d, rec.nullifier));
+    if (typeof where === 'object') return { kind: 'minted', landed: where };
+    const reverted = rec.submissions.find((_, i) => fates[i] === 'reverted');
+    if (reverted) return { kind: 'reverted', hash: reverted.hash };
+    const pending = rec.submissions.filter((_, i) => fates[i] === 'pending');
+    // The chain's time: a browser clock running ahead would call a pending send dead and send again beside it.
+    const now = pending.length ? await this.read(tipAt(this.d, 'latest')) : 'unknown';
+    return {
+      kind: 'open',
+      live: pending.some((s) => now === 'unknown' || s.expiresAt === null || s.expiresAt > now),
+      unknown: where === 'unknown' || fates.includes('unknown'),
+    };
   }
 
   /**
-   * A retained claim found in a block. The wallet is shared with the bridge, so the hash observed
-   * going out may be another transaction's: the ticket's nullifier in the effects is what makes it
-   * this claim's; without it the hash is dropped and the next Retry sends the claim itself. The
-   * record is kept until the adoption succeeds: a note that fails to sync is retried, not lost.
+   * The waiting win against the chain, in an order that never sends a landed claim again: landed,
+   * reverted, the ticket's own lifetime (read now), a send still live, and only then a new attempt.
    */
-  private async adopt(
-    claim: NonNullable<MinerController['retained']>,
-    txHash: string,
-    block: number,
-    effect: TxEffect,
-  ): Promise<boolean> {
-    const { txHash: _, ...ticket } = claim;
-    const ours = (await ticketNullifier(Fr.fromString(ticket.digest), this.d.miner.address)).toString();
-    if (!effect.nullifiers.some((n) => n.toString() === ours)) {
-      this.log(`transaction ${short(txHash)} is not this claim's; it will be sent`);
-      this.retained = { ...ticket };
-      return false;
-    }
-    this.log(`claim ${short(txHash)} was in block ${block} after all`);
-    this.dispatch({ type: 'reconciled', at: Date.now() });
+  private async inspect(rec: WinRecord, stale: () => boolean): Promise<Verdict | 'done'> {
+    const l = await this.landing(rec);
+    if (stale()) return 'unknown';
+    if (l.kind === 'minted') return this.adopt(rec, l.landed, true).then(() => 'done' as const);
+    if (l.kind === 'reverted') return this.revertOf(rec, l.hash, true, stale).then(() => 'done' as const);
+    const mint = await this.read(canMint(this.d, rec.epoch, 'latest'));
+    if (stale() || mint === 'unknown') return 'unknown';
+    if (mint) return l.live ? 'live' : l.unknown ? 'unknown' : 'open';
+    return (await this.notMinted(this.letGo(rec), l, stale)) ? 'not-minted' : 'closed';
+  }
+
+  /**
+   * Not minted, decided at the checkpointed tip: the ticket cannot mint there and its nullifier is absent
+   * there. Never across a switch or dispose: the caller's line must go out with the decision.
+   */
+  private async notMinted(rec: WinRecord, l: Landing, stale: () => boolean): Promise<boolean> {
+    if (l.kind !== 'open' || l.unknown) return false;
+    const [mint, absent] = await Promise.all([
+      this.read(canMint(this.d, rec.epoch, 'checkpointed')),
+      this.read(absentAt(this.d, rec.nullifier, 'checkpointed')),
+    ]);
+    if (stale() || mint !== false || absent !== true) return false;
+    rec.notMinted = true;
+    if (!rec.submissions.length) this.forget(rec);
+    return true;
+  }
+
+  /** A watched win: adopted if a send landed, its revert recovered, let go once every send is dead. */
+  private async watch(w: WinRecord, stale: () => boolean) {
+    const l = await this.landing(w);
+    if (stale()) return;
+    if (l.kind === 'minted') return this.adopt(w, l.landed, false);
+    if (l.kind === 'reverted') return this.revertOf(w, l.hash, false, stale);
+    if (!w.notMinted && (await this.notMinted(w, l, stale)))
+      this.dispatch({
+        type: 'not-minted',
+        lineId: w.lineId,
+        sent: w.submissions.length > 0,
+        watching: this.watches.length > 0,
+        at: Date.now(),
+      });
+    if (!w.notMinted || l.unknown) return;
+    const tip = await this.read(tipAt(this.d, 'checkpointed'));
+    if (tip !== 'unknown' && w.submissions.every((s) => s.expiresAt !== null && s.expiresAt < tip))
+      this.forget(w);
+  }
+
+  /**
+   * A recorded win found in a block, settled once: consumed before settling, put back with its sends
+   * if settling fails, so a later check tries again.
+   */
+  private async adopt(rec: WinRecord, at: Landed, fore: boolean) {
+    this.forget(rec);
     try {
-      await this.minted(ticket, txHash, block, effect);
-      this.retained = null;
+      const before = this.store.get(epochAtom)?.claims ?? 0;
+      const marks = await claimMarks(at.effect, rec.digest, this.d.miner.address, rec.prover);
+      this.lastClaim = marks;
+      this.log(`claim ${short(at.txHash)} was in block ${at.block} after all`);
+      await this.refresh();
+      if (rec.ticket) this.secrets.delete(rec.ticket.secretId);
+      this.remember(rec.epoch, at.block, at.txHash, marks.nullifier);
+      this.dispatch({
+        type: 'adopted',
+        lineId: rec.lineId,
+        fore,
+        watching: this.watches.length > 0,
+        reward: REWARD,
+        block: at.block,
+        txHash: at.txHash,
+        nullifier: marks.nullifier,
+        noteHash: marks.noteHash,
+        noteHashes: marks.noteHashes.length,
+        claims: [before, before + 1],
+        at: Date.now(),
+      });
+      this.announceWin(at.block);
     } catch (e) {
-      await this.claimFailed(e, ticket.epoch);
+      this.log(
+        `claim ${short(at.txHash)} is in block ${at.block}; settling it failed (${claimFailureMessage(e)})`,
+      );
+      if (fore) this.fore = rec;
+      else this.watches.push(rec);
     }
-    return true;
   }
 
   /**
-   * What became of a sent claim: in a block with its effects, `reverted` in one, `dropped` by the
-   * node (not in any block it holds), or `unknown` while it is pending or the node does not answer.
+   * A recorded send reverted in a block: once no claim is in flight the win ends there and the revert's
+   * recovery runs. Mining comes back after it only where it would have gone on: it was running, or it
+   * waited on this win and no Stop came since. A pause, a switch or dispose meanwhile leaves the win for
+   * the next check.
    */
-  private async fate(
-    txHash: string,
-  ): Promise<{ block: number; effect: TxEffect } | 'dropped' | 'reverted' | 'unknown'> {
-    try {
-      const r = await this.d.node.getTxReceipt(TxHash.fromString(txHash), { includeTxEffect: true });
-      if (r.status === 'dropped') return 'dropped';
-      if (r.status === 'pending' || r.blockNumber === undefined) return 'unknown';
-      if (r.executionResult !== 'success') return 'reverted';
-      return r.txEffect ? { block: Number(r.blockNumber), effect: r.txEffect } : 'unknown';
-    } catch {
-      return 'unknown';
-    }
+  private async revertOf(rec: WinRecord, hash: string, fore: boolean, stale: () => boolean) {
+    // Read before the wait: from its end to the failure nothing may yield, or a win found meanwhile would
+    // claim beside the rebuild.
+    const closed = await this.epochClosedSince(rec.epoch);
+    await this.claimSettled();
+    if (stale() || this.blocked()) return;
+    this.end(rec, hash);
+    const m = this.store.get(minerAtom);
+    const waited = fore && m.recovery.fore !== null && !m.recovery.fore.held;
+    this.idleRebuild = !(m.phase === 'mining' || waited);
+    await this.claimFailed(new Error(`claim ${short(hash)} reverted in a block`), rec.epoch, {
+      lineId: rec.lineId,
+      closed,
+    });
   }
 
   /** Never an amount: the notification and the tab are the only things another app can read. */
@@ -873,20 +1148,29 @@ export class MinerController {
       });
   }
 
+  /** A claim's end or a rebuild's: mining goes on unless a Stop came since the last start or the rebuild interrupted none. */
   private resumeAfterClaim() {
-    if (this.stopAfterClaim) {
-      this.stopAfterClaim = false;
-      return;
-    }
-    this.start();
+    const resumes = this.resumes();
+    this.idleRebuild = false;
+    if (resumes) this.start(false);
+  }
+
+  private resumes(): boolean {
+    return !this.stopped && !this.idleRebuild;
   }
 
   /**
-   * `epoch` is the one the claim was made in. A revert whose message names no cause (a mined revert's
-   * receipt carries none on 5.2.0) is taken as stale when the chain's open epoch has moved past it: a
-   * reading, not proof, so a message that does name a reason is never overridden by it.
+   * A revert or a blocked delivery: the line says so, then the chain view is rebuilt (or claims wait for
+   * L1 finality). A revert whose message names no cause (a mined revert's receipt carries none on 5.2.0)
+   * is taken as stale when the chain's open epoch has moved past `epoch`: a reading, not proof, so a
+   * message that does name a reason is never overridden by it. `recorded` is a recorded win's revert: its
+   * line, and its epoch as the caller read it.
    */
-  private async claimFailed(e: unknown, epoch?: bigint) {
+  private async claimFailed(
+    e: unknown,
+    epoch: bigint,
+    recorded?: { lineId: number | null; closed: boolean },
+  ) {
     const kind = classifyClaimFailure(e);
     const message = claimFailureMessage(e);
     this.log(`claim failed (${kind}): ${message}`);
@@ -894,13 +1178,18 @@ export class MinerController {
     const stale =
       cause === null
         ? undefined
-        : cause.stale || (!cause.reason && epoch !== undefined && (await this.epochClosedSince(epoch)));
+        : cause.stale || (!cause.reason && (recorded ? recorded.closed : await this.epochClosedSince(epoch)));
     if (stale && !cause?.stale)
       this.log(`the claim is taken as stale: epoch ${epoch} is closed now and the revert named no reason`);
-    this.dispatch({ type: 'failed', error: message, kind, stale, at: Date.now() });
-    // Nothing was spent by an expired claim or one refused at simulation: mining goes on, on whatever epoch is open now.
-    if (kind === 'expired' || kind === 'refused') return this.resumeAfterClaim();
-    if (kind !== 'reverted' && kind !== 'delivery-blocked') return;
+    this.dispatch({
+      type: 'failed',
+      error: message,
+      kind,
+      stale,
+      watching: this.watches.length > 0,
+      ...(recorded && { lineId: recorded.lineId }),
+      at: Date.now(),
+    });
     // A delivery still blocked after a rebuild is the PXE waiting for L1: only time helps.
     const rebuilt = this.rebuiltAt !== null && Date.now() - this.rebuiltAt < (await this.finalityMs());
     if (kind === 'delivery-blocked' && rebuilt) return this.pauseUntilFinal();
@@ -922,6 +1211,7 @@ export class MinerController {
    */
   async drain(): Promise<void> {
     this.switching = true;
+    this.holds++;
     await this.refreshing.catch(() => {});
     await this.inflightRead.catch(() => {});
     await this.claimSettled();
@@ -953,6 +1243,7 @@ export class MinerController {
   /** The switch is over (rebuilt or failed): the poll may read again. */
   endSwitch(): void {
     this.switching = false;
+    this.dispatch({ type: 'unblocked' });
   }
 
   /** A switch that could rebuild from neither node: no working wallet, only a reload helps. */
@@ -1036,9 +1327,10 @@ export class MinerController {
     this.lastRead = Date.now();
     this.dispatch({ type: 'recovered', at: Date.now() });
     this.log('chain view rebuilt');
-    // A lost race resumes the miner it interrupted unless Stop was pressed during the claim; a node
-    // switch lets release('switch') decide, so a switch made while idle does not start mining on its own.
-    if (!this.pausedBy.size) this.resumeAfterClaim();
+    // A lost race resumes the miner it interrupted unless a Stop came since; under a pause (a node switch)
+    // the release decides, so a switch made while idle does not start mining on its own.
+    if (this.pausedBy.size) this.idleRebuild = false;
+    else this.resumeAfterClaim();
   }
 
   private async finalityMs(): Promise<number> {
@@ -1054,22 +1346,9 @@ export class MinerController {
     const until = Date.now() + (await this.finalityMs());
     this.log(`claims paused until ${new Date(until).toISOString().slice(11, 19)}`);
     this.pausedBy.add('lost-race');
-    this.resumeWhenClear = !this.stopAfterClaim;
-    this.stopAfterClaim = false;
+    this.resumeWhenClear = this.resumes();
+    this.idleRebuild = false;
     this.dispatch({ type: 'paused', until, at: Date.now() });
     this.pauseTimer = setTimeout(() => this.release('lost-race'), until - Date.now());
   }
 }
-
-/**
- * A retained claim can go out again only while the page is idle on its failure, its secret is still
- * the current one (Start rotates the secret and drops the claim) and its epoch is still the open
- * one (a closed epoch's ticket is worthless); a winner that arrived after Stop is never retained.
- */
-export const retryEligible = (
-  retained: { secretId: number; epoch: bigint } | null,
-  secrets: ReadonlyMap<number, string>,
-  phase: MinerState['phase'],
-  openEpoch: bigint | undefined,
-): retained is { secretId: number; epoch: bigint } =>
-  retained !== null && phase === 'idle' && secrets.has(retained.secretId) && retained.epoch === openEpoch;

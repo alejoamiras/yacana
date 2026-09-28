@@ -56,9 +56,16 @@ export const INVENTORY: Readonly<Record<string, Readonly<Record<string, number>>
     'a live switch A → B while mining, a claim after it, and the banner on a dead node': 1,
     'another deployment’s node, or one that does not answer, is refused under the field; the node in use is kept': 0,
   },
-  // The real-proving canary: a tampered claim refused at proving, then the same claim minting restored.
+  // The real-proving canary: a tampered claim refused at proving, then the same claim minting restored;
+  // a pruned anchor, refused at simulation, then the claim's one proof.
   'canary.e2e.ts': {
     'a claim with a bound public input altered is refused at proving before it is sent; restored, the same claim mints': 1,
+    'a pruned anchor under the real prover: the win is proved again, sent once, mints, and mining resumes': 1,
+  },
+  // Each recovery proves its claim once: the pruned anchor fails before proving, the adopted claim is never sent again.
+  'claim-recovery.e2e.ts': {
+    'a pruned anchor: the same win is proved again, sent once, and minted': 1,
+    'a claim whose receipt comes back without its effects is found in its block: adopted, never sent again': 1,
   },
   // The claim is the page's, whichever prover found the ticket; its own proof goes to Presto too, or to
   // WASM when Presto is cut mid-proof or consent is withdrawn. The hard deployment's titles never win.

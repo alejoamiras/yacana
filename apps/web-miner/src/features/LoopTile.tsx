@@ -21,7 +21,7 @@ import { useAtomValue, useStore } from 'jotai';
 import type { MinerController } from '../controller';
 import { chipStep } from '../lib/claim-copy';
 import { amount, compact, durationParts } from '../lib/format';
-import type { MinerState } from '../lib/reducer';
+import { attemptScheduled, type MinerState, offersStop } from '../lib/reducer';
 import { pillStatus } from '../lib/status';
 import { difficultyCaption, emptyCaption, loopHelp, perWinSub, pipDifficultyTip } from '../lib/words';
 import { openPip, pipSupported, pipWindowAtom } from '../pip';
@@ -52,7 +52,7 @@ export function PipView({ controller, onStart, win }: Controls & { win: Window }
           <Mark state={miner.phase === 'mining' ? 'mining' : 'idle'} />
           <StatusPill status={pillStatus(miner, now)} />
         </span>
-        {miner.phase === 'mining' ? (
+        {miner.phase === 'mining' || attemptScheduled(miner) ? (
           <Button size="sm" onClick={() => controller()?.stop()}>
             Stop
           </Button>
@@ -140,7 +140,7 @@ function StartControl({
         Start mining
       </Button>
     );
-  if (miner.phase === 'mining' || miner.phase === 'claiming')
+  if (offersStop(miner))
     return (
       <Button
         size="sm"

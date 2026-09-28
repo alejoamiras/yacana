@@ -18,6 +18,7 @@ import { EmbeddedWallet } from '@aztec/wallets/embedded';
 import { TokenContract } from '@aztec-foundation/aztec-standards/artifacts/src/artifacts/Token.js';
 import { loadMinerArtifact, loadWorkArtifact } from '@yacana/miner-core/artifacts';
 import { buildClaim, claimGasLimits } from '@yacana/miner-core/claim';
+import { classifyClaimFailure } from '@yacana/miner-core/claim-failure';
 import { readOpenEpoch, readRules } from '@yacana/miner-core/epoch';
 import { PARAMS } from '@yacana/miner-core/generated/params';
 import { mineEpoch, type Winner } from '@yacana/miner-core/miner';
@@ -303,6 +304,8 @@ describe.skipIf(!nodeUrl)('miner-core against a live node', () => {
       }),
     );
     expect(replay.ok).toBe(false);
+    // A nullifier already in the tree: the node's refusal the miner reads as another send having landed.
+    expect(replay.ok ? '' : classifyClaimFailure(new Error(replay.error))).toBe('landed-elsewhere');
   }, 900_000);
 
   test('a proof mined for one deployment does not claim on another', async () => {

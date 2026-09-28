@@ -4,6 +4,7 @@ import { clampThreads } from '@yacana/ui';
 import { useAtomValue, useStore } from 'jotai';
 import { useEffect } from 'react';
 import type { MinerController } from '../controller';
+import { offersStop } from '../lib/reducer';
 import { lnaAtom, prestoAtom, prestoDecides } from '../presto';
 import type { Consent } from '../presto-consent';
 import { navigate } from '../routes';
@@ -28,7 +29,7 @@ const interactive = (t: EventTarget | null) =>
       'input, textarea, select, button, a, [role="button"], [contenteditable], [role="dialog"], [role="alertdialog"]',
     ) !== null);
 
-/** Space is the Start button's own action (`onStart`: it also re-asks Presto; only a click opens the mini window), Stop when mining. */
+/** Space is the Start button's own action (`onStart`: it also re-asks Presto; only a click opens the mini window), Stop where it says Stop. */
 export function useHotkeys(
   controller: () => MinerController | undefined,
   onStart: () => void,
@@ -57,7 +58,7 @@ export function useHotkeys(
       switch (e.key) {
         case ' ':
           e.preventDefault();
-          miner.phase === 'mining' ? c?.stop() : onStart();
+          offersStop(miner) ? c?.stop() : onStart();
           return;
         case '[':
           return power(-1);

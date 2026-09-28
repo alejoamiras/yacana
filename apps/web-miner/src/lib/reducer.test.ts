@@ -1,6 +1,17 @@
 import { proofsPerMinute } from '@yacana/miner-core/metrics';
 import { describe, expect, test } from 'vitest';
-import { type EpochInfo, initial, MINTED_FRESH_MS, mintedFresh, reduce, SAMPLE_SPAN_MS } from './reducer';
+import {
+  attemptScheduled,
+  type Command,
+  type EpochInfo,
+  type Event,
+  initial,
+  MINTED_FRESH_MS,
+  type MinerState,
+  mintedFresh,
+  reduce,
+  SAMPLE_SPAN_MS,
+} from './reducer';
 
 const epoch = (n: bigint, seed = 7n, target = 1n << 122n): EpochInfo => ({
   epoch: n,
@@ -20,6 +31,28 @@ const MINTED = {
 
 const attempt = (score: number, t = 0, win = false, bar = 64) =>
   ({ type: 'attempt', proveMs: 3000, score, win, bar, at: 1_700_000_000_000 + t, t }) as const;
+
+/** A claim attempt that failed while its ticket may still mint. */
+const failure = (
+  kind: 'anchor-pruned' | 'lost' | 'expired' | 'other',
+  n: number,
+  sent = false,
+  e: bigint = 3n,
+  error: string = kind,
+): Event => ({ type: 'failed', error, kind, epoch: e, attempt: n, sent, watching: false });
+
+const open: Event = { type: 'checked', verdict: 'open', watching: false };
+
+/** A miner on epoch `e` whose win line is up and whose claim runs. */
+function claimingWin(e = 3n): [MinerState, number | null] {
+  let [s] = reduce(initial, { type: 'start', epoch: epoch(e) });
+  [s] = reduce(s, attempt(70, 100, true));
+  const id = s.ledger[0]?.id ?? null;
+  [s] = reduce(s, { type: 'winner', epoch: e, secretId: s.job?.secretId ?? -1 });
+  return [s, id];
+}
+
+const noteOf = (s: MinerState, id: number | null) => s.ledger.find((l) => l.id === id)?.claim;
 
 describe('miner reducer', () => {
   test('start mines the open epoch with a fresh secret; stop halts', () => {
@@ -146,71 +179,173 @@ describe('miner reducer', () => {
     expect(s.minted).toBeNull();
   });
 
-  test('a claim refused at proving can be submitted again from idle, and only from idle', () => {
-    let s = initial;
-    [s] = reduce(s, { type: 'start', epoch: epoch(0n) });
-    [s] = reduce(s, { type: 'winner', epoch: 0n, secretId: s.job?.secretId ?? -1 });
-    let cmds: unknown[];
-    [s, cmds] = reduce(s, { type: 'failed', error: 'Failed to verify the generated proof!', kind: 'other' });
+  test('an unrecognised failure is not tried again by itself: checks go on, Retry is one more attempt after a check, only from idle', () => {
+    let [s, id] = claimingWin(0n);
+    let cmds: Command[];
+    [s, cmds] = reduce(s, failure('other', 1, false, 0n, 'Failed to verify the generated proof!'));
+    expect(s).toMatchObject({ phase: 'idle', job: null, claim: null, notice: null });
+    expect(cmds).toEqual([{ type: 'halt' }, { type: 'retry-in', ms: 5_000 }]);
+    expect(noteOf(s, id)).toMatchObject({ outcome: 'other', retry: true });
+    expect(attemptScheduled(s)).toBe(false);
+    [s, cmds] = reduce(s, { type: 'due', blocked: false });
+    expect(cmds).toEqual([{ type: 'check' }]);
+    [s, cmds] = reduce(s, open);
     expect(s.phase).toBe('idle');
-    expect(cmds).toEqual([{ type: 'halt' }]);
+    expect(cmds).toEqual([{ type: 'retry-in', ms: 15_000 }]);
+    expect(noteOf(s, id)).toMatchObject({ outcome: 'other', retry: true });
     [s, cmds] = reduce(s, { type: 'retry' });
-    expect(s.phase).toBe('claiming');
-    expect(s.claim?.step).toBe('proving');
-    expect(s.notice).toBeNull();
+    expect([s.phase, cmds]).toEqual(['idle', [{ type: 'check' }]]);
+    [s, cmds] = reduce(s, open);
+    expect(s).toMatchObject({ phase: 'claiming', notice: null });
     expect(cmds).toEqual([{ type: 'submit' }]);
-    // Not while claiming, and not while mining: a retry is only for a claim that already failed.
+    expect(noteOf(s, id)).toEqual({ step: 'proving', recover: 'reprove', attempt: 2 });
+    // Not while claiming, and not while mining: a retry is only for a win that waits.
     expect(reduce(s, { type: 'retry' })).toEqual([s, []]);
     let m = initial;
     [m] = reduce(m, { type: 'start', epoch: epoch(0n) });
     expect(reduce(m, { type: 'retry' })).toEqual([m, []]);
   });
 
-  test('a retained claim found in a block is adopted without a submit; a newer failure or a Start drops older Retry links', () => {
-    let s = initial;
-    [s] = reduce(s, { type: 'start', epoch: epoch(0n) });
-    [s] = reduce(s, attempt(70, 100, true));
-    [s] = reduce(s, { type: 'winner', epoch: 0n, secretId: s.job?.secretId ?? -1 });
-    [s] = reduce(s, { type: 'failed', error: 'the node went away', kind: 'other' });
-    const first = s.ledger[0];
-    expect(first?.claim?.retry).toBe(true);
-    const adopted = reduce(s, { type: 'reconciled' });
-    s = adopted[0];
-    expect(s.phase).toBe('claiming');
-    expect(adopted[1]).toEqual([]);
-    [s] = reduce(s, { type: 'included', block: 9 });
-    expect(s.claim?.step).toBe('waiting');
-    // Another retained failure: only its own line offers Retry.
-    let t = initial;
-    [t] = reduce(t, { type: 'start', epoch: epoch(0n) });
-    [t] = reduce(t, attempt(70, 100, true));
-    [t] = reduce(t, { type: 'winner', epoch: 0n, secretId: t.job?.secretId ?? -1 });
-    [t] = reduce(t, { type: 'failed', error: 'first', kind: 'other' });
-    [t] = reduce(t, { type: 'start', epoch: epoch(0n) });
-    expect(t.ledger.some((l) => l.claim?.retry)).toBe(false);
-    [t] = reduce(t, attempt(70, 200, true));
-    [t] = reduce(t, { type: 'winner', epoch: 0n, secretId: t.job?.secretId ?? -1 });
-    [t] = reduce(t, { type: 'failed', error: 'second', kind: 'other' });
-    expect(t.ledger.filter((l) => l.claim?.retry)).toHaveLength(1);
-    expect(t.ledger.find((l) => l.claim?.retry)?.claim?.reason).toBe('second');
+  test('the schedule: 5 s before the second attempt, 30 s before the third, then the three-tries line; checks slow after five; a pause or a switch defers them', () => {
+    let [s, id] = claimingWin(57n);
+    let cmds: Command[];
+    [s, cmds] = reduce(s, failure('anchor-pruned', 1, false, 57n));
+    expect(cmds).toEqual([{ type: 'halt' }, { type: 'retry-in', ms: 5_000 }]);
+    expect(noteOf(s, id)).toEqual({ recover: 'anchor-pruned', attempt: 2 });
+    expect(attemptScheduled(s)).toBe(true);
+    // A pause or a switch holds the check; its end runs it.
+    expect(reduce(s, { type: 'due', blocked: true })[1]).toEqual([]);
+    expect(reduce(s, { type: 'unblocked' })[1]).toEqual([{ type: 'check' }]);
+    expect(reduce(initial, { type: 'unblocked' })[1]).toEqual([]);
+    [s, cmds] = reduce(s, open);
+    expect(cmds).toEqual([{ type: 'submit' }]);
+    expect(s.recovery.fore?.attempts).toBe(2);
+    [s, cmds] = reduce(s, failure('anchor-pruned', 2, false, 57n));
+    expect(cmds).toEqual([{ type: 'halt' }, { type: 'retry-in', ms: 30_000 }]);
+    [s] = reduce(s, open);
+    [s, cmds] = reduce(s, failure('anchor-pruned', 3, false, 57n));
+    expect(cmds).toEqual([{ type: 'halt' }, { type: 'retry-in', ms: 15_000 }]);
+    expect(noteOf(s, id)).toEqual({ recover: 'spent', until: 57n, retry: true });
+    expect(attemptScheduled(s)).toBe(false);
+    // No fourth attempt by itself: the checks go on, five 15 s apart, then a minute apart.
+    const waits: Command[] = [];
+    for (let i = 0; i < 6; i++) {
+      [s, cmds] = reduce(s, open);
+      waits.push(...cmds);
+    }
+    expect(waits.map((c) => (c.type === 'retry-in' ? c.ms : c.type))).toEqual([
+      15_000, 15_000, 15_000, 15_000, 60_000, 60_000,
+    ]);
+    expect(s.phase).toBe('idle');
+    // Retry: one more attempt past the three.
+    [s] = reduce(s, { type: 'retry' });
+    [s, cmds] = reduce(s, open);
+    expect(cmds).toEqual([{ type: 'submit' }]);
+    expect(noteOf(s, id)).toEqual({ step: 'proving', recover: 'anchor-pruned', attempt: 4 });
   });
 
-  test('an expired claim goes idle with no card (the line says it); the restart that follows is clean', () => {
-    let [s] = reduce(initial, { type: 'start', epoch: epoch(3n) });
-    [s] = reduce(s, { type: 'winner', epoch: 3n, secretId: 1 });
-    const [next, cmds] = reduce(s, {
-      type: 'failed',
-      error: 'Invalid expiration timestamp',
-      kind: 'expired',
-    });
-    expect(next).toMatchObject({ phase: 'idle', job: null, claim: null, notice: null });
+  test('Stop while an attempt is scheduled: none comes, nothing resumes, Retry stays; Start is a check, then one more attempt', () => {
+    let [s, id] = claimingWin();
+    let cmds: Command[];
+    [s] = reduce(s, failure('lost', 1, true));
+    expect(attemptScheduled(s)).toBe(true);
+    [s, cmds] = reduce(s, { type: 'stop' });
     expect(cmds).toEqual([]);
-    // No win line preceded this winner: the outcome gets a ✗ line of its own.
-    expect(next.ledger[0]).toMatchObject({ kind: 'failed', text: 'claim expired' });
-    // The controller restarts on the epoch open now (a newer one here), under a fresh secret.
-    const [again, restart] = reduce(next, { type: 'start', epoch: epoch(4n, 9n) });
-    expect(again).toMatchObject({ phase: 'mining', secretId: 2, notice: null });
-    expect(restart).toEqual([{ type: 'mine', epoch: 4n, seed: 9n, target: 1n << 122n, secretId: 2 }]);
+    expect(attemptScheduled(s)).toBe(false);
+    expect(noteOf(s, id)).toEqual({ recover: 'stopped', until: 3n, retry: true });
+    // The checks go on: an open ticket is not attempted, a closed one resumes nothing.
+    [s, cmds] = reduce(s, open);
+    expect([s.phase, cmds]).toEqual(['idle', [{ type: 'retry-in', ms: 15_000 }]]);
+    const [closed, after] = reduce(s, { type: 'checked', verdict: 'closed', watching: true });
+    expect(after).toEqual([{ type: 'retry-in', ms: 15_000 }]);
+    expect(closed.recovery).toMatchObject({ fore: null, watching: true });
+    // The page's own restart leaves a waiting win alone; the user's Start checks, then attempts.
+    expect(reduce(s, { type: 'start', epoch: epoch(3n) })).toEqual([s, []]);
+    [s, cmds] = reduce(s, { type: 'start', epoch: epoch(3n), user: true });
+    expect([s.phase, cmds]).toEqual(['idle', [{ type: 'check' }]]);
+    [s, cmds] = reduce(s, open);
+    expect(cmds).toEqual([{ type: 'submit' }]);
+    expect(noteOf(s, id)).toEqual({ step: 'proving', recover: 'resend', attempt: 2 });
+  });
+
+  test('a win that can no longer mint lets mining go on: its sends stay watched; not minted once the checkpointed tip agrees', () => {
+    let [s, id] = claimingWin();
+    [s] = reduce(s, { type: 'sent', txHash: '0x1', expiresAt: 600 });
+    [s] = reduce(s, failure('expired', 1, true));
+    expect(s).toMatchObject({ phase: 'idle', job: null, claim: null, notice: null });
+    expect(noteOf(s, id)).toEqual({ recover: 'checking' });
+    const waiting = s;
+    const [closed, c1] = reduce(s, { type: 'checked', verdict: 'closed', watching: true });
+    expect(c1).toEqual([{ type: 'resume' }, { type: 'retry-in', ms: 15_000 }]);
+    expect(noteOf(closed, id)).toEqual({ recover: 'checking' });
+    const [told, cmds] = reduce(closed, { type: 'not-minted', lineId: id, sent: true, watching: false });
+    expect(cmds).toEqual([]);
+    expect(noteOf(told, id)).toEqual({ outcome: 'discarded', sent: true });
+    const [gone, c2] = reduce(waiting, { type: 'checked', verdict: 'not-minted', watching: false });
+    expect(c2).toEqual([{ type: 'resume' }]);
+    expect(noteOf(gone, id)).toEqual({ outcome: 'discarded', sent: true });
+    // The resume mines the epoch open now, under a fresh secret.
+    const [mining, c3] = reduce(gone, { type: 'start', epoch: epoch(4n, 9n) });
+    expect(mining).toMatchObject({ phase: 'mining', secretId: 2 });
+    expect(c3).toEqual([{ type: 'mine', epoch: 4n, seed: 9n, target: 1n << 122n, secretId: 2 }]);
+  });
+
+  test("adopted beside a newer claim: the old line ✓ and one count, the claim in hand's phase, job and claim untouched; found again, ignored", () => {
+    let [s, old] = claimingWin();
+    [s] = reduce(s, failure('lost', 1, true));
+    [s] = reduce(s, { type: 'checked', verdict: 'closed', watching: true });
+    [s] = reduce(s, { type: 'start', epoch: epoch(4n) });
+    [s] = reduce(s, attempt(80, 200, true));
+    [s] = reduce(s, { type: 'winner', epoch: 4n, secretId: s.job?.secretId ?? -1 });
+    [s] = reduce(s, { type: 'sent', txHash: '0xnew', expiresAt: 900 });
+    const before = s;
+    const found: Event = {
+      type: 'adopted',
+      lineId: old,
+      fore: false,
+      watching: false,
+      reward: '4 tYACA',
+      block: 7,
+      ...MINTED,
+    };
+    const [adoptedBeside, cmds] = reduce(s, found);
+    expect(cmds).toEqual([]);
+    expect(adoptedBeside.phase).toBe('claiming');
+    expect(adoptedBeside.job).toBe(before.job);
+    expect(adoptedBeside.claim).toBe(before.claim);
+    expect(adoptedBeside.minted).toBeNull();
+    expect(adoptedBeside.wins).toBe(before.wins + 1);
+    expect(noteOf(adoptedBeside, old)).toEqual({ outcome: 'minted' });
+    expect(adoptedBeside.ledger[0]).toMatchObject({ kind: 'minted', links: { block: 7, tx: MINTED.txHash } });
+    expect(reduce(adoptedBeside, found)).toEqual([adoptedBeside, []]);
+    // The win mining waited on resumes it once settled, unless a Stop came since.
+    let [w, id] = claimingWin();
+    [w] = reduce(w, failure('lost', 1, true));
+    const settled = reduce(w, { ...found, lineId: id, fore: true });
+    expect(settled[1]).toEqual([{ type: 'resume' }]);
+    expect(settled[0]).toMatchObject({ phase: 'idle', wins: 1, recovery: { fore: null } });
+    expect(settled[0].minted).toMatchObject({ block: 7 });
+    [w] = reduce(w, { type: 'stop' });
+    expect(reduce(w, { ...found, lineId: id, fore: true })[1]).toEqual([]);
+  });
+
+  test("a watched win's revert: its own line says so, the rebuild runs, and a running miner halts for it", () => {
+    let [s, old] = claimingWin();
+    [s] = reduce(s, failure('lost', 1, true));
+    [s] = reduce(s, { type: 'checked', verdict: 'closed', watching: true });
+    [s] = reduce(s, { type: 'start', epoch: epoch(4n) });
+    const [r, cmds] = reduce(s, {
+      type: 'failed',
+      error: 'claim 0x1…0001 reverted in a block',
+      kind: 'reverted',
+      stale: true,
+      watching: false,
+      lineId: old,
+    });
+    expect(cmds).toEqual([{ type: 'halt' }]);
+    expect(r).toMatchObject({ phase: 'recovering', job: null, notice: { kind: 'reverted' } });
+    expect(noteOf(r, old)).toEqual({ outcome: 'reverted', stale: true });
+    expect(reduce(r, { type: 'recovered' })[1]).toEqual([]);
   });
 
   test('a reverted or blocked claim enters recovering; recovered returns to idle, paused waits', () => {
@@ -275,7 +410,7 @@ describe('miner reducer', () => {
     expect(s.samples[1]).toMatchObject({ t: 200, score: 5, n: 2, proveMs: 3000, at: 1_700_000_000_200 });
   });
 
-  test("a claim's span opens at the win and closes however the claim ends; retry, reconciliation, a dead prover and the window's trim", () => {
+  test("a claim's span opens at the win and closes however the claim ends; retry, adoption, a dead prover and the window's trim", () => {
     const win = (s0: typeof initial, t: number) => {
       let [s] = reduce(s0, attempt(70, t, true));
       [s] = reduce(s, { type: 'winner', epoch: 0n, secretId: s.job?.secretId ?? -1, t: t + 40 });
@@ -296,7 +431,8 @@ describe('miner reducer', () => {
     s = win(s, 40_000);
     const second = s.ledger[0]?.id ?? null;
     [s] = reduce(s, { type: 'failed', error: 'the node went away', kind: 'other', t: 45_000 });
-    [s] = reduce(s, { type: 'retry', t: 50_000 });
+    [s] = reduce(s, { type: 'retry', t: 48_000 });
+    [s] = reduce(s, { ...open, t: 50_000 });
     expect(s.claimSpans.slice(1)).toEqual([
       { id: second, t0: 40_000, t1: 45_000, outcome: 'failed' },
       { id: second, t0: 50_000, t1: null },
@@ -308,12 +444,19 @@ describe('miner reducer', () => {
     // Found in a block after all: the transaction of the earlier span did land.
     let [r] = reduce(initial, { type: 'start', epoch: epoch(0n) });
     r = win(r, 1_000);
-    [r] = reduce(r, { type: 'failed', error: 'the node went away', kind: 'other', t: 9_000 });
-    [r] = reduce(r, { type: 'reconciled', t: 12_000 });
-    expect(r.claimSpans.map((c) => [c.t0, c.t1, c.outcome])).toEqual([
-      [1_000, 9_000, 'minted'],
-      [12_000, null, undefined],
-    ]);
+    const rid = r.ledger[0]?.id ?? null;
+    [r] = reduce(r, { ...failure('lost', 1, true, 0n), t: 9_000 });
+    [r] = reduce(r, {
+      type: 'adopted',
+      lineId: rid,
+      fore: true,
+      watching: false,
+      reward: '4',
+      block: 9,
+      ...MINTED,
+      t: 12_000,
+    });
+    expect(r.claimSpans.map((c) => [c.t0, c.t1, c.outcome])).toEqual([[1_000, 9_000, 'minted']]);
 
     // Spans leave with the window: three minutes after one ended, the next event drops it.
     [s] = reduce(s, { type: 'online', t: 31_000 + SAMPLE_SPAN_MS + 1 });

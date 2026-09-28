@@ -95,4 +95,73 @@ export const test = base.extend<{ proofMeter: ProofMeter }>({
   ],
 });
 
+/** One call of a JSON-RPC batch the page sent, and the answer to it. */
+interface RpcCall {
+  id: number;
+  method: string;
+  params: unknown[];
+}
+interface RpcAnswer {
+  jsonrpc: '2.0';
+  id: number;
+  result?: unknown;
+  error?: { code: number; message: string };
+}
+
+const callsIn = (body: string | null): RpcCall[] => {
+  try {
+    const parsed = JSON.parse(body ?? '') as unknown;
+    return Array.isArray(parsed) ? (parsed as RpcCall[]) : [];
+  } catch {
+    return [];
+  }
+};
+
+/**
+ * The node's answer to the first call `pick` selects, rewritten on the wire, once: the page's client
+ * batches its calls, so the batch reaches the node as sent and only that call's answer changes.
+ */
+export async function faultOnce(
+  page: Page,
+  pick: (call: RpcCall) => boolean,
+  rewrite: (answer: RpcAnswer, call: RpcCall) => RpcAnswer,
+): Promise<{ fired: () => number }> {
+  let fired = 0;
+  await page.route(
+    (url) => url.hostname === '127.0.0.1',
+    async (route) => {
+      const calls = callsIn(route.request().postData());
+      const i = fired ? -1 : calls.findIndex(pick);
+      if (i < 0) return route.fallback();
+      fired++;
+      const response = await route.fetch();
+      const answers = (await response.json()) as RpcAnswer[];
+      answers[i] = rewrite(answers[i] as RpcAnswer, calls[i] as RpcCall);
+      await route.fulfill({ response, json: answers });
+    },
+  );
+  return { fired: () => fired };
+}
+
+/**
+ * The first public-data read pinned to a block hash — the claim's, against its anchor — answered as a
+ * node that pruned that block answers it (`node_world_state_queries.js` of the pinned node).
+ */
+export const pruneAnchorOnce = (page: Page) =>
+  faultOnce(
+    page,
+    (c) =>
+      c.method === 'aztec_getPublicDataWitness' &&
+      typeof c.params[0] === 'string' &&
+      /^0x[0-9a-f]{64}$/i.test(c.params[0]),
+    (a, c) => ({
+      jsonrpc: '2.0',
+      id: a.id,
+      error: {
+        code: -32000,
+        message: `Block hash ${String(c.params[0])} not found when resolving query. If the node API has been queried with anchor block hash possibly a reorg has occurred.`,
+      },
+    }),
+  );
+
 export { expect, type Page } from '@playwright/test';

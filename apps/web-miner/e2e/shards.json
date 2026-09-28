@@ -1,6 +1,6 @@
 {
   "cockpit": ["miner.e2e.ts", "passkey.e2e.ts"],
-  "chain": ["states.e2e.ts", "switch.e2e.ts", "presto.e2e.ts"],
+  "chain": ["states.e2e.ts", "switch.e2e.ts", "presto.e2e.ts", "claim-recovery.e2e.ts"],
   "canary": ["canary.e2e.ts", "withdraw.e2e.ts", "words.e2e.ts", "opening.e2e.ts"],
   "bridge": ["bridge-states.e2e.ts"]
 }

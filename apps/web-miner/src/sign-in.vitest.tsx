@@ -17,6 +17,7 @@ import {
   bootAtom,
   epochAtom,
   mineIntentAtom,
+  minerAtom,
   nowAtom,
   rulesAtom,
   signInAtom,
@@ -387,6 +388,37 @@ describe('the page hotkeys', () => {
     );
     fireEvent.keyDown(window, { key: ' ' });
     expect(start).toHaveBeenCalledTimes(1);
+  });
+
+  test('Space stops wherever the button says Stop: an attempt on its way, a claim in flight', () => {
+    const start = vi.fn();
+    const stop = vi.fn();
+    const controller = () => ({ start, stop, reconfigure: vi.fn() }) as unknown as MinerController;
+    function Keys() {
+      useHotkeys(controller, start, consent);
+      return null;
+    }
+    const store = createStore();
+    const fore = {
+      lineId: 1,
+      epoch: 3n,
+      attempts: 1,
+      kind: 'anchor-pruned',
+      sent: false,
+      auto: true,
+      held: false,
+      more: false,
+    } as const;
+    store.set(minerAtom, { ...store.get(minerAtom), recovery: { fore, watching: false, checks: 0 } });
+    render(
+      <Provider store={store}>
+        <Keys />
+      </Provider>,
+    );
+    fireEvent.keyDown(window, { key: ' ' });
+    store.set(minerAtom, { ...store.get(minerAtom), phase: 'claiming' });
+    fireEvent.keyDown(window, { key: ' ' });
+    expect([stop.mock.calls.length, start.mock.calls.length]).toEqual([2, 0]);
   });
 
   test('[ and ] move the threads only while the slider is shown: found under consent, they change nothing', () => {
