@@ -131,13 +131,16 @@ export async function passKeyScreen(page: Page): Promise<void> {
   await page.getByTestId('create-passkey').click();
 }
 
-/** The hold gesture on a HoldButton, through its fill (1.2 s) and the release that confirms. */
+/**
+ * The hold gesture on a HoldButton, released once its fill reads full: the fill runs on the frame clock,
+ * and a page busy after a reload drops frames, so a fixed wait can release early and only reveal the click path.
+ */
 export async function holdThrough(page: Page, testId: string): Promise<void> {
   const button = page.getByTestId(testId);
   const box = (await button.boundingBox()) as { x: number; y: number; width: number; height: number };
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
-  await page.waitForTimeout(1400);
+  await expect(button.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '100');
   await page.mouse.up();
 }
 

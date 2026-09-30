@@ -24,7 +24,8 @@ the next version is deployed.
    that block into `deployments/testnet.json` (delete the side file after); then `bun run bridge -- register`
    puts the version on the portal and `bun run bridge -- set-forwarder <address> on` lists the forwarder key's
    address. An existing record is amended in place instead: `l1-deploy.ts deployments/testnet.json` refuses a
-   record whose miner trusts another portal.
+   record whose miner trusts another portal. Last, `bun tools/deploy/scripts/l1-verify.ts deployments/testnet.json`
+   with `ETHERSCAN_API_KEY` (a keyed run on `deployments/etherscan.env.example`) publishes both contracts' source.
 
 ## Before: Aztec announces V6
 
