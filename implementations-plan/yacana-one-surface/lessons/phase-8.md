@@ -181,3 +181,9 @@ A fresh session over `9b190fa..HEAD`, `01a0d0fd-bcdd-7033-a576-b61366b39657`, hi
   or `unread` do, and that the SDK awaits each receipt read before its retry timeout. Converged.
 - **On e3ea574** (test-only, after the gate) — "no new material findings": "The assertion matches both
   build bases, and checking that `target` is absent catches the existing external-tab behavior."
+
+## Merged
+2026-09-28, at the owner's call: `gh stack merge 72 --squash` landed #67–#71 atomically as five squash commits
+(a886e90 … 847688b). Workers Builds deployed 847688b to production: `build.json` names that commit, and
+`/mine/stats`, `/mine/stats/`, `/mine/stats/bridge` and `/mine/stats/verify` answer 200; `/stats` still
+redirects to `/stats/`.

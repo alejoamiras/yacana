@@ -6,7 +6,7 @@ eli5_mode: artifact
 code_review: off
 hardening: none (no new trust boundary; the hosted Stats reads only what the miner's guard already admits — the realm it joins is recorded in §4)
 budget: "recon 3 agents (Stats mapper, miner sweep, landing and Stats sweep); codex at high (GPT-6 Astra); the Claude leg on Opus 5.5 (the owner prefers it to Fable); code-review off (owner, 2026-09-23)"
-status: approved by the owner 2026-09-23 with conditions (§2 "At approval"); codex final pass approve (round 3); Opus conditional approve, folded; implemented 2026-09-24 (P1–P8 ✓), delivered as five stacked PRs
+status: approved by the owner 2026-09-23 with conditions (§2 "At approval"); codex final pass approve (round 3); Opus conditional approve, folded; implemented 2026-09-24 (P1–P8 ✓); closed 2026-09-28 (stack #72, PRs #67–#71 merged, production green on 847688b)
 created: 2026-09-23
 ---
 
