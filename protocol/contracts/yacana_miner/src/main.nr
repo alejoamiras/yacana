@@ -5,6 +5,7 @@
 mod bridge;
 mod launch;
 mod params;
+mod proof_points;
 mod retarget;
 mod test;
 mod ticket;
@@ -36,7 +37,7 @@ pub contract YacanaMiner {
         T_MAX, VERSION,
     };
     use crate::retarget::next_target;
-    use crate::ticket::{low128, ticket_digest};
+    use crate::ticket::{assert_reduced_points, low128, ticket_digest};
     use crate::vk::{W_VK, W_VK_HASH};
 
     global NUM_PUBLIC_INPUTS: u32 = 6;
@@ -216,6 +217,7 @@ pub contract YacanaMiner {
         // The recipient sits inside the commitment, so a leaked (proof, secret) pays nobody else.
         let commit = Poseidon2::hash([DOM_SECRET, secret, recipient.to_field()], 3);
         verify_honk_proof_non_zk(W_VK, proof, [domain, params.seed, e as Field, commit, nonce, out], W_VK_HASH);
+        assert_reduced_points(proof);
         let digest = ticket_digest(proof);
         assert(low128(digest) < params.target, "ticket above target");
         self.context.push_nullifier_unsafe(Poseidon2::hash([DOM_NULL, digest], 2));

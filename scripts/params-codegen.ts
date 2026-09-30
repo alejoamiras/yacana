@@ -110,7 +110,7 @@ use crate::ticket::{low128, ticket_digest};
 use yacana_work_lib::{DOM_DEPLOY, DOM_NULL, DOM_SECRET, DOM_SEED};
 use poseidon::poseidon2::Poseidon2;
 
-global FIXTURE_PROOF: [Field; ${v.fixtureProof.length}] = [
+pub(crate) global FIXTURE_PROOF: [Field; ${v.fixtureProof.length}] = [
 ${v.fixtureProof.map((f) => `    ${f},`).join('\n')}
 ];
 

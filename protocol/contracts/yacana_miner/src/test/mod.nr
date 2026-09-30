@@ -1,6 +1,7 @@
 // TXE tests are plumbing-only: the simulator accepts any bytes as a proof (the first test pins
 // that fact), so everything about proof validity is proved elsewhere. Each claim uses a distinct
 // "proof" ground until its ticket wins, which also gives every claim its own nullifier.
+mod encoding;
 mod vectors;
 
 use crate::YacanaMiner;
@@ -8,6 +9,7 @@ use crate::params::{CLAIM_TTL_SECONDS, EXPECTED_EPOCH_SECONDS, N, REWARD, T_MAX}
 use crate::launch::commitment_of;
 use crate::retarget::next_target;
 use crate::ticket::{low128, ticket_digest};
+use encoding::{HI, LO};
 use aztec::{
     protocol::{address::{AztecAddress, EthAddress}, traits::ToField},
     test::helpers::{authwit as authwit_cheatcodes, test_environment::TestEnvironment},
@@ -120,6 +122,27 @@ unconstrained fn txe_accepts_a_fabricated_proof() {
     let s = setup();
     let _ = claim(s, 0, 1000);
     assert_eq(s.env.view_public(YacanaMiner::at(s.miner).claims_in(0)), 1);
+}
+
+// LOOKUP_INVERSES.x (slots 32–33, the point at infinity's 0) spelled as q, with proof[0] ground once so
+// the ticket wins: TXE verifies no proof, so only the reducedness check can refuse its claim.
+unconstrained fn tampered_proof() -> [Field; RECURSIVE_PROOF_LENGTH] {
+    let mut proof = [0; RECURSIVE_PROOF_LENGTH];
+    proof[0] = 5013;
+    proof[32] = LO;
+    proof[33] = HI;
+    proof
+}
+
+#[test]
+unconstrained fn the_tampered_fixture_wins() {
+    assert(low128(ticket_digest(tampered_proof())) < INITIAL_TARGET);
+}
+
+#[test(should_fail)]
+unconstrained fn a_claim_with_a_point_written_as_q_is_refused() {
+    let s = setup();
+    s.env.call_private(s.deployer, YacanaMiner::at(s.miner).claim(0, 5013, 0, 7, tampered_proof(), s.deployer));
 }
 
 #[test]

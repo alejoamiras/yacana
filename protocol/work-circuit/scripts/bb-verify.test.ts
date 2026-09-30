@@ -64,6 +64,18 @@ describe.skipIf(absent)('verify', () => {
     expect(await verify({ ...files, vk: '/dev/null' })).toEqual({ verified: false, wellFormed: false });
   }, 60_000);
 
+  test('a coordinate written as q is a refusal that never parsed', async () => {
+    const proof = new Uint8Array(await Bun.file(files.proof).arrayBuffer());
+    // LOOKUP_INVERSES.x (slots 32–33) is the point at infinity's 0; (Q_LO, Q_HI) spells it as q.
+    proof.set(Buffer.from('5d97816a916871ca8d3c208c16d87cfd47'.padStart(64, '0'), 'hex'), 32 * 32);
+    proof.set(Buffer.from('30644e72e131a029b85045b6818158'.padStart(64, '0'), 'hex'), 33 * 32);
+    await Bun.write(join(scratch, 'aliased-proof'), proof);
+    expect(await verify({ ...files, proof: join(scratch, 'aliased-proof') })).toEqual({
+      verified: false,
+      wellFormed: false,
+    });
+  }, 60_000);
+
   test('a binary that is not there is operational', async () => {
     await expect(verify(files, join(scratch, 'no-such-bb'))).rejects.toBeInstanceOf(OperationalError);
   });

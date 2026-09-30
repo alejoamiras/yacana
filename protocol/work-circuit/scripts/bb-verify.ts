@@ -28,6 +28,8 @@ const MALFORMED = [
   /^Proof verification failed: invalid (proof|VK) size\b/,
   // bb's limb-range assertion on a commitment coordinate.
   /^Reason\s*: Conversion error here usually implies some bad proof serde or parsing$/,
+  // A coordinate spelled at or above q (c + q for c): the native codec refuses it, the in-circuit one does not.
+  /^Reason\s*: Non-canonical field element: value >= fq::modulus$/,
 ];
 const REFUSED = /^Proof verification failed$/;
 

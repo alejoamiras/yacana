@@ -1,11 +1,11 @@
 {
-  "miner": "0x058c14aeaf1cd0b05d03c642a371cfb00feae0a3118bba4215ce4ef5ae36f38f",
+  "miner": "0x0364f04e318480bb6d6354772b12ee8e59fce2123dc43e16bc5650fd5505014c",
   "chainId": "11155111",
   "rollupVersion": "1821665230",
   "epoch": 0,
-  "claims": [1, 2],
-  "block": 80514,
-  "txHash": "0x282fde31d2f705c1a6f68bbb296dae0c704640c7f703f7389104326ea2c22727",
-  "nullifier": "0x0d46ac5e9a930d48e784d559b341af7109ab06857e3a5ad379b3ba08a328d838",
-  "noteHash": "0x2718d86dc07c152c10ad113604843204669eff0ef28bcf4c957e091d110cf4a4"
+  "claims": [2, 3],
+  "block": 99290,
+  "txHash": "0x0954a6a9d00a81e3b36f7f8682f80bb2a29b064f40876fe1375c551b892c4838",
+  "nullifier": "0x01bac1c1f28f61d516b62e21f45260a83fc99690f15ece61cd9d34e749d229bb",
+  "noteHash": "0x2ef6336d1721be2aec2092085fb1476ab376138914e9beb6cbcb1687daf8032b"
 }

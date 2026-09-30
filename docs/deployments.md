@@ -22,27 +22,27 @@ Contracts are immutable: a parameter change is a new deployment (`yacana.params.
 `deployments/<profile>.json`, written by the deploy script (and refused as an overwrite unless
 `YACANA_DEPLOY_FORCE=1`).
 
-## Public Aztec testnet — `testnet` profile (2026-09-13, Yacana with the bridge)
+## Public Aztec testnet — `testnet` profile (2026-09-28, Yacana with the reducedness check)
 
-The miner with its bridge functions (`exit_to_l1`, `send_ahead`, `claim_from_l1`, the retire message), bound
-at deployment to the portal on Sepolia below; the same work-circuit VK
-(`W_VK_HASH` `0x1d1043617e4762fe8a2bb2ecf572de706ae890fdb4a4ff0d8f298e24722ece7b`), domain tags, genesis seed and
-token metadata as the archived 2026-09-05 deployment, which keeps running on its own (it has no bridge). The
-rehearsal of `docs/upgrades.md` step 0 on the public networks (the plan's P11), from the arc-4 branch, on
-preview deployments only.
+The miner of the 2026-09-13 deployment below with `claim`'s reducedness check: a proof is accepted only if every
+coordinate of its 36 points is in its one reduced encoding (`docs/threat-model.md`, "Re-encoded proof points").
+The same work-circuit VK, domain tags, genesis seed, parameters and token metadata; a new portal and YACA, since
+the old portal's slot for this rollup version belongs to the old miner (`registerVersion` is write-once). Deployed
+from the fix's branch as one keyed run (my-stack: keys from 1Password on the owner's Mac, never a `.env`).
 
 | | |
 |---|---|
-| Node | `https://v5.testnet.rpc.aztec-labs.com` (L1 chain 11155111, node `5.2.0-nightly.20260815` at deploy time) |
-| Miner (`YacanaMiner`) | [`0x058c14aeaf1cd0b05d03c642a371cfb00feae0a3118bba4215ce4ef5ae36f38f`](https://testnet.aztecscan.xyz/contracts/instances/0x058c14aeaf1cd0b05d03c642a371cfb00feae0a3118bba4215ce4ef5ae36f38f) |
-| Token (aztec-standards `Token` v5.2.0, minter = miner, `bound_token()`) | [`0x0436563c5d7b05702a0c806c58917ec3377c639bbc04da3b851c393510be45fc`](https://testnet.aztecscan.xyz/contracts/instances/0x0436563c5d7b05702a0c806c58917ec3377c639bbc04da3b851c393510be45fc) |
-| Deployer (initializerless Schnorr account, no privilege after `bind_token`) | `0x2c7a1312299762bab96e91d83c26c4bf1754959bf95854df117b42bca4e3c54b` |
-| Miner salt / token salt | `0x25f925d8…b0796` / `0x0a04360c…f34fa` (full values in `deployments/testnet.json`) |
-| Miner class id / token class id | [`0x09500c6f…ad63a`](https://testnet.aztecscan.xyz/contracts/classes/0x09500c6fc6e6e2731eff89f8c8a9de63fa9915f3aa3b9752d51d7b4b9a1ad63a/versions/1) / `0x10fd5603…fecbf` |
+| Node | `https://v5.testnet.rpc.aztec-labs.com` (L1 chain 11155111) |
+| Miner (`YacanaMiner`) | [`0x0364f04e318480bb6d6354772b12ee8e59fce2123dc43e16bc5650fd5505014c`](https://testnet.aztecscan.xyz/contracts/instances/0x0364f04e318480bb6d6354772b12ee8e59fce2123dc43e16bc5650fd5505014c) |
+| Token (aztec-standards `Token` v5.2.0, minter = miner, `bound_token()`) | [`0x1fb296ab77cc42f7807e95fbdc2260d59cc9f5d48bff1ef65299b9a279466a15`](https://testnet.aztecscan.xyz/contracts/instances/0x1fb296ab77cc42f7807e95fbdc2260d59cc9f5d48bff1ef65299b9a279466a15) |
+| Deployer (initializerless Schnorr account, no privilege after `bind_token`) | `0x01ac35f9b30617d5e45cbc7e36211b299d0ac0a6d0b24ee4469d91466f10bb7e` |
+| Miner salt / token salt | `0x06d63f15…bf61b` / `0x06a1a5b9…d524f` (full values in `deployments/testnet.json`) |
+| Miner class id / token class id | [`0x0ee9c81b…5b07f`](https://testnet.aztecscan.xyz/contracts/classes/0x0ee9c81b4018f249a69235d41eaddda33316e5142644398df3d6f56080c5b07f/versions/1) / `0x10fd5603…fecbf` |
 | Rollup version (in the deploy domain) | 1821665230 (Registry index 5 on the portal) |
-| Portal it trusts | `0xD536D74Eedf1d2308bf8556402f37f4102eD63f7` (Sepolia, below) |
+| Portal it trusts | `0x13c06CF71C75fDaE21a46d66478e738209A0370c` (Sepolia, below) |
 | Fees | sponsored FPC (`SPONSORED_FPC_SALT`) |
-| Deployed / launched | 2026-09-13T11:58:32.147Z / epoch 0 opened at once (`launchAt` 1789300764, immediate: no notice or reveal window in this profile) |
+| Deployed / launched | 2026-09-28T15:27:37.303Z / epoch 0 opened at once (`launchAt` 1790609292, immediate: no notice or reveal window in this profile) |
+| Example claim (the landing's) | [`0x0954a6a9…4838`](https://testnet.aztecscan.xyz/tx-effects/0x0954a6a9d00a81e3b36f7f8682f80bb2a29b064f40876fe1375c551b892c4838), by a throwaway account with the headless miner |
 
 Parameters (the `testnet` profile, also embedded in the contract as compile-time globals):
 
@@ -160,7 +160,70 @@ deployed with `YACANA_PORTAL` naming the portal it trusts, immutably, so the por
 `bun run bridge -- register` and `bun run bridge -- set-forwarder` (`docs/upgrades.md`, step 0). The site builds both blocks into the apps (`VITE_BRIDGE`, `VITE_MIGRATION`; production
 refuses a plaintext or local RPC); `bun run bridge -- status` reads the portal's view of every registered version.
 
-Sepolia (2026-09-13, the rehearsal; the policy of `packages/bridge/src/policy.ts` for the `testnet` profile:
+Sepolia (2026-09-28; the policy of `packages/bridge/src/policy.ts` for the `testnet` profile: `PER_HOUR` 576 tYACA,
+`ALLOWANCE` 384 tYACA, 180 d exit floor, 30 d / 60 d pause, launch window −7 d / +90 d, 400 000 gas a leaf):
+
+| | |
+|---|---|
+| Portal (`YacanaPortal`; deployed in [`0x42d38318…bc61`](https://sepolia.etherscan.io/tx/0x42d38318a3135077227c6184a4387886ab83659506dc8778e20192dd2074bc61)) | [`0x13c06CF71C75fDaE21a46d66478e738209A0370c`](https://sepolia.etherscan.io/address/0x13c06CF71C75fDaE21a46d66478e738209A0370c) |
+| YACA (`tYACA`, ERC-20, minter = the portal, created by it) | [`0x4DA537e78409830dCa92850fE635eFD15A60109c`](https://sepolia.etherscan.io/address/0x4DA537e78409830dCa92850fE635eFD15A60109c) |
+| Aztec Registry (the testnet's) | `0xa0bfb1b494fb49041e5c6e8c2c1be09cd171c6ba` |
+| Operators (an EOA; the Safe comes with the mainnet plan; its key is `YACANA_L1_PRIVATE_KEY` of the `Yacana-Testnet` item) | [`0xc9b7162F57B74257261cB61a0FAc870Eda87Cbb7`](https://sepolia.etherscan.io/address/0xc9b7162F57B74257261cB61a0FAc870Eda87Cbb7) |
+| Listed forwarder (the relayer of 2026-09-14) | [`0x6792D5eb…8bac`](https://sepolia.etherscan.io/address/0x6792D5eb75e1F025438349d454AC91378d9F8bac), listed by [`0x2af3cf09…54c4`](https://sepolia.etherscan.io/tx/0x2af3cf09a9bf110c2b23c59dcc1b2399cfcccea0435ad06c64669cb2514154c4) |
+| Registration of version 1821665230 (index 5) | [`0xb97bd785…681f`](https://sepolia.etherscan.io/tx/0xb97bd785e6e2afce454d04cba64c15530875e27d323f108e3b6216a2e12f681f) |
+| Deploy block / RPC in the record | 11801404 / `https://ethereum-sepolia-rpc.publicnode.com` |
+
+The versioned origin: a retired version's last build, assembled with `YACANA_APP_ROLE=old bun run site:build` into
+`apps/site/dist-old` and deployed to the `yacana-v5` Worker (`apps/site/v5/wrangler.jsonc`, custom domain
+`v5.yacana.network`, versions at `<id>-yacana-v5.<account>.workers.dev`). It restores accounts and never creates
+one, sends ahead and exits; mining there has ended. It is kept until the version's deadline has passed
+(`docs/upgrades.md`). Its custom domain is created by its first production deploy, after the merge, never from a
+branch; before that a version of the Worker serving the frozen record proves the role and the headers on a preview
+host. Rehearsed 2026-09-13: the Worker created without its route from a copy of `v5/wrangler.jsonc` minus `routes`
+(so nothing but version previews is reachable), version `86e77d40-bbf3-4716-b8c7-b8ad82372aa7` of commit `bc3cbb4`
+serving the 2026-09-05 record as role `old` at `https://86e77d40-yacana-v5.alejo-amiras.workers.dev` — the same
+policy headers as the apex preview, `build.json` with the role and the old miner, the retired banner, sign-in
+restore-only with the preview notice naming the host.
+First production deploy 2026-09-14, after stack #41 merged: `YACANA_APP_ROLE=old bun run site:build` of `2f56f86`
+and `wrangler deploy -c v5/wrangler.jsonc` (version `00295ec9-ec53-4664-a9ef-5a3625fbc3c6`) created the custom
+domain; `https://v5.yacana.network/build.json` reports role `old` with the live testnet record. The apex was
+deployed by Workers Builds from the same commit.
+
+The witness archive: `deployments/witnesses/<profile>.jsonl`, written by `bun run bridge -- forward` from a
+version's settled exits (every version of the profile in the one file), committed, and served by the site as one
+file per version at `/witnesses/<version>.jsonl`. A relaunch on the same rollup version moves the old archive out
+of that folder, or the site would serve the old portal's witnesses as the new one's.
+
+## Mainnet
+
+Not deployed. The `mainnet` profile (N = 24, 1 h epochs, target 2^122, `YACA`) exists in `yacana.params.json`;
+launch is a later plan (`docs/roadmap.md`).
+
+## Archived — Yacana public testnet with the bridge, before the reducedness check (2026-09-13)
+
+The miner with its bridge functions (`exit_to_l1`, `send_ahead`, `claim_from_l1`, the retire message), bound
+at deployment to the portal on Sepolia below; the same work-circuit VK
+(`W_VK_HASH` `0x1d1043617e4762fe8a2bb2ecf572de706ae890fdb4a4ff0d8f298e24722ece7b`), domain tags, genesis seed and
+token metadata as the archived 2026-09-05 deployment, which keeps running on its own (it has no bridge). The
+rehearsal of `docs/upgrades.md` step 0 on the public networks (the plan's P11), from the arc-4 branch, on
+preview deployments only.
+
+| | |
+|---|---|
+| Node | `https://v5.testnet.rpc.aztec-labs.com` (L1 chain 11155111, node `5.2.0-nightly.20260815` at deploy time) |
+| Miner (`YacanaMiner`) | [`0x058c14aeaf1cd0b05d03c642a371cfb00feae0a3118bba4215ce4ef5ae36f38f`](https://testnet.aztecscan.xyz/contracts/instances/0x058c14aeaf1cd0b05d03c642a371cfb00feae0a3118bba4215ce4ef5ae36f38f) |
+| Token (aztec-standards `Token` v5.2.0, minter = miner, `bound_token()`) | [`0x0436563c5d7b05702a0c806c58917ec3377c639bbc04da3b851c393510be45fc`](https://testnet.aztecscan.xyz/contracts/instances/0x0436563c5d7b05702a0c806c58917ec3377c639bbc04da3b851c393510be45fc) |
+| Deployer (initializerless Schnorr account, no privilege after `bind_token`) | `0x2c7a1312299762bab96e91d83c26c4bf1754959bf95854df117b42bca4e3c54b` |
+| Miner salt / token salt | `0x25f925d8…b0796` / `0x0a04360c…f34fa` (full values in `deployments/testnet-2026-09-13.json`) |
+| Miner class id / token class id | [`0x09500c6f…ad63a`](https://testnet.aztecscan.xyz/contracts/classes/0x09500c6fc6e6e2731eff89f8c8a9de63fa9915f3aa3b9752d51d7b4b9a1ad63a/versions/1) / `0x10fd5603…fecbf` |
+| Rollup version (in the deploy domain) | 1821665230 (Registry index 5 on the portal) |
+| Portal it trusts | `0xD536D74Eedf1d2308bf8556402f37f4102eD63f7` (Sepolia, below) |
+| Fees | sponsored FPC (`SPONSORED_FPC_SALT`) |
+| Deployed / launched | 2026-09-13T11:58:32.147Z / epoch 0 opened at once (`launchAt` 1789300764, immediate: no notice or reveal window in this profile) |
+
+Its record is `deployments/testnet-2026-09-13.json`; its miner keeps running on its own, and its portal holds K2 below. Its witness archive moved to `deployments/testnet-2026-09-13.witnesses.jsonl`, out of the served folder.
+
+Sepolia (the rehearsal; the policy of `packages/bridge/src/policy.ts` for the `testnet` profile:
 `PER_HOUR` 576 tYACA, `ALLOWANCE` 384 tYACA, 180 d exit floor, 30 d / 60 d pause, launch window −7 d / +90 d,
 400 000 gas a leaf):
 
@@ -188,31 +251,6 @@ After them `bun run bridge -- status` reads `exited 1 · inbound 1` for version 
 on the branch preview reads the same from the portal, and the miner's wallet page on that preview shows the
 bridge tile against the live headroom. Every step above ran from the arc-4 branch on preview deployments; the
 apex and the `v5` custom domain are untouched.
-
-The versioned origin: a retired version's last build, assembled with `YACANA_APP_ROLE=old bun run site:build` into
-`apps/site/dist-old` and deployed to the `yacana-v5` Worker (`apps/site/v5/wrangler.jsonc`, custom domain
-`v5.yacana.network`, versions at `<id>-yacana-v5.<account>.workers.dev`). It restores accounts and never creates
-one, sends ahead and exits; mining there has ended. It is kept until the version's deadline has passed
-(`docs/upgrades.md`). Its custom domain is created by its first production deploy, after the merge, never from a
-branch; before that a version of the Worker serving the frozen record proves the role and the headers on a preview
-host. Rehearsed 2026-09-13: the Worker created without its route from a copy of `v5/wrangler.jsonc` minus `routes`
-(so nothing but version previews is reachable), version `86e77d40-bbf3-4716-b8c7-b8ad82372aa7` of commit `bc3cbb4`
-serving the 2026-09-05 record as role `old` at `https://86e77d40-yacana-v5.alejo-amiras.workers.dev` — the same
-policy headers as the apex preview, `build.json` with the role and the old miner, the retired banner, sign-in
-restore-only with the preview notice naming the host.
-First production deploy 2026-09-14, after stack #41 merged: `YACANA_APP_ROLE=old bun run site:build` of `2f56f86`
-and `wrangler deploy -c v5/wrangler.jsonc` (version `00295ec9-ec53-4664-a9ef-5a3625fbc3c6`) created the custom
-domain; `https://v5.yacana.network/build.json` reports role `old` with the live testnet record. The apex was
-deployed by Workers Builds from the same commit.
-
-The witness archive: `deployments/witnesses/<profile>.jsonl`, written by `bun run bridge -- forward` from a
-version's settled exits (every version of the profile in the one file), committed, and served by the site as one
-file per version at `/witnesses/<version>.jsonl`.
-
-## Mainnet
-
-Not deployed. The `mainnet` profile (N = 24, 1 h epochs, target 2^122, `YACA`) exists in `yacana.params.json`;
-launch is a later plan (`docs/roadmap.md`).
 
 ## Archived — Yacana public testnet before the bridge, `testnet` profile (2026-09-05)
 

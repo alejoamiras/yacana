@@ -43,8 +43,9 @@ describe('the example claim from a transaction effect', () => {
       ...e,
       publicDataWrites: e.publicDataWrites.filter((w) => !pred(w)),
     });
-    // The miner's two leaves are the ones whose values are the counter (2) and the digest; drop the counter.
-    const counter = e.publicDataWrites.find((w) => BigInt(w.value) === 2n) as { leafSlot: string };
+    // The miner's two leaves are the ones whose values are the counter and the digest; drop the counter.
+    const count = BigInt(recorded.claims[1]);
+    const counter = e.publicDataWrites.find((w) => BigInt(w.value) === count) as { leafSlot: string };
     await expect(extract(without((w) => w.leafSlot === counter.leafSlot))).rejects.toThrow(/no claims\[e\]/);
     await expect(
       extract({ ...e, nullifiers: e.nullifiers.filter((n) => n !== recorded.nullifier) }),
