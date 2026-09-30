@@ -165,8 +165,8 @@ Sepolia (2026-09-28; the policy of `packages/bridge/src/policy.ts` for the `test
 
 | | |
 |---|---|
-| Portal (`YacanaPortal`; deployed in [`0x42d38318…bc61`](https://sepolia.etherscan.io/tx/0x42d38318a3135077227c6184a4387886ab83659506dc8778e20192dd2074bc61)) | [`0x13c06CF71C75fDaE21a46d66478e738209A0370c`](https://sepolia.etherscan.io/address/0x13c06CF71C75fDaE21a46d66478e738209A0370c) |
-| YACA (`tYACA`, ERC-20, minter = the portal, created by it) | [`0x4DA537e78409830dCa92850fE635eFD15A60109c`](https://sepolia.etherscan.io/address/0x4DA537e78409830dCa92850fE635eFD15A60109c) |
+| Portal (`YacanaPortal`, verified; deployed in [`0x42d38318…bc61`](https://sepolia.etherscan.io/tx/0x42d38318a3135077227c6184a4387886ab83659506dc8778e20192dd2074bc61)) | [`0x13c06CF71C75fDaE21a46d66478e738209A0370c`](https://sepolia.etherscan.io/address/0x13c06CF71C75fDaE21a46d66478e738209A0370c#code) |
+| YACA (`tYACA`, ERC-20, minter = the portal, created by it, verified) | [`0x4DA537e78409830dCa92850fE635eFD15A60109c`](https://sepolia.etherscan.io/address/0x4DA537e78409830dCa92850fE635eFD15A60109c#code) |
 | Aztec Registry (the testnet's) | `0xa0bfb1b494fb49041e5c6e8c2c1be09cd171c6ba` |
 | Operators (an EOA; the Safe comes with the mainnet plan; its key is `YACANA_L1_PRIVATE_KEY` of the `Yacana-Testnet` item) | [`0xc9b7162F57B74257261cB61a0FAc870Eda87Cbb7`](https://sepolia.etherscan.io/address/0xc9b7162F57B74257261cB61a0FAc870Eda87Cbb7) |
 | Listed forwarder (the relayer of 2026-09-14) | [`0x6792D5eb…8bac`](https://sepolia.etherscan.io/address/0x6792D5eb75e1F025438349d454AC91378d9F8bac), listed by [`0x2af3cf09…54c4`](https://sepolia.etherscan.io/tx/0x2af3cf09a9bf110c2b23c59dcc1b2399cfcccea0435ad06c64669cb2514154c4) |
