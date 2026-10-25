@@ -9,9 +9,22 @@ explainer: off
 eli5_mode: skipped (orchestrator-owned)
 budget: "recon 1 Sonnet agent + 1 docs fetch; codex at high (gpt-6.1-sol); code-review off"
 hardening: not scheduled
-status: drafted 2026-10-25; codex r1 → conditional approve, folded; final fresh pass → conditional approve, folded → approve; awaiting the orchestrator
+status: completed 2026-10-25 (PR #75, unmerged)
 created: 2026-10-25
 ---
+
+## Outcome
+
+2026-10-25, completed: delivered as PR #75, unmerged (the merge is the orchestrator's). Shipped: `<workflow>-status`
+in the 13 pull-request workflows, the verdict `scripts/ci-status.ts` behind `.github/actions/status`, `setup-bun`'s
+`install` input, actionlint's filter in a `changes` job, G1–G3 in `scripts/layout.test.ts`, the `CLAUDE.md`
+convention. Added in the fix loop: off `pull_request` a status posts `<name> (dispatch)`, so a dispatch run never
+answers for a PR head. ask1's Check, on draft PR #76 (closed unmerged): a harness-only change ran only `rig` and all
+13 statuses went green; a deliberate throw turned only `harness-status` red; cancelling the run turned it `failure`;
+`gh run rerun --failed` reran the cancelled job and the status went green (I2, I3 hold). Codex fix loop converged in
+two rounds. Known limits: none. Open items: none. Not this plan's: `Workers Builds: yacana` fails on every branch,
+`main`'s own head included (`lessons/phase-3.md`); reported to the orchestrator. The `/goal` and `/loop` seeds are
+retired.
 
 # ci-1: one status check per pull-request workflow
 
@@ -143,7 +156,7 @@ makes those 13 names the required checks. Recon: `recon.md`.
 - **Gate**: `bun run lint:actions && bun run lint && bun run typecheck && bun test && bun run test:components` exit
   0. Layers: lint, typecheck, unit (guard included), component.
 
-### P3 — ask1's Check on GitHub (after the arc PR's 13 statuses are green)
+### P3 — ask1's Check on GitHub (after the arc PR's 13 statuses are green) ✓
 Warning: every commit here must pass lint and typecheck, or miner-core's status turns red too.
 1. Branch `ci-1-status-evidence` from the arc branch. Add a comment-only change to `tools/harness/src/user.ts`.
 2. Open a draft PR with the arc branch as base, titled `chore(ci): status evidence, do not merge`.
