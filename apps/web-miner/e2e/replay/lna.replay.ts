@@ -31,7 +31,7 @@ function fakePresto(): Promise<{ server: Server; port: number; hits: () => numbe
     if (req.url?.startsWith('/health')) {
       res.setHeader('content-type', 'application/json');
       return void res.end(
-        JSON.stringify({ status: 'ok', api_version: 1, schemes: ['chonk', 'ultra_honk'], version: '1.1.1' }),
+        JSON.stringify({ status: 'ok', api_version: 1, schemes: ['chonk', 'ultra_honk'], version: '1.2.1' }),
       );
     }
     res.writeHead(404).end();

@@ -292,7 +292,7 @@ npm lock: a new supply-chain gate G1 does not allow (D4).
 git diff --exit-code protocol/portal/abi` is clean (or the diff is explained). `bun tools/deploy/scripts/l1-deploy.ts
 --anvil` exits 0. Layers: unit, integration (forge).
 
-### P4: the isolated network, the recordings, the browser suites, the rig ☐
+### P4: the isolated network, the recordings, the browser suites, the rig ✓
 1. `bun tools/localnet/src/isolated-node.ts --smoke`; then `bun run e2e:agent -- bun test tools/deploy` (the live
    suite; P2's two expected failures only).
 2. Re-record: `bun run e2e:agent -- bun apps/web-miner/e2e/replay/setup.ts record`, and
@@ -460,6 +460,10 @@ cleared failures; a gate for every part of ask3's Check; §4's replay and reduce
   environment, geth at the latest header's own timestamp, and an append-priced estimate sent into a new bucket
   reverts out of gas (reproduced on anvil). The margin is `INBOX_BUCKET_GAS` in `packages/bridge/src/inbox.ts`, and
   the holder's send-ahead forward (`forwardOnEthereum`, the same Inbox write) takes it too.
+- P4: four fixes the gates found, each in `lessons/phase-4.md`: the network's `FORGE_BIN` (6.0.0 looks under
+  `~/.aztec/current` first), the live burst taking turns at proving (bb.js 6.0.0 interleaves concurrent Chonk
+  proofs in one process), `no-prover.ts` exporting `CircuitKind` (the read-only apps and `site:build` did not
+  build), and the pruned-anchor fault reading 6.0.0's `{ number, hash }` block parameter.
 
 ## 9. Post-implementation (no repository standard exists; written out)
 

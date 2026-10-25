@@ -40,7 +40,7 @@ the few config-time edges `scripts/boundaries.test.ts` lists.
 
 ```
 bun install
-bun run codegen && bun run contracts:compile   # aztec 5.2.0 toolchain, see CLAUDE.md
+bun run codegen && bun run contracts:compile   # aztec 6.0.0 toolchain, see CLAUDE.md
 bun run lint && bun test                        # unit suites
 bun run e2e:agent -- bun test packages/miner-core                     # live suite on an isolated network
 bun run e2e:agent -- bun run --cwd apps/web-miner test:e2e        # web miner in headless Chromium

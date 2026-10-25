@@ -12,3 +12,4 @@
 - 2026-10-25 P2 gate pass: lint, typecheck, components 347, bun test (expected: 2 example-claim + 2 replay-binding until P4), contracts:test 90, check:proofs 4/4, generators clean.
 - 2026-10-25 P3 gate pass: portal:build, portal:test 77/77 (LEAF_GAS holds: worst leaf 288,947), abi clean, l1-deploy --anvil; I5 shortfall on geth semantics (41,731 gas), margin 45,000 taken.
 - 2026-10-25 ORCHY-STEER: OA1 answered, owner decision P1-01: dRPC's public node is the default V6 node; A2 settled, P6 no longer waits on it.
+- 2026-10-25 P4 gate pass: smoke, live (2 expected), replay 9/9 + check-chunks, visual 8/8 (data-only diffs), shards cockpit 8 / chain 14 / bridge 5 / canary 5 at retry 0, stats 7, landing 5, site:e2e 3, rig 13/13.

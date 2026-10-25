@@ -46,7 +46,7 @@ Deferred by that plan's decisions (`plan.md` §5, §8):
 ## Deferred (later plans)
 
 - Native / CLI mining via aztec-accelerator on top of miner-core.
-- External wallet connection (`@aztec/wallet-sdk`); the embedded wallet ships first.
+- External wallet connection (`@aztec-labs/wallet-sdk`); the embedded wallet ships first.
 - Mainnet fee path (fees are sponsored in this plan) and launch operations. Any sponsor that pays for arbitrary
   calls is drainable by public reverts (premature `roll()`, claims sequenced after a close): self-paid fees, or a
   sponsor with per-account quotas and a function allowlist (`docs/threat-model.md`).
@@ -56,11 +56,11 @@ Deferred by that plan's decisions (`plan.md` §5, §8):
 - `/harden security` before any mainnet deployment (no external audit, plan Ask 8).
 - Fully pinned toolchain install in CI: `toolchain.lock.json` pins the version installer script and verifies
   nargo, bb and the WASM after install, but the installer's own downloads (`noirup` from a moving branch,
-  foundry, `npm install @aztec/*` without an integrity lock) still run unpinned on the runner. Owning the
+  foundry, `npm ci` against a lock it fetches without a digest) still run unpinned on the runner. Owning the
   install (lockfile + pinned nargo release) closes that.
 - An executed same-witness re-derivation measurement (patched bb prover build) — deferred by the owner after Phase 1; Phase 1 reports a timer-derived
   estimate (`spike-results.md` §4b).
-- Web miner storage: the embedded wallet uses the deprecated IndexedDB stores (`@aztec/kv-store/deprecated/indexeddb`);
+- Web miner storage: the embedded wallet uses the deprecated IndexedDB stores (`@aztec-labs/kv-store/deprecated/indexeddb`);
   moving to the SQLite-OPFS default needs its worker and WASM assets emitted unhashed by the build.
 - **Claiming after a public revert** (Phase 5 finding): a stale claim that reverts in public leaves the miner's
   PXE with a pending note-delivery index for a nullifier that never landed; the next claim's constrained delivery
@@ -76,7 +76,7 @@ Deferred by that plan's decisions (`plan.md` §5, §8):
   passkey follows its platform account, a lost authenticator loses the key. Before mainnet: an export path or a
   words-backed second factor.
 - Key rotation and account discovery: `deriveAccountFields` keeps its index parameter; the miner uses index 0 only.
-- External wallet connection for launch mode (`@aztec/wallet-sdk`): the landing links the CLI commit path.
+- External wallet connection for launch mode (`@aztec-labs/wallet-sdk`): the landing links the CLI commit path.
 - Testnet soak operations: the soak driver (`tools/deploy/scripts/soak.ts`) mines from one machine with a
   hashrate schedule; a second machine or a second deployment profile would exercise multi-miner races beyond the
   8-wallet local burst.

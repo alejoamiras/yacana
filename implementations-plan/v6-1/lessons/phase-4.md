@@ -42,3 +42,10 @@
   for Aztec 6.0.0 and proves on `bb="bundled"` (10 proofs in `chain`), and its `PRESTO_HOME` is 16 KB with no
   downloaded `bb` (F8 holds). The breakdown's `prestoProofs` counts transaction proofs, which a prover-less shard
   skips, so the native evidence is Presto's own log and the Presto specs' assertions.
+- Then: web-stats 7/7 (155 s), web-landing 5/5 (110 s), `site:e2e` 3/3 (163 s). `bun run rig -- all` 13 pass across
+  flip, bridge, browser, deposit, migration, never-settled, origin and skip-version (1,778 s), so I4's anvil
+  base-fee stall did not reproduce and no flag went in. The migration and browser cases ran the operator's
+  `retire` with its new margin and a deposit through the page.
+- **Wall-clocks.** Local runs here against 5.2.0's last green `e2e.yml` (2026-09-21, CI job times with setup):
+  cockpit 5.3 min (CI 8.9), chain 12.7 (9.8), bridge 5.8 (7.2), canary 7.1 (13.5), web-stats 2.6 (6.3),
+  web-landing 1.8 (5.5), rig 29.6 (28.2). Not like for like: P5's dispatch gives 6.0.0's CI times.

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { classifyClaimFailure, revertCause } from './claim-failure.ts';
 
-// The strings aztec.js 5.2.0, the node and the PXE produce (utils/node.js waitForTx; the tagging sync). The
+// The strings aztec.js 6.0.0, the node and the PXE produce (utils/node.js waitForTx; the tagging sync). The
 // first two as the owner's ledger showed them (hashes shortened there), the third from a replay on the
 // isolated network.
 const FIXTURES: [string, ReturnType<typeof classifyClaimFailure>][] = [
