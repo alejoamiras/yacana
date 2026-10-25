@@ -124,7 +124,7 @@ makes those 13 names the required checks. Recon: `recon.md`.
 
 ## Phases
 
-### P1 — the verdict and its test
+### P1 — the verdict and its test ✓
 1. Add `scripts/ci-status.ts` as specified.
 2. Add `scripts/ci-status.test.ts` with one table through `verdict`. The ok rows: ran and relevant, skipped and not
    relevant, no filter and ran. The failing rows: failed, cancelled, never started (`skipped` while relevant),
