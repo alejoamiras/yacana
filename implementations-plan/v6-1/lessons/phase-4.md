@@ -17,3 +17,14 @@
   under the age gate (G1: no other change). Worth an upstream report (not filed: outward-facing).
 - Step 1: smoke 37 s; `bun run e2e:agent -- bun test tools/deploy` 23 pass, 1 skip, 2 fail (the two example-claim
   assertions, as in P2), 415 s.
+- **The read-only apps did not build on 6.0.0.** `@aztec-labs/stdlib` and `@aztec-labs/foundation` now import
+  `CircuitKind` from bb.js at module load (four sites), and the non-proving apps resolve bb.js to
+  `web-kit`'s `no-prover.ts`, which did not export it: web-stats and web-landing failed `vite build`, so
+  `site:build` (Workers Builds' command) was broken from P2 on; no P2 gate built a site. `CircuitKind` is a plain
+  enum, so the stub now carries its names and values as data. `site:build` then passed (three apps).
+- Step 2: the replay re-recorded (13 answers, 93 s) and the visual fixture (132 answers, 81 s). `test:replay` 9/9
+  (74 s), `check-chunks` (first paint 9 chunks, no stats module; Stats 357.6 kB on first opening),
+  `replay-binding` 3/3. The eight screenshots differed by 0.01 of their pixels; every diff was data: addresses,
+  the rollup version chip, epoch timings, the launch date (Sep 13 → Oct 25, the recording's day), and the bridge
+  chart's "since launch" axis stretched to it. Layout and type unchanged at 1280 and 390. Regenerated in the
+  pinned image; `test:visual` 8/8 (21 s).

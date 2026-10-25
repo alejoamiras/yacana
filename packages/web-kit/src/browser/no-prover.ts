@@ -21,3 +21,13 @@ export const BN254_G2_GENERATOR = gone('BN254_G2_GENERATOR');
 export const flattenChonkProofFields = gone('flattenChonkProofFields');
 export const randomBytes = gone('randomBytes');
 export const serializeWitness = gone('serializeWitness');
+
+/** Data, not proving: the SDK tags circuits with it at import. bb.js's enum, names and values both ways. */
+export const CircuitKind = {
+  App: 0,
+  Kernel: 1,
+  HidingKernel: 2,
+  0: 'App',
+  1: 'Kernel',
+  2: 'HidingKernel',
+} as const;

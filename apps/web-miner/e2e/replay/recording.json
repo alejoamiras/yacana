@@ -1,32 +1,32 @@
 {
-  "recordedAt": "2026-09-23T22:41:15.417Z",
+  "recordedAt": "2026-10-25T17:25:13.449Z",
   "deployment": {
     "chainId": "31337",
-    "rollupVersion": "3685977955",
-    "rollupAddress": "0x4ed7c70f96b99c776995fb64377f0d4ab3b0e1c1",
-    "miner": "0x111105797275648a1eee920a0fa50a354ed467df6f09e1e95a5767912bc99aec",
-    "token": "0x1558f124e9b43d1b1a88aa64d3f73a50f3e453160a1ac95a20ce89ae6f0d054c",
-    "minerClassId": "0x0ee9c81b4018f249a69235d41eaddda33316e5142644398df3d6f56080c5b07f",
-    "tokenClassId": "0x10fd5603d57b91daa46f9b8f98ff0cbd4516315ce10e423c05dcfe9638bfecbf"
+    "rollupVersion": "1685378643",
+    "rollupAddress": "0xa85233c63b9ee964add6f2cffe00fd84eb32338f",
+    "miner": "0x2e233ebc5abe549feaebc95380677afeb6207a34be400121f12528c5ab51f7c9",
+    "token": "0x0a7d247a6ec1741eb35ee9ad2ba5590f941d5ca19e1d19ba6ed85c715dc00199",
+    "minerClassId": "0x05f5edc215509252395ebf2d1cdded27f0815fc7c7d1486783ddadf072b2269d",
+    "tokenClassId": "0x2ff0939914ff64bd3f7979926dbe8cf3332bc2fee55928bf3cc9ca802568ea9f"
   },
   "binding": {
-    "minerArtifactSha256": "989ab4203da314474dd00abedf52fbb77e8c961e9e59daaa7b6b5d0785c006f7",
-    "tokenArtifactSha256": "ba9d55233331526a70ca791ed4d8bb2efdc80d406483d74aead02d1fbc7876b0",
+    "minerArtifactSha256": "8ba26be56767f639792e7228505f1a990c4a4759620e8e53579373890cf9cc21",
+    "tokenArtifactSha256": "f18cccf8dd26bd50417d09ec2dbd94f69e536ddf99bdec231d8ef10815f343e0",
     "layoutsSha256": "488aa9cd0616524786a7f494afc95690a0bdf3e32ac7abc504c5fee81fdf27e6",
-    "aztecVersion": "5.2.0"
+    "aztecVersion": "6.0.0"
   },
-  "claimsKey": "aztec_getPublicStorageAt [\"latest\",\"0x111105797275648a1eee920a0fa50a354ed467df6f09e1e95a5767912bc99aec\",\"0x035e3b6ba5d690a33845814e334a4bc18c8b6600cd65d7f1948cbaf3ace02331\"]",
+  "claimsKey": "aztec_getPublicStorageAt [\"latest\",\"0x2e233ebc5abe549feaebc95380677afeb6207a34be400121f12528c5ab51f7c9\",\"0x035e3b6ba5d690a33845814e334a4bc18c8b6600cd65d7f1948cbaf3ace02331\"]",
   "answers": {
     "aztec_getBlockData [\"latest\"]": {
       "header": {
         "lastArchive": {
-          "root": "0x16d184601f8db361029550157f404da08c3121700798db86c7ce283c68368192",
+          "root": "0x19c13aac29b992cdaec58779855a74549816d60da3f89fb0da81ff653b447ed2",
           "nextAvailableLeafIndex": 8
         },
         "state": {
           "l1ToL2MessageTree": {
             "root": "0x0fef6d80d31109ddb56d6b3f607cbc9c0af0bff3ea0d43e8f278983c64c11f7a",
-            "nextAvailableLeafIndex": 8192
+            "nextAvailableLeafIndex": 0
           },
           "partial": {
             "noteHashTree": {
@@ -34,49 +34,68 @@
               "nextAvailableLeafIndex": 512
             },
             "nullifierTree": {
-              "root": "0x0eab302779c154cb66108a9718d2605f61bf408805695282461d18482558d4a4",
+              "root": "0x276c8654281375330a35e5cada204c9a80055f07866b5a5561a97d09ed5d85d6",
               "nextAvailableLeafIndex": 640
             },
             "publicDataTree": {
-              "root": "0x1096e1d523c1b3160061248434e78279c0fd799b9d79feb934aa8f6da3fcfec1",
+              "root": "0x193442d82ebd01b9eae82ac60f457a13e91a4a0e3456368072633e32b27cbdff",
               "nextAvailableLeafIndex": 166
             }
           }
         },
-        "spongeBlobHash": "0x07827b88ea7542550e93664101885fe32b19739a6c589c832a5ee08a9080fa2b",
+        "spongeBlobHash": "0x19070592fb2a0d5d4cfc320daabaa73b56b280307bff4e5845c5375e721aac72",
+        "txEffectsTreeRoot": "0x01649fe58873050c8e1c5a97cee0c1522ac1bbb548be1ed79f37e14a9a83925f",
         "globalVariables": {
           "chainId": "0x0000000000000000000000000000000000000000000000000000000000007a69",
-          "version": "0x00000000000000000000000000000000000000000000000000000000dbb38f63",
+          "version": "0x000000000000000000000000000000000000000000000000000000006474d653",
           "blockNumber": 8,
           "slotNumber": "0x0000000000000000000000000000000000000000000000000000000000000008",
-          "timestamp": "1790204042",
+          "timestamp": "1792949638",
           "coinbase": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
           "feeRecipient": "0x0000000000000000000000000000000000000000000000000000000000000000",
           "gasFees": {
             "feePerDaGas": "0",
-            "feePerL2Gas": "75696000000"
+            "feePerL2Gas": "869281200000"
           }
         },
-        "totalFees": "0x00000000000000000000000000000000000000000000000000d115a0c5711400",
-        "totalManaUsed": "0x00000000000000000000000000000000000000000000000000000000000bdd07"
+        "totalFees": "0x000000000000000000000000000000000000000000000000096115b148735e00",
+        "totalManaUsed": "0x00000000000000000000000000000000000000000000000000000000000bdd04"
       },
       "archive": {
-        "root": "0x29da7264e0c2e04196a8f887c90759bc19808be9ce8e449763ac2bfd601d9624",
+        "root": "0x2968e78dcd53175c3f6d37e46043af3ba97878eb254c41f8b85539b4aaf89f01",
         "nextAvailableLeafIndex": 9
       },
-      "blockHash": "0x1cf1a154c5859f7b681ce36622ede149db373fcf7d5b0c2b272f585516ad0451",
+      "blockHash": "0x0ac55e65c395825e8fca64f73c1ad4925ae1e0b2360299ded164086ec6d94be7",
       "checkpointNumber": 8,
       "indexWithinCheckpoint": 0
     },
     "aztec_getBlockNumber []": 8,
     "aztec_getChainId []": 31337,
     "aztec_getCheckpointNumber [\"checkpointed\"]": 8,
-    "aztec_getContract [\"0x111105797275648a1eee920a0fa50a354ed467df6f09e1e95a5767912bc99aec\"]": {
+    "aztec_getContract [\"0x0a7d247a6ec1741eb35ee9ad2ba5590f941d5ca19e1d19ba6ed85c715dc00199\"]": {
       "version": 2,
-      "salt": "0x081dc2d17e468f5cffc277d9b8abca22bd8f716d89613c91babc1febeff17ba2",
-      "deployer": "0x0d05ff827b757c5c89fdd18dfa04c8295a9a373cb2ba116804c29f4a47dd937d",
-      "currentContractClassId": "0x0ee9c81b4018f249a69235d41eaddda33316e5142644398df3d6f56080c5b07f",
-      "originalContractClassId": "0x0ee9c81b4018f249a69235d41eaddda33316e5142644398df3d6f56080c5b07f",
+      "salt": "0x09d9fbb2a43bc77c18b9f88f71e851fdb1967e9c20ffc70f43d540dd69e59e54",
+      "deployer": "0x223b89f308a3f7b6f1f95f6b733601e1227c4a4dc607539c3d8167e080dd1747",
+      "currentContractClassId": "0x2ff0939914ff64bd3f7979926dbe8cf3332bc2fee55928bf3cc9ca802568ea9f",
+      "originalContractClassId": "0x2ff0939914ff64bd3f7979926dbe8cf3332bc2fee55928bf3cc9ca802568ea9f",
+      "initializationHash": "0x2ba88a388efc8c0ef7fd8557f98ffa708ab7261a03649c73aff3e576f42e38a5",
+      "immutablesHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "publicKeys": {
+        "npkMHash": "0x14fbaeaeddaa69be81d404c684e78e9f1a786d225faf8de2ce97c92f67d89a26",
+        "ivpkM": "0x00c044b05b6ca83b9c2dbae79cc1135155956a64e136819136e9947fe5e5866c1c1f0ca244c7cd46b682552bff8ae77dea40b966a71de076ec3b7678f2bdb151",
+        "ovpkMHash": "0x0e60ed663a4da5636e2e25a1f1f0c5b27c011c8eaed22bbe61e2a0fd875dd24b",
+        "tpkMHash": "0x082c6d164b0ba073c9dd911100248c8ecd80b03f82f38531856a3c16dadcbef0",
+        "mspkMHash": "0x14a5d4bde495b8c3a9ba4aed0d4870526e46fdff22d341a2f689ac5a50d10356",
+        "fbpkMHash": "0x0f124f07811eebfaaa6d31316a2cc5bf255fa118f720e8ff1f2fc0d4aa46d496"
+      },
+      "address": "0x0a7d247a6ec1741eb35ee9ad2ba5590f941d5ca19e1d19ba6ed85c715dc00199"
+    },
+    "aztec_getContract [\"0x2e233ebc5abe549feaebc95380677afeb6207a34be400121f12528c5ab51f7c9\"]": {
+      "version": 2,
+      "salt": "0x247e2767a1f04fdb412e39cd0da23a38aa3da0a861ada7a0412124aa34a7e946",
+      "deployer": "0x223b89f308a3f7b6f1f95f6b733601e1227c4a4dc607539c3d8167e080dd1747",
+      "currentContractClassId": "0x05f5edc215509252395ebf2d1cdded27f0815fc7c7d1486783ddadf072b2269d",
+      "originalContractClassId": "0x05f5edc215509252395ebf2d1cdded27f0815fc7c7d1486783ddadf072b2269d",
       "initializationHash": "0x0c09bb1d01cc7caeda2e9df13554b2db9ea046cc370454439c9e7f2afcece262",
       "immutablesHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "publicKeys": {
@@ -87,67 +106,49 @@
         "mspkMHash": "0x14a5d4bde495b8c3a9ba4aed0d4870526e46fdff22d341a2f689ac5a50d10356",
         "fbpkMHash": "0x0f124f07811eebfaaa6d31316a2cc5bf255fa118f720e8ff1f2fc0d4aa46d496"
       },
-      "address": "0x111105797275648a1eee920a0fa50a354ed467df6f09e1e95a5767912bc99aec"
-    },
-    "aztec_getContract [\"0x1558f124e9b43d1b1a88aa64d3f73a50f3e453160a1ac95a20ce89ae6f0d054c\"]": {
-      "version": 2,
-      "salt": "0x19f90071e49a1a2f05a4519ea04104671175884c5380c2826fd6a7f4464e4d38",
-      "deployer": "0x0d05ff827b757c5c89fdd18dfa04c8295a9a373cb2ba116804c29f4a47dd937d",
-      "currentContractClassId": "0x10fd5603d57b91daa46f9b8f98ff0cbd4516315ce10e423c05dcfe9638bfecbf",
-      "originalContractClassId": "0x10fd5603d57b91daa46f9b8f98ff0cbd4516315ce10e423c05dcfe9638bfecbf",
-      "initializationHash": "0x060b110850fbcc54a46e19e4ce43ed5566721a5ff4a7be72947659eb315997c5",
-      "immutablesHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-      "publicKeys": {
-        "npkMHash": "0x14fbaeaeddaa69be81d404c684e78e9f1a786d225faf8de2ce97c92f67d89a26",
-        "ivpkM": "0x00c044b05b6ca83b9c2dbae79cc1135155956a64e136819136e9947fe5e5866c1c1f0ca244c7cd46b682552bff8ae77dea40b966a71de076ec3b7678f2bdb151",
-        "ovpkMHash": "0x0e60ed663a4da5636e2e25a1f1f0c5b27c011c8eaed22bbe61e2a0fd875dd24b",
-        "tpkMHash": "0x082c6d164b0ba073c9dd911100248c8ecd80b03f82f38531856a3c16dadcbef0",
-        "mspkMHash": "0x14a5d4bde495b8c3a9ba4aed0d4870526e46fdff22d341a2f689ac5a50d10356",
-        "fbpkMHash": "0x0f124f07811eebfaaa6d31316a2cc5bf255fa118f720e8ff1f2fc0d4aa46d496"
-      },
-      "address": "0x1558f124e9b43d1b1a88aa64d3f73a50f3e453160a1ac95a20ce89ae6f0d054c"
+      "address": "0x2e233ebc5abe549feaebc95380677afeb6207a34be400121f12528c5ab51f7c9"
     },
     "aztec_getNodeInfo []": {
-      "nodeVersion": "5.2.0",
+      "nodeVersion": "6.0.0",
       "l1ChainId": 31337,
-      "rollupVersion": 3685977955,
+      "rollupVersion": 1685378643,
       "l1ContractAddresses": {
-        "rollupAddress": "0x4ed7c70f96b99c776995fb64377f0d4ab3b0e1c1",
-        "registryAddress": "0x610178da211fef7d417bc0e6fed39f05609ad788",
-        "inboxAddress": "0x0665fbb86a3aceca91df68388ec4bbe11556ddce",
-        "outboxAddress": "0x9d63c831188174d95338a847bc027095a2442550",
-        "feeJuiceAddress": "0x0165878a594ca255338adfa4d48449f69242eb8f",
-        "feeJuicePortalAddress": "0xfd05ee8687d4ca828ba3d26ef04b80dd1348e5bd",
-        "coinIssuerAddress": "0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6",
-        "rewardDistributorAddress": "0x6f1216d1bfe15c98520ca1434fc1d9d57ac95321",
-        "governanceProposerAddress": "0xb7f8bc63bbcad18155201308c8f3540b07f84f5e",
-        "governanceAddress": "0xa51c1fc2f0d1a1b8494ed1fe312d7c3a78ed91c0",
-        "stakingAssetAddress": "0x5fc8d32690cc91d4c39d9d3abcbd16989f875707",
-        "feeAssetHandlerAddress": "0x0b306bf915c4d645ff596e518faf3f9669b97016",
-        "stakingAssetHandlerAddress": "0x68b1d87f95878fe05b998f19b66f4baba5de1aed",
-        "zkPassportVerifierAddress": "0x9a9f2ccfde556a7e9ff0848998aa4a0cfd8863ae",
-        "gseAddress": "0x8a791620dd6260079bf849dc5567adc3f2fdc318",
-        "dateGatedRelayerAddress": "0x9a676e781a523b5d0c0e43731313a708cb607508"
+        "rollupAddress": "0xa85233c63b9ee964add6f2cffe00fd84eb32338f",
+        "registryAddress": "0xa51c1fc2f0d1a1b8494ed1fe312d7c3a78ed91c0",
+        "inboxAddress": "0x46682ca783d96a4a65390211934d5714cdb788e4",
+        "outboxAddress": "0x0a41804810f008e5ee565aa4b95a6a7c50a09082",
+        "feeJuiceAddress": "0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6",
+        "feeJuicePortalAddress": "0x3e180b566a1ef3ad836ee42c9519be95b13e7473",
+        "coinIssuerAddress": "0x610178da211fef7d417bc0e6fed39f05609ad788",
+        "rewardDistributorAddress": "0x1f708c24a0d3a740cd47cc0444e9480899f3da7d",
+        "governanceProposerAddress": "0x0dcd1bf9a1b36ce34237eeafef220932846bcd82",
+        "governanceAddress": "0x9a676e781a523b5d0c0e43731313a708cb607508",
+        "stakingAssetAddress": "0xa513e6e4b8f2a923d98304ec87f64353c4d5c853",
+        "feeAssetHandlerAddress": "0x9a9f2ccfde556a7e9ff0848998aa4a0cfd8863ae",
+        "stakingAssetHandlerAddress": "0xc6e7df5e7b4f2a278906862b61205850344d4e7d",
+        "zkPassportVerifierAddress": "0x3aa5ebb10dc797cac828524e59a333d0a371443c",
+        "gseAddress": "0xb7f8bc63bbcad18155201308c8f3540b07f84f5e",
+        "dateGatedRelayerAddress": "0x959922be3caee4b8cd9a407cc3ac1c251c2007b1"
       },
       "protocolContractAddresses": {
         "classRegistry": "0x0000000000000000000000000000000000000000000000000000000000000001",
         "feeJuice": "0x0000000000000000000000000000000000000000000000000000000000000003",
         "instanceRegistry": "0x0000000000000000000000000000000000000000000000000000000000000002",
-        "multiCallEntrypoint": "0x246d60af8b79a5dceece7d2388921203401c0df02ce674c5781c6c2162922986"
+        "multiCallEntrypoint": "0x2d464e835406c6057bf147843d1541e0b338a13f8fedd5cba697629172dd8105"
       },
       "realProofs": false,
       "txsLimits": {
         "gas": {
-          "daGas": 55882,
+          "daGas": 55836,
           "l2Gas": 6540000
         }
       }
     },
-    "aztec_getPublicStorageAt [\"latest\",\"0x111105797275648a1eee920a0fa50a354ed467df6f09e1e95a5767912bc99aec\",\"0x0000000000000000000000000000000000000000000000000000000000000003\"]": "0x1558f124e9b43d1b1a88aa64d3f73a50f3e453160a1ac95a20ce89ae6f0d054c",
-    "aztec_getPublicStorageAt [\"latest\",\"0x111105797275648a1eee920a0fa50a354ed467df6f09e1e95a5767912bc99aec\",\"0x000000000000000000000000000000000000000000000000000000000000000f\"]": "0x0000000000000000000000000000000000000000000000000000000000000000",
-    "aztec_getPublicStorageAt [\"latest\",\"0x111105797275648a1eee920a0fa50a354ed467df6f09e1e95a5767912bc99aec\",\"0x035e3b6ba5d690a33845814e334a4bc18c8b6600cd65d7f1948cbaf3ace02331\"]": "0x0000000000000000000000000000000000000000000000000000000000000000",
-    "aztec_getPublicStorageAt [\"latest\",\"0x111105797275648a1eee920a0fa50a354ed467df6f09e1e95a5767912bc99aec\",\"0x0b8231a42f1b14f6d5723e64e4e4d3c4061c684f446e5eaaea1b1848ce4fed97\"]": "0x0000000000000000000000000000000080000000000000000000000000000000",
-    "aztec_getPublicStorageAt [\"latest\",\"0x111105797275648a1eee920a0fa50a354ed467df6f09e1e95a5767912bc99aec\",\"0x0b8231a42f1b14f6d5723e64e4e4d3c4061c684f446e5eaaea1b1848ce4fed98\"]": "0x0e909fb47b3c7f103f2bb9257b33fecad36bfa3fff36c3eee9c44d7c11a207e3",
-    "aztec_getPublicStorageAt [\"latest\",\"0x111105797275648a1eee920a0fa50a354ed467df6f09e1e95a5767912bc99aec\",\"0x0b8231a42f1b14f6d5723e64e4e4d3c4061c684f446e5eaaea1b1848ce4fed99\"]": "0x000000000000000000000000000000000000000000000000000000006ab4588a"
+    "aztec_getPublicStorageAt [\"latest\",\"0x2e233ebc5abe549feaebc95380677afeb6207a34be400121f12528c5ab51f7c9\",\"0x0000000000000000000000000000000000000000000000000000000000000003\"]": "0x0a7d247a6ec1741eb35ee9ad2ba5590f941d5ca19e1d19ba6ed85c715dc00199",
+    "aztec_getPublicStorageAt [\"latest\",\"0x2e233ebc5abe549feaebc95380677afeb6207a34be400121f12528c5ab51f7c9\",\"0x000000000000000000000000000000000000000000000000000000000000000f\"]": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "aztec_getPublicStorageAt [\"latest\",\"0x2e233ebc5abe549feaebc95380677afeb6207a34be400121f12528c5ab51f7c9\",\"0x035e3b6ba5d690a33845814e334a4bc18c8b6600cd65d7f1948cbaf3ace02331\"]": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "aztec_getPublicStorageAt [\"latest\",\"0x2e233ebc5abe549feaebc95380677afeb6207a34be400121f12528c5ab51f7c9\",\"0x0b8231a42f1b14f6d5723e64e4e4d3c4061c684f446e5eaaea1b1848ce4fed97\"]": "0x0000000000000000000000000000000080000000000000000000000000000000",
+    "aztec_getPublicStorageAt [\"latest\",\"0x2e233ebc5abe549feaebc95380677afeb6207a34be400121f12528c5ab51f7c9\",\"0x0b8231a42f1b14f6d5723e64e4e4d3c4061c684f446e5eaaea1b1848ce4fed98\"]": "0x174f5c0e30af33160416fa7968f33af03ee15a93888dacf76787eeb1890fe05b",
+    "aztec_getPublicStorageAt [\"latest\",\"0x2e233ebc5abe549feaebc95380677afeb6207a34be400121f12528c5ab51f7c9\",\"0x0b8231a42f1b14f6d5723e64e4e4d3c4061c684f446e5eaaea1b1848ce4fed99\"]": "0x000000000000000000000000000000000000000000000000000000006ade3d86"
   }
 }
