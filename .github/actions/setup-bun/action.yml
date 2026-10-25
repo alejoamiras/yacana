@@ -1,5 +1,10 @@
 name: Setup Bun
-description: Install the pinned Bun and the workspace dependencies with a frozen lockfile
+description: Install the pinned Bun and, unless told not to, the workspace dependencies with a frozen lockfile
+
+inputs:
+  install:
+    description: Whether to install the workspace dependencies
+    default: 'true'
 
 runs:
   using: composite
@@ -8,5 +13,6 @@ runs:
       with:
         bun-version: 1.4.0
     - name: Install dependencies
+      if: inputs.install == 'true'
       shell: bash
       run: bun install --frozen-lockfile

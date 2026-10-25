@@ -1,0 +1,19 @@
+name: Status
+description: Fail unless every job the calling job needs ended as the workflow's change filter implies
+
+inputs:
+  needs:
+    description: The calling job's `toJSON(needs)`
+    required: true
+
+runs:
+  using: composite
+  steps:
+    # The verdict imports nothing: no dependency install.
+    - uses: ./.github/actions/setup-bun
+      with:
+        install: 'false'
+    - shell: bash
+      run: bun scripts/ci-status.ts
+      env:
+        NEEDS: ${{ inputs.needs }}
