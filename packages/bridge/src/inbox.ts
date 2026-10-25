@@ -7,6 +7,15 @@ import { computeSecretHash } from '@aztec-labs/stdlib/hash';
 import { L1Actor, L1ToL2Message, L2Actor } from '@aztec-labs/stdlib/messaging';
 import { claimContent, retireContent } from './content.ts';
 
+/**
+ * Gas a write that sends an Inbox message may need beyond its estimate. The Inbox opens one bucket per
+ * L1 block, and geth estimates at the latest block's own timestamp: when that block already holds a
+ * message, the estimate appends to its bucket while the transaction lands later and opens a new one,
+ * 41,731 gas more on a ring slot not yet written. The portal's frame passes the Inbox 63/64 of what it
+ * holds, so the margin covers 64/63 of that.
+ */
+export const INBOX_BUCKET_GAS = 45_000n;
+
 export interface InboundScope {
   chainId: bigint;
   rollupVersion: bigint;

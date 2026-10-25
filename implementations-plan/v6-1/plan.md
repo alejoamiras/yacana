@@ -277,7 +277,7 @@ npm lock: a new supply-chain gate G1 does not allow (D4).
 - Re-run the generators; `git diff --exit-code` is clean.
 - Layers: typecheck/lint, unit, integration (TXE, bb).
 
-### P3: the L1 side ☐
+### P3: the L1 side ✓
 1. Refresh the vendored sources per `VENDORED.md`: copy, rewrite the imports, add the constants and the three
    `Inbox__*` errors the 6.0.0 Inbox needs. Delete `test/aztec/FrontierLib.sol`. Give `Harness.sol`'s Inbox its
    four-argument constructor and a ring of at least 512.
@@ -454,6 +454,10 @@ cleared failures; a gate for every part of ask3's Check; §4's replay and reduce
   nothing here and `sha256 v0.3.0` is a transitive 5.2.0's lock did not pin either.
 - P2: `replay-binding.bun.test.ts`'s two tests refuse the 5.2.0 recording until P4 re-records it; they join the two
   example-claim failures in P2's and P3's gates, and P4 clears them.
+- P3: I5's row is taken although anvil's estimate covered the write: anvil estimates in the next block's
+  environment, geth at the latest header's own timestamp, and an append-priced estimate sent into a new bucket
+  reverts out of gas (reproduced on anvil). The margin is `INBOX_BUCKET_GAS` in `packages/bridge/src/inbox.ts`, and
+  the holder's send-ahead forward (`forwardOnEthereum`, the same Inbox write) takes it too.
 
 ## 9. Post-implementation (no repository standard exists; written out)
 

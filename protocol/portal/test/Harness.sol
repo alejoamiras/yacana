@@ -24,7 +24,7 @@ contract FakeRollup is IHaveVersion {
   constructor(uint256 version, ERC20 feeAsset) {
     VERSION = version;
     OUTBOX = new Outbox(address(this), version);
-    INBOX = new Inbox(address(this), feeAsset, version, 4, 2);
+    INBOX = new Inbox(address(this), feeAsset, version, 512);
   }
 
   function getVersion() external view returns (uint256) {

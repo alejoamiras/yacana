@@ -2,15 +2,33 @@
 // Copyright 2024 Aztec Labs.
 pragma solidity >=0.8.27;
 
-import {IInbox} from "@aztec/IInbox.sol";
+import {IInbox, MAX_MSGS_PER_BUCKET} from "@aztec/IInbox.sol";
 import {Constants} from "@aztec/Constants.sol";
-import {FrontierLib} from "@aztec-test/FrontierLib.sol";
 import {Hash} from "@aztec/Hash.sol";
 import {DataStructures} from "@aztec/DataStructures.sol";
 import {Errors} from "@aztec/Errors.sol";
 import {FeeJuicePortalStub} from "@aztec-test/FeeJuicePortalStub.sol";
 import {IERC20} from "@oz/token/ERC20/IERC20.sol";
 import {SafeCast} from "@oz/utils/math/SafeCast.sol";
+
+// Number of buckets in the rolling-hash ring. Eviction is gated on proven consumption, so the ring has to
+// cover the worst-case proving lag (~2 epochs of one bucket per L1 block, which is what MIN_BUCKET_RING_SIZE
+// below is derived from) with enough margin that adversarial bucket creation cannot cheaply exhaust it: a
+// forced rollover costs ~2.2M gas, so burning this much headroom takes ~250 continuously-owned L1 blocks
+// (~50 min, ~9B gas). Ring size bounds retention only — 2 storage slots per live bucket, no per-send gas — and
+// exhausting it halts sends rather than overwriting unconsumed buckets.
+uint256 constant INBOX_BUCKET_RING_SIZE = 4096;
+
+// Constructor floor for the bucket ring. The ring must cover the longest stall the chain recovers from on
+// its own: the prune-and-repropose window of 64 checkpoints (2 epochs = 384 L1 blocks) at the natural cadence
+// of one bucket per L1 block, so the buckets it must re-consume after a prune have not been overwritten. 384
+// rounded up to the next power of two, kept at or below the production ring.
+uint256 constant MIN_BUCKET_RING_SIZE = 512;
+
+// Number of newest live buckets `getBucketAtOrBeforeTotal` probes one by one before binary-searching the rest of
+// the ring. Checkpoint endpoints normally sit within the last few buckets, so the short walk resolves the common
+// case in a handful of reads while a target far behind a deposit backlog still costs O(probes + log ring size).
+uint256 constant ENDPOINT_WALKBACK_PROBES = 4;
 
 /**
  * @title Inbox
@@ -19,42 +37,36 @@ import {SafeCast} from "@oz/utils/math/SafeCast.sol";
  */
 contract Inbox is IInbox {
   using Hash for DataStructures.L1ToL2Msg;
-  using FrontierLib for FrontierLib.Forest;
-  using FrontierLib for FrontierLib.Tree;
 
   address public immutable ROLLUP;
   uint256 public immutable VERSION;
   address public immutable FEE_ASSET_PORTAL;
 
-  uint256 public immutable LAG;
+  uint256 public immutable BUCKET_RING_SIZE;
 
-  uint256 internal immutable HEIGHT;
-  uint256 internal immutable SIZE;
-  bytes32 internal immutable EMPTY_ROOT; // The root of an empty frontier tree
+  // Ring of rolling-hash buckets, keyed by `bucketSeq % BUCKET_RING_SIZE`. Consumed by the streaming inbox
+  // checks at `propose`.
+  mapping(uint256 ringIndex => InboxBucket bucket) internal buckets;
 
-  // Practically immutable value as we only set it in the constructor.
-  FrontierLib.Forest internal forest;
+  uint64 internal currentBucketSeq;
 
-  mapping(uint256 checkpointNumber => FrontierLib.Tree tree) public trees;
+  // Sequence number of the newest bucket consumed by the proven chain, pushed by the Rollup on every proven-tip
+  // advance. Anchoring eviction to proven consumption is prune-immune (the proven tip never rewinds) and
+  // fail-closed (the cache can only lag the truth). Shares a slot with currentBucketSeq so the overwrite check
+  // reads it warm.
+  uint64 internal provenConsumedBucketSeq;
 
-  InboxState internal state;
-
-  constructor(address _rollup, IERC20 _feeAsset, uint256 _version, uint256 _height, uint256 _lag) {
+  constructor(address _rollup, IERC20 _feeAsset, uint256 _version, uint256 _bucketRingSize) {
     ROLLUP = _rollup;
     VERSION = _version;
 
-    HEIGHT = _height;
-    SIZE = 2 ** _height;
+    require(_bucketRingSize >= MIN_BUCKET_RING_SIZE, "BUCKET RING TOO SMALL");
+    BUCKET_RING_SIZE = _bucketRingSize;
 
-    require(_lag > 0, "LAG TOO SMALL");
-    LAG = _lag;
-
-    state = InboxState({
-      rollingHash: 0, totalMessagesInserted: 0, inProgress: SafeCast.toUint64(Constants.INITIAL_CHECKPOINT_NUMBER + LAG)
-    });
-
-    forest.initialize(_height);
-    EMPTY_ROOT = trees[type(uint256).max].root(forest, HEIGHT, SIZE);
+    // Genesis bucket: a checkpoint consuming no messages references the same bucket as its parent, so the
+    // first checkpoint against an empty Inbox references this one and no base case leaks into `propose`.
+    buckets[0] =
+      InboxBucket({rollingHash: 0, totalMsgCount: 0, timestamp: SafeCast.toUint64(block.timestamp), msgCount: 0});
 
     FEE_ASSET_PORTAL = address(new FeeJuicePortalStub(_rollup, _feeAsset, IInbox(this), VERSION));
   }
@@ -69,7 +81,7 @@ contract Inbox is IInbox {
    * @param _secretHash - The secret hash of the message (make it possible to hide when a specific message is consumed
    * on L2)
    *
-   * @return Hash of the sent message and its leaf index in the tree.
+   * @return Hash of the sent message and its compact cumulative index.
    */
   function sendL2Message(DataStructures.L2Actor memory _recipient, bytes32 _content, bytes32 _secretHash)
     external
@@ -81,24 +93,11 @@ contract Inbox is IInbox {
     require(uint256(_content) <= Constants.MAX_FIELD_VALUE, Errors.Inbox__ContentTooLarge(_content));
     require(uint256(_secretHash) <= Constants.MAX_FIELD_VALUE, Errors.Inbox__SecretHashTooLarge(_secretHash));
 
-    // Is this the best way to read a packed struct into local variables in a single SLOAD
-    // without having to use assembly and manual unpacking?
-    InboxState memory _state = state;
-    bytes16 rollingHash = _state.rollingHash;
-    uint64 totalMessagesInserted = _state.totalMessagesInserted;
-    uint64 inProgress = _state.inProgress;
-
-    FrontierLib.Tree storage currentTree = trees[inProgress];
-
-    if (currentTree.isFull(SIZE)) {
-      inProgress += 1;
-      currentTree = trees[inProgress];
-    }
-
-    // this is the global leaf index and not index in the checkpoint subtree
-    // such that users can simply use it and don't need access to a node if they are to consume it in public.
-    // trees are constant size so global index = tree number * size + subtree index
-    uint256 index = (inProgress - Constants.INITIAL_CHECKPOINT_NUMBER) * SIZE + currentTree.nextIndex;
+    // Compact cumulative message index: the zero-based position of this message in the Inbox's
+    // insertion order, equal to the number of messages inserted before it. It matches the streaming L1-to-L2 tree's
+    // leaf count, so consumers do not need per-checkpoint tree geometry. Sourced from the current bucket's running
+    // total, which the absorb below then advances (a rollover carries the total forward unchanged).
+    uint256 index = _totalMessagesInserted();
 
     // If the sender is the fee asset portal, we use a magic address to simpler have it initialized at genesis.
     // We assume that no-one will know the private key for this address and that the precompile won't change to
@@ -114,66 +113,182 @@ contract Inbox is IInbox {
     });
 
     bytes32 leaf = message.sha256ToField();
-    currentTree.insertLeaf(leaf);
 
-    bytes16 updatedRollingHash = bytes16(keccak256(abi.encodePacked(rollingHash, leaf)));
-    state = InboxState({
-      rollingHash: updatedRollingHash, totalMessagesInserted: totalMessagesInserted + 1, inProgress: inProgress
-    });
+    (uint64 bucketSeq, bytes32 inboxRollingHash) = _absorbIntoBucket(leaf);
 
-    emit MessageSent(inProgress, index, leaf, updatedRollingHash);
+    emit MessageSent(leaf, inboxRollingHash, bucketSeq, message);
 
     return (leaf, index);
   }
 
   /**
-   * @notice Consumes the current tree, and starts a new one if needed
+   * @notice Records that the proven chain has consumed all messages up to and including bucket `_bucketSeq`
    *
-   * @dev Only callable by the rollup contract
-   * @dev In the first iteration we return empty tree root because first checkpoint's messages tree is always
-   * empty because there has to be a 1 checkpoint lag to prevent sequencer DOS attacks
+   * @dev Callable only by the ROLLUP. Monotonic: a value at or below the current record is a no-op. Reverts if
+   * `_bucketSeq` is ahead of the current bucket.
    *
-   * @param _toConsume - The checkpoint number to consume
-   *
-   * @return The root of the consumed tree
+   * @param _bucketSeq - The sequence number of the newest bucket the proven chain has consumed
    */
-  function consume(uint256 _toConsume) external override(IInbox) returns (bytes32) {
+  function markProvenConsumed(uint64 _bucketSeq) external override(IInbox) {
     require(msg.sender == ROLLUP, Errors.Inbox__Unauthorized());
-
-    uint64 inProgress = state.inProgress;
-    require(_toConsume < inProgress, Errors.Inbox__MustBuildBeforeConsume());
-
-    bytes32 root = EMPTY_ROOT;
-    if (_toConsume > Constants.INITIAL_CHECKPOINT_NUMBER) {
-      root = trees[_toConsume].root(forest, HEIGHT, SIZE);
+    require(_bucketSeq <= currentBucketSeq, Errors.Inbox__BucketOutOfWindow(_bucketSeq, currentBucketSeq));
+    if (_bucketSeq > provenConsumedBucketSeq) {
+      provenConsumedBucketSeq = _bucketSeq;
     }
-
-    // Once consumption reaches the current lag boundary, open the next checkpoint
-    // so new inserts keep a full LAG-sized buffer ahead of the rollup.
-    if (_toConsume + LAG == inProgress) {
-      state.inProgress = inProgress + 1;
-    }
-
-    return root;
   }
 
   function getFeeAssetPortal() external view override(IInbox) returns (address) {
     return FEE_ASSET_PORTAL;
   }
 
-  function getRoot(uint256 _checkpointNumber) external view override(IInbox) returns (bytes32) {
-    return trees[_checkpointNumber].root(forest, HEIGHT, SIZE);
-  }
-
   function getState() external view override(IInbox) returns (InboxState memory) {
-    return state;
+    uint64 seq = currentBucketSeq;
+    InboxBucket storage bucket = buckets[seq % BUCKET_RING_SIZE];
+    return
+      InboxState({rollingHash: bucket.rollingHash, totalMessagesInserted: bucket.totalMsgCount, currentBucketSeq: seq});
   }
 
   function getTotalMessagesInserted() external view override(IInbox) returns (uint64) {
-    return state.totalMessagesInserted;
+    return _totalMessagesInserted();
   }
 
-  function getInProgress() external view override(IInbox) returns (uint64) {
-    return state.inProgress;
+  function getCurrentBucketSeq() external view override(IInbox) returns (uint64) {
+    return currentBucketSeq;
+  }
+
+  function getBucket(uint256 _seq) external view override(IInbox) returns (InboxBucket memory) {
+    uint256 current = currentBucketSeq;
+    require(_seq <= current && current - _seq < BUCKET_RING_SIZE, Errors.Inbox__BucketOutOfWindow(_seq, current));
+    return buckets[_seq % BUCKET_RING_SIZE];
+  }
+
+  /**
+   * @notice Returns the live bucket with the greatest cumulative message total at or below `_upperBound`
+   *
+   * @dev Totals strictly increase with the bucket sequence, so the newest live bucket whose total does not exceed
+   * the bound is the answer. The live interval is `[oldest, current]` with `oldest = current - ringSize + 1` once the
+   * ring has wrapped (computed subtraction-first so `current + 1` cannot overflow at the sequence maximum); entries
+   * below `oldest` share a ring slot with a newer bucket and are never dereferenced. Walks back from `current` for
+   * at most ENDPOINT_WALKBACK_PROBES live entries, checking for `oldest` before each step down, then binary-searches
+   * only the still unscanned interval below the walk.
+   *
+   * @param _upperBound - The cumulative message total the returned bucket may not exceed
+   *
+   * @return The sequence number of the matching bucket and the bucket itself
+   */
+  function getBucketAtOrBeforeTotal(uint64 _upperBound)
+    external
+    view
+    override(IInbox)
+    returns (uint64, InboxBucket memory)
+  {
+    uint256 current = currentBucketSeq;
+    uint256 oldest = 0;
+    if (current >= BUCKET_RING_SIZE) {
+      oldest = current - BUCKET_RING_SIZE + 1;
+    }
+
+    uint256 seq = current;
+    for (uint256 i = 0; i < ENDPOINT_WALKBACK_PROBES; i++) {
+      uint64 total = buckets[seq % BUCKET_RING_SIZE].totalMsgCount;
+      if (total <= _upperBound) {
+        return (SafeCast.toUint64(seq), buckets[seq % BUCKET_RING_SIZE]);
+      }
+      if (seq == oldest) {
+        revert Errors.Inbox__NoBucketAtOrBeforeTotal(_upperBound, total);
+      }
+      seq -= 1;
+    }
+
+    // Every entry in (seq, current] exceeds the bound, so the answer, if any, lies in [oldest, seq].
+    uint256 lo = oldest;
+    uint256 hi = seq;
+    uint64 oldestTotal = buckets[lo % BUCKET_RING_SIZE].totalMsgCount;
+    if (oldestTotal > _upperBound) {
+      revert Errors.Inbox__NoBucketAtOrBeforeTotal(_upperBound, oldestTotal);
+    }
+    // Invariant: the bucket at `lo` qualifies and every bucket above `hi` does not; `mid` rounds up so `lo` always
+    // moves on a hit and the loop converges on the greatest qualifying sequence.
+    while (lo < hi) {
+      uint256 mid = hi - (hi - lo) / 2;
+      if (buckets[mid % BUCKET_RING_SIZE].totalMsgCount <= _upperBound) {
+        lo = mid;
+      } else {
+        hi = mid - 1;
+      }
+    }
+    return (SafeCast.toUint64(lo), buckets[lo % BUCKET_RING_SIZE]);
+  }
+
+  function getProvenConsumedBucketSeq() external view override(IInbox) returns (uint64) {
+    return provenConsumedBucketSeq;
+  }
+
+  /**
+   * @notice Returns the number of buckets that can still be opened before sends revert to protect an unconsumed
+   * bucket from being overwritten
+   *
+   * @dev Counts bucket openings, not messages: at zero, messages can still be absorbed into the current bucket
+   * until it fills or its L1 block passes. Neither subtraction can underflow: `markProvenConsumed` keeps the
+   * record at or below `currentBucketSeq`, and opening bucket n requires `provenConsumedBucketSeq >= n -
+   * BUCKET_RING_SIZE`, so the unconsumed span never exceeds the ring.
+   *
+   * @return The number of buckets that can still be opened
+   */
+  function getRingHeadroom() external view override(IInbox) returns (uint256) {
+    return BUCKET_RING_SIZE - (currentBucketSeq - provenConsumedBucketSeq);
+  }
+
+  /**
+   * @notice Absorbs a message leaf into the consensus rolling hash and snapshots it into the bucket ring
+   *
+   * @dev A bucket only holds messages from a single L1 block, up to MAX_MSGS_PER_BUCKET; the first message
+   * of a new L1 block — or the message after a full bucket, spilling over within the same block — opens the
+   * next bucket, inheriting the rolling hash and cumulative count. Bucket 0 is the pristine genesis base
+   * case and never absorbs. Opening a bucket overwrites the ring entry from BUCKET_RING_SIZE buckets ago; the
+   * open reverts unless the proven chain has consumed that entry, so in-flight messages are never destroyed —
+   * sends halt instead until proving catches up.
+   *
+   * @param _leaf - The message leaf to absorb
+   *
+   * @return The sequence number of the bucket the leaf was absorbed into and the updated rolling hash
+   */
+  function _absorbIntoBucket(bytes32 _leaf) internal returns (uint64, bytes32) {
+    uint64 bucketSeq = currentBucketSeq;
+    InboxBucket memory bucket = buckets[bucketSeq % BUCKET_RING_SIZE];
+
+    // Buckets are keyed by L1 block timestamp: a strictly larger timestamp opens a new bucket (a full bucket
+    // also rolls over within the same block). Post-merge Ethereum increases block.timestamp strictly per block,
+    // so messages from different L1 blocks always land in different buckets. Under anvil with manual mining two
+    // blocks can share a timestamp and therefore a bucket; this is harmless because the consumption cutoff is
+    // computed over timestamps, so co-timestamped blocks are indistinguishable to it.
+    if (bucketSeq == 0 || bucket.timestamp < block.timestamp || bucket.msgCount == MAX_MSGS_PER_BUCKET) {
+      bucketSeq += 1;
+      if (bucketSeq >= BUCKET_RING_SIZE) {
+        uint64 evictedBucketSeq = SafeCast.toUint64(bucketSeq - BUCKET_RING_SIZE);
+        require(
+          provenConsumedBucketSeq >= evictedBucketSeq, Errors.Inbox__WouldOverwriteUnconsumedBucket(evictedBucketSeq)
+        );
+      }
+      currentBucketSeq = bucketSeq;
+      bucket = InboxBucket({
+        rollingHash: bucket.rollingHash,
+        totalMsgCount: bucket.totalMsgCount,
+        timestamp: SafeCast.toUint64(block.timestamp),
+        msgCount: 0
+      });
+    }
+
+    bucket.rollingHash = Hash.accumulateInboxRollingHash(bucket.rollingHash, _leaf);
+    bucket.totalMsgCount += 1;
+    bucket.msgCount += 1;
+    buckets[bucketSeq % BUCKET_RING_SIZE] = bucket;
+
+    return (bucketSeq, bucket.rollingHash);
+  }
+
+  // Cumulative number of messages inserted into the Inbox, tracked by the current bucket's running total.
+  function _totalMessagesInserted() internal view returns (uint64) {
+    return buckets[currentBucketSeq % BUCKET_RING_SIZE].totalMsgCount;
   }
 }

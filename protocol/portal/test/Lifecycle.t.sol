@@ -79,8 +79,8 @@ contract LifecycleTest is Harness {
     portal.forward(V1, a);
     vm.prank(alice);
     uint256 index = portal.deposit(2 ether, bytes32(uint256(0x5ec)), V1, block.timestamp + 1 hours);
-    // The Inbox numbers leaves globally from its first in-progress tree: tree 1 × 2^4 + 0.
-    assertEq(index, 32);
+    // The Inbox numbers messages by their place in its insertion order: none came before this one.
+    assertEq(index, 0);
     assertEq(portal.YACA_TOKEN().balanceOf(alice), 3 ether);
     assertEq(portal.versionInfo(V1).inbound, 2 ether);
     assertEq(v1.INBOX().getTotalMessagesInserted(), 1);

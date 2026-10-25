@@ -1,13 +1,15 @@
 // The Ethereum side from the page: wagmi's injected connector with EIP-6963 discovery (every
 // installed wallet by name and icon, no WalletConnect) over the hoisted viem, the four writes a
 // holder makes (deposit, forward, redeem, note a transition), and the portal's reads over
-// the RPC in use, which need no wallet at all. Gas comes from the injected wallet; the redeem key's
-// signatures are made in `flows.ts`, never by the wallet.
+// the RPC in use, which need no wallet at all. Gas comes from the injected wallet, except for a write
+// that sends an Inbox message (`inboxWriteGas`); the redeem key's signatures are made in `flows.ts`,
+// never by the wallet.
 
 import { type ForwardArgs, yacanaPortalAbi } from '@yacana/bridge/portal';
 import { type Chain, type ContractFunctionArgs, defineChain, type Hex, parseEventLogs } from 'viem';
 import { createConfig, http, injected } from 'wagmi';
 import { getAccount, switchChain, waitForTransactionReceipt, writeContract } from 'wagmi/actions';
+import { inboxWriteGas } from './eth-balance.ts';
 
 export interface EthSettings {
   chainId: number;
@@ -135,7 +137,9 @@ export async function depositOnEthereum(
 ): Promise<{ txHash: Hex; inboxIndex: bigint }> {
   const signer = await pinnedSigner(config);
   onStep?.('deposit');
-  const txHash = await writeContract(config, { ...signer, ...depositCall(p) });
+  const call = depositCall(p);
+  const gas = await inboxWriteGas(config, signer.account, call);
+  const txHash = await writeContract(config, { ...signer, ...call, gas });
   await onSent?.(txHash);
   const receipt = await mined(config, txHash);
   const [deposited] = parseEventLogs({ abi: yacanaPortalAbi, eventName: 'Deposited', logs: receipt.logs });
@@ -148,7 +152,10 @@ export async function forwardOnEthereum(
   config: WagmiConfig,
   p: { portal: Hex; version: bigint; args: ForwardArgs },
 ): Promise<{ txHash: Hex; inboxIndex: bigint; target: bigint }> {
-  const txHash = await writeContract(config, { ...(await pinnedSigner(config)), ...forwardCall(p) });
+  const signer = await pinnedSigner(config);
+  const call = forwardCall(p);
+  const gas = await inboxWriteGas(config, signer.account, call);
+  const txHash = await writeContract(config, { ...signer, ...call, gas });
   const receipt = await mined(config, txHash);
   const [forwarded] = parseEventLogs({ abi: yacanaPortalAbi, eventName: 'Forwarded', logs: receipt.logs });
   if (!forwarded) throw new Error(`forward ${txHash} emitted no Forwarded event`);
