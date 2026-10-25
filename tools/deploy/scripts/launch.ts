@@ -15,6 +15,7 @@ import { SponsoredFPCContract } from '@aztec-labs/noir-contracts.js/SponsoredFPC
 import { deriveMasterMessageSigningSecretKey } from '@aztec-labs/stdlib/keys';
 import { EmbeddedWallet } from '@aztec-labs/wallets/embedded';
 import { PARAMS, PROFILE } from '@yacana/miner-core/generated/params';
+import { NODE_MAX_BATCH } from '@yacana/miner-core/node-client';
 import { DOM_LAUNCH } from '@yacana/miner-core/proof';
 import type { Deployment } from '../src/deploy.ts';
 
@@ -31,7 +32,11 @@ const secretFile = resolve(repo, `deployments/.launch-${PROFILE}.json`);
 type Secret = { account: string; preimage: string };
 const unwrap = async <T>(p: Promise<unknown>): Promise<T> => ((await p) as { result: T }).result;
 
-const wallet = await EmbeddedWallet.create(nodeUrl, { ephemeral: true, pxe: { proverEnabled: true } });
+const wallet = await EmbeddedWallet.create(nodeUrl, {
+  ephemeral: true,
+  pxe: { proverEnabled: true },
+  nodeClientOptions: { maxBatchSize: NODE_MAX_BATCH },
+});
 try {
   const fpc = await getContractInstanceFromInstantiationParams(SponsoredFPCContract.artifact, {
     salt: new Fr(SPONSORED_FPC_SALT),

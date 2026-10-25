@@ -9,6 +9,7 @@ import { SPONSORED_FPC_SALT } from '@aztec-labs/constants';
 import { Fq, Fr } from '@aztec-labs/foundation/curves/bn254';
 import { SponsoredFPCContract } from '@aztec-labs/noir-contracts.js/SponsoredFPC';
 import { EmbeddedWallet } from '@aztec-labs/wallets/embedded';
+import { NODE_MAX_BATCH } from '@yacana/miner-core/node-client';
 
 export interface SponsoredReceipt {
   txHash: string;
@@ -17,7 +18,11 @@ export interface SponsoredReceipt {
 }
 
 export async function sponsoredTransaction(nodeUrl: string): Promise<SponsoredReceipt> {
-  const wallet = await EmbeddedWallet.create(nodeUrl, { ephemeral: true, pxe: { proverEnabled: true } });
+  const wallet = await EmbeddedWallet.create(nodeUrl, {
+    ephemeral: true,
+    pxe: { proverEnabled: true },
+    nodeClientOptions: { maxBatchSize: NODE_MAX_BATCH },
+  });
   try {
     const fpc = await getContractInstanceFromInstantiationParams(SponsoredFPCContract.artifact, {
       salt: new Fr(SPONSORED_FPC_SALT),

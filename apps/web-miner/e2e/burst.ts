@@ -19,6 +19,7 @@ import { buildClaim, claimGasLimits } from '@yacana/miner-core/claim';
 import { readOpenEpoch } from '@yacana/miner-core/epoch';
 import { PARAMS } from '@yacana/miner-core/generated/params';
 import { mineEpoch } from '@yacana/miner-core/miner';
+import { NODE_MAX_BATCH } from '@yacana/miner-core/node-client';
 import { deployDomain } from '@yacana/miner-core/proof';
 import { newEpochSecret } from '@yacana/miner-core/secret';
 import { BbJsWorkProver } from '@yacana/miner-core/work';
@@ -31,8 +32,12 @@ if (!nodeUrl || !minerAddress || !tokenAddress)
 const say = (o: Record<string, unknown>) =>
   console.log(JSON.stringify({ t: new Date().toISOString(), ...o }));
 
-const node = createAztecNodeClient(nodeUrl);
-const wallet = await EmbeddedWallet.create(nodeUrl, { ephemeral: true, pxe: { proverEnabled: true } });
+const node = createAztecNodeClient(nodeUrl, { maxBatchSize: NODE_MAX_BATCH });
+const wallet = await EmbeddedWallet.create(nodeUrl, {
+  ephemeral: true,
+  pxe: { proverEnabled: true },
+  nodeClientOptions: { maxBatchSize: NODE_MAX_BATCH },
+});
 const fpc = await getContractInstanceFromInstantiationParams(SponsoredFPCContract.artifact, {
   salt: new Fr(SPONSORED_FPC_SALT),
 });

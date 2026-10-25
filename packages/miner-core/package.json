@@ -17,6 +17,7 @@
     "./keys/mnemonic": "./src/keys/mnemonic.ts",
     "./metrics": "./src/metrics.ts",
     "./miner": "./src/miner.ts",
+    "./node-client": "./src/node-client.ts",
     "./proof": "./src/proof.ts",
     "./reader": "./src/reader.ts",
     "./retarget": "./src/retarget.ts",

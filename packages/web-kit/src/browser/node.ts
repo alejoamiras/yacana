@@ -3,6 +3,7 @@
 import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
 import { jsonStringify } from '@aztec-labs/foundation/json-rpc';
 import { makeFetch } from '@aztec-labs/foundation/json-rpc/client';
+import { NODE_MAX_BATCH } from '@yacana/miner-core/node-client';
 import {
   assertDeployment,
   type ExpectedDeployment,
@@ -32,7 +33,8 @@ export function parseNodeUrl(text: string, mode: SiteMode): URL {
 }
 
 /** A client that fails in one deadline: the SDK's default retries retryable failures three times. */
-export const nodeClient = (url: string): Node => createAztecNodeClient(url, { fetch: makeFetch([], false) });
+export const nodeClient = (url: string): Node =>
+  createAztecNodeClient(url, { fetch: makeFetch([], false), maxBatchSize: NODE_MAX_BATCH });
 
 /**
  * A client for optional reads beside the page's own: each request quiet (it never opens nor extends a
@@ -41,6 +43,7 @@ export const nodeClient = (url: string): Node => createAztecNodeClient(url, { fe
  */
 export const quietNodeClient = (url: string, deadlineMs: number, turn?: () => Promise<void>): Node =>
   createAztecNodeClient(url, {
+    maxBatchSize: NODE_MAX_BATCH,
     fetch: async (host: string, body: unknown, extraHeaders: Record<string, string> = {}) => {
       await turn?.();
       const init: QuietInit = {

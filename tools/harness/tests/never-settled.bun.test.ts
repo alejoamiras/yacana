@@ -19,6 +19,7 @@ import { registerVersion } from '@yacana/deploy/bridge/register';
 import { noteAllTransitions } from '@yacana/deploy/bridge/transition';
 import { repoRoot } from '@yacana/localnet/toolchain';
 import { type RigVersion, startUpgradeRig, type UpgradeRig } from '@yacana/localnet/upgrade-rig';
+import { NODE_MAX_BATCH } from '@yacana/miner-core/node-client';
 import type { WorkProver } from '@yacana/miner-core/work';
 import { getContract, type Hex } from 'viem';
 import { revertName } from '../src/revert.ts';
@@ -144,7 +145,7 @@ describe.skipIf(!enabled)('a send-ahead that never settles (H5)', () => {
     // scratch never gets past the pruned checkpoint. So the case asserts only that the version comes
     // back and serves, and the app promises nothing about an unsettled crossing beyond the facts above.
     const node6b = await rig.startNode(v6v, { autoProve: false });
-    const info = await createAztecNodeClient(node6b.nodeUrl).getNodeInfo();
+    const info = await createAztecNodeClient(node6b.nodeUrl, { maxBatchSize: NODE_MAX_BATCH }).getNodeInfo();
     expect(BigInt(info.rollupVersion)).toBe(v6v.version);
   }, 1_800_000);
 });

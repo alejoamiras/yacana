@@ -7,6 +7,7 @@ import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
 import { createExtendedL1Client } from '@aztec-labs/ethereum/client';
 import { OutboxContract, RegistryContract, RollupContract } from '@aztec-labs/ethereum/contracts';
 import { type RigVersion, startUpgradeRig, type UpgradeRig } from '@yacana/localnet/upgrade-rig';
+import { NODE_MAX_BATCH } from '@yacana/miner-core/node-client';
 import { foundry } from 'viem/chains';
 import { sponsoredTransaction } from '../src/sponsored.ts';
 
@@ -48,7 +49,7 @@ describe.skipIf(!enabled)('the flip alone (H0)', () => {
     expect((await registry.getRollupAddress(1)).equals(v6.rollup)).toBe(true);
 
     // The old network keeps building and settling after the flip until it is stopped.
-    const oldNode = createAztecNodeClient(rig.node?.nodeUrl as string);
+    const oldNode = createAztecNodeClient(rig.node?.nodeUrl as string, { maxBatchSize: NODE_MAX_BATCH });
     const provenBefore = await oldNode.getBlockNumber('proven');
     await rig.warpBy(72 * 4);
     await rig.prove();
@@ -56,7 +57,7 @@ describe.skipIf(!enabled)('the flip alone (H0)', () => {
 
     await rig.stopNode();
     const node6 = await rig.startNode(v6);
-    const client6 = createAztecNodeClient(node6.nodeUrl);
+    const client6 = createAztecNodeClient(node6.nodeUrl, { maxBatchSize: NODE_MAX_BATCH });
     const info = await client6.getNodeInfo();
     expect(BigInt(info.rollupVersion)).toBe(v6.version);
     expect(info.l1ContractAddresses.rollupAddress.equals(v6.rollup)).toBe(true);

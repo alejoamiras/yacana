@@ -15,6 +15,7 @@ import type { AztecNode } from '@aztec-labs/stdlib/interfaces/client';
 import { deriveMasterMessageSigningSecretKey } from '@aztec-labs/stdlib/keys';
 import { EmbeddedWallet } from '@aztec-labs/wallets/embedded';
 import { MINER_ARTIFACT_PATH } from '@yacana/miner-core/artifacts';
+import { NODE_MAX_BATCH } from '@yacana/miner-core/node-client';
 import type { Deployment } from '../deploy.ts';
 
 export interface L2Side {
@@ -31,7 +32,11 @@ export interface L2Side {
 
 /** Opens the version's node named by the record (or `nodeUrl`) with an account derived from `secret`. */
 export async function openL2(record: Deployment, secret: Fr, nodeUrl = record.nodeUrl): Promise<L2Side> {
-  const wallet = await EmbeddedWallet.create(nodeUrl, { ephemeral: true, pxe: { proverEnabled: true } });
+  const wallet = await EmbeddedWallet.create(nodeUrl, {
+    ephemeral: true,
+    pxe: { proverEnabled: true },
+    nodeClientOptions: { maxBatchSize: NODE_MAX_BATCH },
+  });
   try {
     const fpc = await getContractInstanceFromInstantiationParams(SponsoredFPCContract.artifact, {
       salt: new Fr(SPONSORED_FPC_SALT),
@@ -42,7 +47,7 @@ export async function openL2(record: Deployment, secret: Fr, nodeUrl = record.no
       Fr.ZERO,
       deriveMasterMessageSigningSecretKey(secret),
     );
-    const node = createAztecNodeClient(nodeUrl);
+    const node = createAztecNodeClient(nodeUrl, { maxBatchSize: NODE_MAX_BATCH });
     const artifact = loadContractArtifact(await Bun.file(MINER_ARTIFACT_PATH).json());
     // The miner's bridge calls reach the token (a burn, a mint): the wallet needs both instances.
     for (const [address, art] of [

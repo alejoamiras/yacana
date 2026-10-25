@@ -26,6 +26,7 @@ import { classifyClaimFailure } from '@yacana/miner-core/claim-failure';
 import { readOpenEpoch, readRules } from '@yacana/miner-core/epoch';
 import { PARAMS } from '@yacana/miner-core/generated/params';
 import { mineEpoch, type Winner } from '@yacana/miner-core/miner';
+import { NODE_MAX_BATCH } from '@yacana/miner-core/node-client';
 import { DOM_NULL, deployDomain } from '@yacana/miner-core/proof';
 import { newEpochSecret } from '@yacana/miner-core/secret';
 import { BbJsWorkProver, type WorkProver } from '@yacana/miner-core/work';
@@ -44,7 +45,7 @@ describe.skipIf(!nodeUrl)('miner-core against a live node', () => {
   let prover: WorkProver;
   let chainId: bigint;
   let rollupVersion: bigint;
-  const node = createAztecNodeClient(nodeUrl);
+  const node = createAztecNodeClient(nodeUrl, { maxBatchSize: NODE_MAX_BATCH });
 
   const mine = async (
     m: Contract,
@@ -70,7 +71,12 @@ describe.skipIf(!nodeUrl)('miner-core against a live node', () => {
       (e: Error) => ({ ok: false as const, error: e.message.split('\n')[0] ?? '' }),
     );
 
-  const newWallet = () => EmbeddedWallet.create(nodeUrl, { ephemeral: true, pxe: { proverEnabled: true } });
+  const newWallet = () =>
+    EmbeddedWallet.create(nodeUrl, {
+      ephemeral: true,
+      pxe: { proverEnabled: true },
+      nodeClientOptions: { maxBatchSize: NODE_MAX_BATCH },
+    });
   /**
    * bb.js proves a transaction as stateful steps on one process-wide instance and awaits between them,
    * so two wallets proving at once in one process interleave each other's steps; miners are processes

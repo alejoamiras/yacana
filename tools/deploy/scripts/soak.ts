@@ -24,6 +24,7 @@ import { buildClaim, claimGasLimits, isDeliveryBlockedError } from '@yacana/mine
 import { readOpenEpoch, readRules } from '@yacana/miner-core/epoch';
 import { PARAMS, PROFILE } from '@yacana/miner-core/generated/params';
 import { mineEpoch } from '@yacana/miner-core/miner';
+import { NODE_MAX_BATCH } from '@yacana/miner-core/node-client';
 import { deployDomain } from '@yacana/miner-core/proof';
 import { newEpochSecret } from '@yacana/miner-core/secret';
 import { BbJsWorkProver } from '@yacana/miner-core/work';
@@ -58,8 +59,12 @@ const deployment = (await Bun.file(resolve(repo, `deployments/${PROFILE}.json`))
   miner: string;
   token: string;
 };
-const node = createAztecNodeClient(nodeUrl);
-const wallet = await EmbeddedWallet.create(nodeUrl, { ephemeral: true, pxe: { proverEnabled: true } });
+const node = createAztecNodeClient(nodeUrl, { maxBatchSize: NODE_MAX_BATCH });
+const wallet = await EmbeddedWallet.create(nodeUrl, {
+  ephemeral: true,
+  pxe: { proverEnabled: true },
+  nodeClientOptions: { maxBatchSize: NODE_MAX_BATCH },
+});
 const fpc = await getContractInstanceFromInstantiationParams(SponsoredFPCContract.artifact, {
   salt: new Fr(SPONSORED_FPC_SALT),
 });

@@ -6,12 +6,15 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
+import { NODE_MAX_BATCH } from '@yacana/miner-core/node-client';
 import type { Deployment } from '../src/deploy.ts';
 
 const path = resolve(process.argv[2] ?? 'deployments/testnet.json');
 const record = JSON.parse(readFileSync(path, 'utf8')) as Partial<Deployment> & Record<string, unknown>;
 if (!record.nodeUrl) throw new Error(`${path} has no nodeUrl`);
-const node = createAztecNodeClient(process.env.AZTEC_NODE_URL ?? record.nodeUrl);
+const node = createAztecNodeClient(process.env.AZTEC_NODE_URL ?? record.nodeUrl, {
+  maxBatchSize: NODE_MAX_BATCH,
+});
 const [chainId, info] = await Promise.all([node.getChainId(), node.getNodeInfo()]);
 if (String(chainId) !== record.chainId)
   throw new Error(`the node is on chain ${chainId}, the record says ${record.chainId}`);

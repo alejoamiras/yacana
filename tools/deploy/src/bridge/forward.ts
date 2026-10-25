@@ -28,6 +28,7 @@ import {
   rootOf,
 } from '@yacana/bridge/witness';
 import { MINER_ARTIFACT_PATH } from '@yacana/miner-core/artifacts';
+import { NODE_MAX_BATCH } from '@yacana/miner-core/node-client';
 import { getContract, type Hex, type Log, parseEventLogs } from 'viem';
 import type { Deployment } from '../deploy.ts';
 import { confirmed, minerBytes32, type Operator, writeOpts } from './operator.ts';
@@ -95,7 +96,9 @@ export async function archiveExits(
   const version = BigInt(opts.source.rollupVersion);
   const mine = known.filter((e) => e.version === version.toString());
   if (opts.fromArchive) return { entries: mine, pending: [] };
-  const node = createAztecNodeClient(opts.sourceNodeUrl ?? opts.source.nodeUrl);
+  const node = createAztecNodeClient(opts.sourceNodeUrl ?? opts.source.nodeUrl, {
+    maxBatchSize: NODE_MAX_BATCH,
+  });
   const scope = scopeOf(opts.source);
   const event = await exitRecordedEvent(loadContractArtifact(await Bun.file(MINER_ARTIFACT_PATH).json()));
   const pending: number[] = [];

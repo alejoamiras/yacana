@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 import { RollupAbi } from '@aztec-foundation/l1-artifacts/RollupAbi';
 import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
 import { createAztecNodeDebugClient } from '@aztec-labs/stdlib/interfaces/client';
+import { NODE_MAX_BATCH } from '@yacana/miner-core/node-client';
 import { createPublicClient, decodeEventLog, type Hex, http } from 'viem';
 import { LOG_WINDOW } from './logs.ts';
 import { type ProofClient, type ProofFloor, proofReader } from './proofs.ts';
@@ -205,7 +206,7 @@ describe.skipIf(!nodeUrl || !l1RpcUrl)('the reader against a real anvil', () => 
   test(
     "the local network's synthetic prove advances the tip and emits no event: the reader says so over real getLogs",
     async () => {
-      const node = createAztecNodeClient(nodeUrl);
+      const node = createAztecNodeClient(nodeUrl, { maxBatchSize: NODE_MAX_BATCH });
       const info = await node.getNodeInfo();
       const rollup = info.l1ContractAddresses.rollupAddress.toString() as Hex;
       const client = createPublicClient({ transport: http(l1RpcUrl) });

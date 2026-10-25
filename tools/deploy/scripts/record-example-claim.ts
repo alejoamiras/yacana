@@ -6,6 +6,7 @@ import { resolve } from 'node:path';
 import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
 import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
 import { TxHash } from '@aztec-labs/stdlib/tx';
+import { NODE_MAX_BATCH } from '@yacana/miner-core/node-client';
 import {
   assertDeployment,
   expectedFromStrings,
@@ -35,7 +36,7 @@ const record = (await Bun.file(resolve(repo, recordPath)).json()) as {
 };
 const nodeUrl = process.env.AZTEC_NODE_URL ?? record.nodeUrl;
 if (!nodeUrl) throw new Error('AZTEC_NODE_URL is not set and the record names no node');
-const node = createAztecNodeClient(nodeUrl);
+const node = createAztecNodeClient(nodeUrl, { maxBatchSize: NODE_MAX_BATCH });
 const layout = (await loadLayouts()).miner;
 // The node answers for the record's chain, rollup and contracts, or nothing is recorded from it.
 await assertDeployment(node, expectedFromStrings(record), layout);

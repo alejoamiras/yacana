@@ -7,6 +7,7 @@ import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
 import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
 import { PROFILE } from '@yacana/miner-core/generated/params';
 import { difficulty } from '@yacana/miner-core/metrics';
+import { NODE_MAX_BATCH } from '@yacana/miner-core/node-client';
 import {
   DEFAULT_LIMITS,
   type EpochRow,
@@ -24,7 +25,7 @@ const repo = resolve(import.meta.dir, '../../..');
  * one, oldest first; the slots are derived here, not fetched.
  */
 export async function epochStats(nodeUrl: string, minerAddress: string, first = 0): Promise<EpochRow[]> {
-  const node = createAztecNodeClient(nodeUrl);
+  const node = createAztecNodeClient(nodeUrl, { maxBatchSize: NODE_MAX_BATCH });
   const miner = AztecAddress.fromStringUnsafe(minerAddress);
   const layout = (await loadLayouts()).miner;
   const open = await readOpenEpochNumber(node, miner, layout);

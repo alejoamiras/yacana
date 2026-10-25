@@ -1,6 +1,9 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
 import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
 import { Fr } from '@aztec-labs/aztec.js/fields';
+import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
+import { makeFetch } from '@aztec-labs/foundation/json-rpc/client';
+import { NODE_MAX_BATCH } from '@yacana/miner-core/node-client';
 import type { ExpectedDeployment } from '@yacana/miner-core/reader';
 
 let mod: typeof import('./node.ts');
@@ -138,5 +141,39 @@ describe('switchableNode', () => {
     s.use('https://b.example');
     expect(made).toEqual(['https://a.example', 'https://b.example']);
     expect(guard).toBeDefined();
+  });
+});
+
+describe('the node clients', () => {
+  test('no HTTP call carries more than NODE_MAX_BATCH requests, however many one turn issues', async () => {
+    const sizes: number[] = [];
+    const server = Bun.serve({
+      port: 0,
+      hostname: '127.0.0.1',
+      async fetch(req) {
+        const body = (await req.json()) as { id: number } | { id: number }[];
+        const calls = Array.isArray(body) ? body : [body];
+        sizes.push(calls.length);
+        const out = calls.map((c) => ({ jsonrpc: '2.0', id: c.id, result: 1 }));
+        return Response.json(Array.isArray(body) ? out : out[0]);
+      },
+    });
+    const url = `http://127.0.0.1:${server.port}`;
+    const release = guard.allowCandidate(url, 60_000);
+    const burst = (node: ReturnType<typeof mod.nodeClient>) =>
+      Promise.all(Array.from({ length: 10 }, () => node.getBlockNumber()));
+    try {
+      // The SDK's own client sends the ten as one call: the count sees batching.
+      await burst(createAztecNodeClient(url, { fetch: makeFetch([], false) }));
+      expect(sizes).toEqual([10]);
+      for (const node of [mod.nodeClient(url), mod.quietNodeClient(url, 5_000)]) {
+        sizes.length = 0;
+        expect(await burst(node)).toEqual(Array(10).fill(1));
+        expect(Math.max(...sizes)).toBe(NODE_MAX_BATCH);
+      }
+    } finally {
+      release();
+      server.stop(true);
+    }
   });
 });
