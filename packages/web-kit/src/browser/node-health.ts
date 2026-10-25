@@ -135,6 +135,16 @@ export function nextTransport(t: Transport, e: HealthEvent, now: number): Transp
 export const coolingDown = (t: Transport, now = Date.now()): boolean =>
   t.kind !== 'ok' && (now < t.retryAt || probing);
 
+/**
+ * A failure sent before the request that opened the cooldown is that burst's (a batch leaves as several calls):
+ * it never lengthens the backoff, but it may turn silence into a throttle or carry the node's own later deadline.
+ */
+function burstMayChange(t: Transport, e: HealthEvent, now: number): boolean {
+  if (e.type !== '429') return false;
+  if (t.kind === 'silent') return true;
+  return e.retryAfterS !== null && t.kind === 'throttled' && now + clamp(e.retryAfterS * 1000) > t.retryAt;
+}
+
 /** One outcome of the current endpoint into the store; exported for tests, the guard feeds it in production. */
 export function recordOutcome(o: NodeRequestOutcome): void {
   // A → B → A: an answer from the first visit to A passes the endpoint check but predates the reset.
@@ -152,12 +162,10 @@ export function recordOutcome(o: NodeRequestOutcome): void {
     opaque = [...opaque.filter((t) => now - t < OPAQUE_WINDOW_MS), now];
     if (opaque.length >= OPAQUE_BURST) event = { type: '429', retryAfterS: null };
   } else if (event.type === 'ok') opaque = [];
-  // A failure sent before the request that opened the cooldown is that burst's (a batch leaves as several
-  // calls): it lengthens nothing, and may only turn silence into a throttle.
   if (
     health.transport.kind !== 'ok' &&
     o.startedAt < cooldownFrom &&
-    !(event.type === '429' && health.transport.kind === 'silent')
+    !burstMayChange(health.transport, event, now)
   )
     return;
   const transport = nextTransport(health.transport, event, now);
