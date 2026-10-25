@@ -37,14 +37,19 @@ interface Step {
   /** The `if` of the job the step belongs to. */
   jobIf?: string;
   run?: string;
+  shell?: string;
   uses?: string;
   env?: Record<string, string>;
   with?: Record<string, unknown>;
   'working-directory'?: string;
 }
 interface Job {
+  name?: string;
   if?: string;
+  needs?: string | string[];
   'continue-on-error'?: boolean;
+  'runs-on'?: string;
+  'timeout-minutes'?: number;
   uses?: string;
   with?: { filters?: string };
   steps?: Step[];
@@ -52,9 +57,12 @@ interface Job {
 interface Workflow {
   file: string;
   pullRequest: boolean;
+  /** The `pull_request` trigger's own settings; null when it fires on every pull request. */
+  pullRequestFilter: unknown;
   filter: string[];
   steps: Step[];
   jobs: Job[];
+  byId: Record<string, Job>;
 }
 
 const ciDir = (dir: string): string[] => readdirSync(join(repo, dir)).map((f) => `${dir}/${f}`);
@@ -70,6 +78,7 @@ const workflows: Workflow[] = ciDir('.github/workflows').map((file) => {
   return {
     file,
     pullRequest: 'pull_request' in (doc.on ?? {}),
+    pullRequestFilter: doc.on?.pull_request,
     filter,
     steps: jobs.flatMap((j) =>
       (j.steps ?? []).map((st) => ({
@@ -79,6 +88,7 @@ const workflows: Workflow[] = ciDir('.github/workflows').map((file) => {
       })),
     ),
     jobs,
+    byId: doc.jobs ?? {},
   };
 });
 const actionSteps: Step[] = ciDir('.github/actions').flatMap(
@@ -258,6 +268,30 @@ function testGlobs(config: string): { include: string[]; exclude: string[] } | u
   return lists.include && lists.exclude ? { include: lists.include, exclude: lists.exclude } : undefined;
 }
 
+// The required checks are the `status` jobs. Protection reads a skipped job as passed, so each must always run,
+// need every other job and hand their results unaltered to scripts/ci-status.ts, which reads a job as gated
+// exactly when its workflow has a `changes` job.
+const STATUS = 'status';
+const statusName = (file: string): string => `${file.replace(/^.*\//, '').replace(/\.yml$/, '')}-status`;
+const needsOf = (j: Job): string[] => (j.needs === undefined ? [] : [j.needs].flat());
+
+/** What would make the verdict misread a job: a gate other than the change filter, or a failure read as success. */
+function coverageProblems(w: Workflow): string[] {
+  const filtered = 'changes' in w.byId;
+  return Object.entries(w.byId)
+    .filter(([id]) => id !== STATUS && id !== 'changes')
+    .flatMap(([id, j]) => {
+      const gated = j.if === CHANGES_GATE && needsOf(j).includes('changes');
+      const out: string[] = [];
+      if (filtered ? !gated : j.if !== undefined)
+        out.push(`${w.file}: ${id} is gated by more than the change filter`);
+      // A job that continues on error reports `success` when it fails.
+      if (j['continue-on-error'] !== undefined && j['continue-on-error'] !== false)
+        out.push(`${w.file}: ${id} continues on error`);
+      return out;
+    });
+}
+
 // Suites that need a network the pull-request lanes do not boot: the rig's cases run through
 // `bun run rig`, the rest skip without their environment and run in the e2e workflow.
 const NOT_IN_A_PR_LANE = [/^tools\/harness\/tests\//];
@@ -328,6 +362,51 @@ describe('workflows', () => {
     const lanes = workflows.filter((w) => w.pullRequest && w.steps.flatMap(gating).some(buildsSite));
     expect(lanes.map((w) => w.file)).not.toEqual([]);
     expect(readManifest('.').scripts?.['site:build']).toBe('bun apps/site/src/assemble.ts');
+  });
+
+  test('a pull-request workflow runs on every pull request, so its status check always appears', () => {
+    const filtered = workflows
+      .filter((w) => w.pullRequest && w.pullRequestFilter !== null)
+      .map((w) => w.file);
+    expect(filtered).toEqual([]);
+  });
+
+  test('every pull-request workflow has a status job that always runs and needs every other job', () => {
+    for (const w of workflows.filter((x) => x.pullRequest)) {
+      const job = w.byId[STATUS];
+      const others = Object.keys(w.byId).filter((id) => id !== STATUS);
+      expect({ file: w.file, job: job && { ...job, needs: needsOf(job).sort() } }).toEqual({
+        file: w.file,
+        job: {
+          name: statusName(w.file),
+          needs: others.sort(),
+          if: 'always()',
+          'runs-on': expect.any(String),
+          'timeout-minutes': expect.any(Number),
+          steps: [
+            { uses: expect.stringMatching(/^actions\/checkout@[0-9a-f]{40}$/) },
+            { uses: './.github/actions/status', with: { needs: `\${{ toJSON(needs) }}` } },
+          ],
+        },
+      });
+    }
+    const status = YAML.parse(readFileSync(join(repo, '.github/actions/status/action.yml'), 'utf8')) as {
+      runs: { steps: Step[] };
+    };
+    expect(status.runs.steps).toEqual([
+      { uses: './.github/actions/setup-bun', with: { install: 'false' } },
+      { shell: 'bash', run: 'bun scripts/ci-status.ts', env: { NEEDS: `\${{ inputs.needs }}` } },
+    ]);
+    const names = workflows.flatMap((w) => Object.values(w.byId).map((j) => j.name));
+    const shared = workflows
+      .filter((w) => w.pullRequest)
+      .map((w) => statusName(w.file))
+      .filter((n) => names.filter((x) => x === n).length !== 1);
+    expect(shared).toEqual([]);
+  });
+
+  test('a job the status covers is gated by the change filter alone, or not at all, and never hides a failure', () => {
+    expect(workflows.filter((w) => w.pullRequest).flatMap(coverageProblems)).toEqual([]);
   });
 
   test("the root's test:components reaches every workspace with a Vitest config", () => {

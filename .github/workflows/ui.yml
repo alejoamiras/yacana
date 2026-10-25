@@ -38,3 +38,15 @@ jobs:
       - run: bun run lint
       - run: bun run --cwd packages/ui typecheck
       - run: bun run --cwd packages/ui test:components
+
+  status:
+    name: ui-status
+    needs: [changes, test]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: ./.github/actions/status
+        with:
+          needs: ${{ toJSON(needs) }}

@@ -26,3 +26,15 @@ jobs:
         run: bun audit | tee -a "$GITHUB_STEP_SUMMARY"
       - run: bun run typecheck
       - run: bun test packages/miner-core packages/bridge tools/deploy scripts tools/localnet
+
+  status:
+    name: miner-core-status
+    needs: [test]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: ./.github/actions/status
+        with:
+          needs: ${{ toJSON(needs) }}

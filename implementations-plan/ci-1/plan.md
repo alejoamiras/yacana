@@ -134,7 +134,7 @@ makes those 13 names the required checks. Recon: `recon.md`.
 - **Gate**: `bun test scripts/ci-status.test.ts && bun run lint && bun run typecheck` exit 0. Layers: unit, lint,
   typecheck.
 
-### P2 — the action, the 13 status jobs, the guard, the doc
+### P2 — the action, the 13 status jobs, the guard, the doc ✓
 1. Add the `install` input to `setup-bun`, then add the `status` action.
 2. Move actionlint's glob into a `changes` job that calls `_changes.yml`; gate `actionlint` on `CHANGES_GATE`.
 3. Add the `status` job to the 13 workflows.

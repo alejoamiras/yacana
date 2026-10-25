@@ -51,3 +51,15 @@ jobs:
       - run: bun run --cwd apps/web-landing test:components
       # The site config (launch mode, the example claim) and the metrics the copy deck computes from.
       - run: bun test apps/site packages/miner-core/src/metrics.test.ts
+
+  status:
+    name: web-landing-status
+    needs: [changes, test]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: ./.github/actions/status
+        with:
+          needs: ${{ toJSON(needs) }}
