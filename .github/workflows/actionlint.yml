@@ -3,18 +3,40 @@ name: actionlint
 on:
   workflow_dispatch:
   pull_request:
-    paths:
-      - '.github/**'
 
 permissions:
   contents: read
 
 jobs:
+  changes:
+    uses: ./.github/workflows/_changes.yml
+    permissions:
+      contents: read
+      pull-requests: read
+    with:
+      filters: |
+        relevant:
+          - '.github/**'
+
   actionlint:
     name: Lint workflows
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - name: actionlint
         run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.12 -color
+
+  status:
+    name: ${{ github.event_name == 'pull_request' && 'actionlint-status' || 'actionlint-status (dispatch)' }}
+    needs: [changes, actionlint]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: ./.github/actions/status
+        with:
+          needs: ${{ toJSON(needs) }}

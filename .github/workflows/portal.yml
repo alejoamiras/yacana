@@ -47,3 +47,15 @@ jobs:
       - run: bun protocol/portal/scripts/abi.ts && git diff --exit-code protocol/portal/abi
       - run: bun run portal:test
       - run: bun tools/deploy/scripts/l1-deploy.ts --anvil
+
+  status:
+    name: ${{ github.event_name == 'pull_request' && 'portal-status' || 'portal-status (dispatch)' }}
+    needs: [changes, test]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: ./.github/actions/status
+        with:
+          needs: ${{ toJSON(needs) }}
