@@ -143,6 +143,12 @@ export async function faultOnce(
   return { fired: () => fired };
 }
 
+/** The hash a block parameter pins: a bare hash, `{ hash }`, or the anchored `{ number, hash }` the PXE sends. */
+const pinnedHash = (block: unknown): string | undefined => {
+  const hash = typeof block === 'string' ? block : (block as { hash?: unknown } | null)?.hash;
+  return typeof hash === 'string' && /^0x[0-9a-f]{64}$/i.test(hash) ? hash : undefined;
+};
+
 /**
  * The first public-data read pinned to a block hash — the claim's, against its anchor — answered as a
  * node that pruned that block answers it (`node_world_state_queries.js` of the pinned node).
@@ -150,16 +156,13 @@ export async function faultOnce(
 export const pruneAnchorOnce = (page: Page) =>
   faultOnce(
     page,
-    (c) =>
-      c.method === 'aztec_getPublicDataWitness' &&
-      typeof c.params[0] === 'string' &&
-      /^0x[0-9a-f]{64}$/i.test(c.params[0]),
+    (c) => c.method === 'aztec_getPublicDataWitness' && pinnedHash(c.params[0]) !== undefined,
     (a, c) => ({
       jsonrpc: '2.0',
       id: a.id,
       error: {
         code: -32000,
-        message: `Block hash ${String(c.params[0])} not found when resolving query. If the node API has been queried with anchor block hash possibly a reorg has occurred.`,
+        message: `Block hash ${pinnedHash(c.params[0])} not found when resolving query. If the node API has been queried with anchor block hash possibly a reorg has occurred.`,
       },
     }),
   );

@@ -28,3 +28,17 @@
   the rollup version chip, epoch timings, the launch date (Sep 13 → Oct 25, the recording's day), and the bridge
   chart's "since launch" axis stretched to it. Layout and type unchanged at 1280 and 390. Regenerated in the
   pinned image; `test:visual` 8/8 (21 s).
+- **The pruned-anchor fault stopped firing.** 6.0.0's PXE pins its anchored reads as the new `{ number, hash }`
+  block parameter (`blockHeader.toBlockParameter()`), not a bare hash, so `pruneAnchorOnce`'s string-only matcher
+  never matched: the claim minted and the test waited out its 10 minutes. The node's error for a missing hash is
+  unchanged for every hash-bearing form (`node_world_state_queries.js` `#throwOnUndefinedBlockData`), so the
+  miner's `ANCHOR_PRUNED` classifier still holds; the matcher now reads the hash from either form. 6.0.0's PXE
+  also caches hash-pinned reads (`caching_aztec_node.js`), which the fault does not depend on.
+- **Two suites in one worktree race on the prebuild.** Running `chain` and `bridge` at once in this checkout, one
+  copied `packages/miner-core/generated/slots` while the other regenerated it (ENOENT). Each lane is one checkout's
+  run at a time; not a code fault. `chain` alone then passed.
+- Step 3, web-miner shards at retry 0: `cockpit` 8/8 (5.3 min), `chain` 14/14 (12.7 min), `bridge` 5/5 (5.8 min),
+  all prover-less; `canary` 5/5 real (7.1 min, 50 s proving). Presto 1.2.1 from the committed digest: its log asks
+  for Aztec 6.0.0 and proves on `bb="bundled"` (10 proofs in `chain`), and its `PRESTO_HOME` is 16 KB with no
+  downloaded `bb` (F8 holds). The breakdown's `prestoProofs` counts transaction proofs, which a prover-less shard
+  skips, so the native evidence is Presto's own log and the Presto specs' assertions.

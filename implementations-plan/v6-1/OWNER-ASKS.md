@@ -16,6 +16,10 @@ Labs host later is one `site.env` line and a redeploy.
 **Other option.** Hold the PR until Aztec Labs runs a V6 host. The code and the site's move ship together
 (plan D1), so the apex stays on V5 until then.
 
+**Decision (2026-10-25, P1-01).** The owner chose to ship with dRPC's public node
+(`https://aztec-testnet.drpc.org`) as the default V6 node, signed on the decision page with no note. P6 sets it
+in `site.env`.
+
 ## Noted, no decision needed
 
 - **Open V5 tabs.** A tab left open on the V5 apex sees the redeploy and shows its frozen copy: "What is still on

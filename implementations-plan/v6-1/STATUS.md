@@ -11,3 +11,4 @@
 - 2026-10-25 P1 gate pass: toolchain + work-circuit tests 23/23, codegen idempotent (proof + layout version only), contracts:compile, lint:shell, lint.
 - 2026-10-25 P2 gate pass: lint, typecheck, components 347, bun test (expected: 2 example-claim + 2 replay-binding until P4), contracts:test 90, check:proofs 4/4, generators clean.
 - 2026-10-25 P3 gate pass: portal:build, portal:test 77/77 (LEAF_GAS holds: worst leaf 288,947), abi clean, l1-deploy --anvil; I5 shortfall on geth semantics (41,731 gas), margin 45,000 taken.
+- 2026-10-25 ORCHY-STEER: OA1 answered, owner decision P1-01: dRPC's public node is the default V6 node; A2 settled, P6 no longer waits on it.

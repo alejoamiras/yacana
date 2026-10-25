@@ -73,7 +73,7 @@ portal and YACA on Sepolia, and point the site at it. V5 balances and epochs are
 - A2. **The default node is `https://aztec-testnet.drpc.org`**, the only V6 RPC Aztec documents. Aztec Labs runs
   none (`v6.testnet.rpc.aztec-labs.com` does not resolve). It is a third party that sees what the V5 host saw:
   the PXE's tag-sync queries and every private transaction, by visitor IP. OWNER-ASKS OA1. A later host is one
-  `site.env` line.
+  `site.env` line. **Settled** by owner decision P1-01 (below, UI impact).
 - A3. **Headless Presto goes to 1.2.1** (≥ 1.1.3 for bb.js 6; recon records its four digests).
 - A4. **K runs no earlier than 2026-10-29T17:06Z**, so no key sits in a process that loads a package still inside
   its seven-day window. P1–P5 take longer than that anyway.
@@ -96,6 +96,8 @@ into a test crate (6.0.0 only warns); `follow-ups.md`'s migration to issues; the
 **UI impact** (the whole visible budget, quoted):
 - ask3: "Upgrade the repository from Aztec 5.2.0 to 6.0.0 and move the testnet deployment to the 6.0.0 rollup.
   … the site moved to V6. V5 balances and epochs are not carried, and v5.yacana.network is left as it is."
+- P1-01 (owner, on OA1): "the owner chose to ship with dRPC's public node (https://aztec-testnet.drpc.org) as the
+  default V6 node", signed on the decision page with no note.
 - G1 (owner, with ask3): "listing each exact package name the 6.0.0 install needs in `minimumReleaseAgeExcludes`
   …, installing, and removing the exemption again in the same PR once `bun.lock` holds them … No other change to
   the supply-chain gates."
