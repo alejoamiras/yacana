@@ -342,8 +342,8 @@ touches what K deployed, a merge of `origin/main` included, reopens K. The PR bo
 K2's.
 **Validation gate**:
 - Both class ids are equal.
-- `git diff --exit-code d267f17 HEAD -- protocol/portal/ packages/bridge/src/policy.ts` is clean (what K1
-  deployed), and `git diff --exit-code <K2 SHA> HEAD -- protocol/ yacana.params.json packages/bridge/src/policy.ts
+- `git diff --exit-code d267f17 HEAD -- protocol/portal/ yacana.params.json packages/bridge/src/policy.ts` is
+  clean (what K1 deployed: the portal's immutables come from the params through `policyFor`), and `git diff --exit-code <K2 SHA> HEAD -- protocol/ yacana.params.json packages/bridge/src/policy.ts
   bun.lock` is clean (registration is write-once, `YacanaPortal.sol:222`: a miner fix after K needs a new portal).
 - `bun test` exits 0: the new effect fixture clears P2's two expected failures.
 - `YACANA_TESTNET_NODE_URL=https://aztec-testnet.drpc.org bun test tools/deploy/src/example-claim.test.ts`
@@ -369,7 +369,7 @@ check on `main` and on every branch cut from it until the records land, and that
 
 All steps run from a clean checkout of a reviewed PR head after P5 is green (A4's date lifted by ask8). The template is
 `deployments/testnet.env.example` (op:// references for `YACANA_L1_PRIVATE_KEY` and `YACANA_DEPLOYER_SECRET`;
-public `YACANA_L1_RPC_URL`, `AZTEC_NODE_URL`, `YACANA_REGISTRY`). Steps K1–K3 are one keyed run. Outputs (records,
+public `YACANA_L1_RPC_URL`, `AZTEC_NODE_URL`, `YACANA_REGISTRY`). Steps K1–K3 were planned as one keyed run; it ran in two parts (below). Outputs (records,
 transaction hashes, logs with no secret) go to `~/.cache/orchy/alejoamiras-yacana/scratch/v6-1/keyed-out/`.
 
 | Step | Command | Key | Expect | Verify on chain |
@@ -381,14 +381,22 @@ transaction hashes, logs with no secret) go to `~/.cache/orchy/alejoamiras-yacan
 | K4 | `AZTEC_NODE_URL=https://aztec-testnet.drpc.org bun run soak -- --hours 0.5 --report <keyed-out>/soak.jsonl`; pick an account with two `claim` rows; `bun tools/deploy/scripts/record-example-claim.ts <its second claim's txHash> --keep-effect tools/deploy/fixtures/example-claim-effect.json` | none | ≥ 2 mints by one account; `testnet.example-claim.json` and the effect fixture | the tx on `VITE_EXPLORER_URL` (if it does not index V6, an owner ask before P6) |
 | K5 | `bun tools/deploy/scripts/l1-verify.ts deployments/testnet.json` (template `deployments/etherscan.env.example`) | Etherscan key | both contracts verified | Etherscan "Contract Source Code Verified" |
 
-**Run so far.** K1 ran at d267f17. Portal `0x12D46b6878a4Dc0506CD15f94CA9E56Ae06BC4D2` and YACA
-`0xC7cc767BaaE1E979bED8a3C118587bfAea67ac2A` were created on Sepolia in block 11993997 by tx `0x2ac8c122…b4fb2c`.
-Read back: status 1, 15,317 and 2,202 bytes of code, `YACA.PORTAL()` = the portal, `operators()` =
-`0xc9b7…Cbb7`. The creation was forge's own initcode, sent with the node's estimate × 1.3, because forge's
-broadcast ran out of gas (lessons/keyed.md; #80). K2 failed before sending anything: dRPC's free plan refuses a
-batch above 3 requests, and the 6.0.0 client batches up to 100. **K2 onward runs from the head of the arc that caps
-every node client at `NODE_MAX_BATCH`**. That arc changes no file under `protocol/`, `yacana.params.json`,
-`packages/bridge/src/policy.ts` or `bun.lock`. P6's pin gates name both SHAs: K1's d267f17 and K2's.
+**Run so far.**
+- **K1 ran at d267f17.** Portal `0x12D46b6878a4Dc0506CD15f94CA9E56Ae06BC4D2` and YACA
+  `0xC7cc767BaaE1E979bED8a3C118587bfAea67ac2A` were created on Sepolia in block 11993997 by tx `0x2ac8c122…b4fb2c`.
+  - Read back: status 1, 15,317 and 2,202 bytes of code, `YACA.PORTAL()` = the portal, `operators()` = `0xc9b7…Cbb7`.
+  - forge's broadcast `0x533825f2…def305` (block 11993956) ran out of gas at its simulated limit, so the creation
+    was sent as forge's own initcode with the node's estimate × 1.3 (lessons/keyed.md; #80).
+- **K2 failed part-way.** It deployed and mined a token, then failed while proving the miner's deployment.
+  - The token: tx `0x07a9b344…db11e9`, at `0x276eda514bd9cf70d9b3d09df8492a27fb1ba1baa69c9b05ed09c082dc69c4d3`.
+  - The failure came from the PXE's class-id hint prefetch: 4 concurrent reads, one refused batch. dRPC's free plan
+    refuses a batch above 3 requests, and the 6.0.0 client batches up to 100.
+  - That token is an inert orphan. Its minter is the predicted miner `0x28b6eae0…ad49860`, which was never deployed,
+    and that address came from a random salt that is now lost. The rerun deploys a new pair. P6 names the orphan in
+    `docs/deployments.md` so nobody mistakes it for the token.
+- **K2 onward runs from the head of the arc that caps every node client at `NODE_MAX_BATCH`.** That arc changes no
+  file under `protocol/`, `yacana.params.json`, `packages/bridge/src/policy.ts` or `bun.lock`. P6's pin gates name
+  both SHAs: K1's d267f17 and K2's.
 
 The account's first claim carries the delivery handshake's note hash, so the example claim must be its second
 (lessons.md). After the merge, `https://yacana.network/build.json` must name the V6 miner.
@@ -465,6 +473,32 @@ P5's CI scope and make K1's verification command use the declared RPC)*. Finding
 Looks fine (its list): prove before codegen; the change map; K0 before any spend; the K order; P6's class ids and
 cleared failures; a gate for every part of ask3's Check; §4's replay and reducedness claims.
 
+**Arc a2 (the batch cap) review, round 1** (on `d267f17..e9bb873`).
+
+*Codex (gpt-6.1-sol, high): material findings.*
+1. Medium, demonstrated. The batch-size test failed in a full run, because another suite leaves its fetch stub in
+   place. **Fixed**: the test stubs fetch itself and restores it.
+2. Nit: the constant's comment was compressed. **Fixed**.
+
+*Opus 5.5 beside it: material findings.* Each was verified.
+1. High: two stats-host tests asserted exact call counts that the cap changes. **Fixed**: they count the calls out
+   when a claim or a hide begins and assert that none follows. Mutation-checked: a host that ignores claims, and
+   turns that never wait, both fail them.
+2. Medium, demonstrated. The records said K2 sent nothing, but it mined a token (§7). **Fixed** in §7 and in
+   lessons, from the log and the node.
+3. Medium: the test-order fault, as Codex 1.
+4. Low, by trace. One failed burst, now several calls, stretched the silent cooldown to 60 s. **Fixed**: a failure
+   sent before its cooldown opened lengthens nothing, and its test fails without the rule. The opaque-burst
+   heuristic still counts in-flight calls, as designed, and it did so before for concurrent turns.
+5. Low: `switch.e2e.ts`'s bound counted HTTP calls from before the switch. **Fixed**: the count is taken once the
+   switch lands, and nothing may follow.
+6. Low: P6's K1 pin lacked `yacana.params.json`. **Fixed**.
+7. Nits:
+   - the "one keyed run" line (fixed);
+   - K1's gas figures, which now come from chain and the log (fixed);
+   - STATUS's exceptions (fixed);
+   - the singular "K's SHA" in round 1's audit text, left as the record of what was argued then.
+
 **Implementation deviations** (the tree wins; each in `lessons/`):
 - P1: the `nargo` pins keep 5.2.0's shape (the deps our `Nargo.toml` files name); `poseidon v0.4.0` is fetched by
   nothing here and `sha256 v0.3.0` is a transitive 5.2.0's lock did not pin either.
@@ -485,6 +519,11 @@ cleared failures; a gate for every part of ask3's Check; §4's replay and reduce
   (`packages/miner-core/src/node-client.ts`). The exceptions are `tools/localnet`'s three clients and the
   debug/admin clients: they reach only the run's own node, and capping them would add a localnet → miner-core edge
   for no behaviour.
+  - A batch now leaves as several calls, so three things were restated:
+    - the node-health store no longer lets a failure sent before its cooldown opened lengthen it;
+    - two stats-host tests and `switch.e2e.ts` counted HTTP calls as one per batch, and now count the calls out when a
+      claim, a hide or a switch begins, and assert that none follows;
+    - the batch-size test stubs fetch itself.
 - P5: CI found one cause no local gate could: the runner's system Node is 22, and 6.0.0's `aztec start` needs 24
   (`DisposableStack`). `setup-aztec` sets up Node 24 before the install; a CI change ask3 does need.
   Its second run found a rig race 6.0.0 created: a warp right after an Inbox write proposes without the message and
