@@ -149,3 +149,5 @@ export const outcome = (p: Promise<unknown>): Promise<string> =>
     () => 'ok',
     (e: Error) => e.message.split('\n')[0] ?? 'error',
   );
+
+// A change only the harness filter watches.
