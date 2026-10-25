@@ -48,3 +48,15 @@ jobs:
       - run: bun test tools/localnet/src/toolchain.test.ts protocol/work-circuit
         env:
           YACANA_REQUIRE_TOOLCHAIN: '1'
+
+  status:
+    name: ${{ github.event_name == 'pull_request' && 'work-circuit-status' || 'work-circuit-status (dispatch)' }}
+    needs: [changes, test]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: ./.github/actions/status
+        with:
+          needs: ${{ toJSON(needs) }}

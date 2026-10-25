@@ -47,3 +47,15 @@ jobs:
       - run: bun run --cwd packages/web-kit typecheck
       # The production guards of the env, the CSP/COOP/COEP policy, the fetch guard, the pinned CRS.
       - run: bun test packages/web-kit
+
+  status:
+    name: ${{ github.event_name == 'pull_request' && 'web-kit-status' || 'web-kit-status (dispatch)' }}
+    needs: [changes, test]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: ./.github/actions/status
+        with:
+          needs: ${{ toJSON(needs) }}

@@ -88,3 +88,15 @@ jobs:
           if-no-files-found: ignore
           include-hidden-files: true
           retention-days: 14
+
+  status:
+    name: ${{ github.event_name == 'pull_request' && 'web-miner-status' || 'web-miner-status (dispatch)' }}
+    needs: [changes, test, replay]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: ./.github/actions/status
+        with:
+          needs: ${{ toJSON(needs) }}

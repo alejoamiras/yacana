@@ -65,3 +65,15 @@ jobs:
       - run: bun run artifacts:commit && git diff --exit-code
       # The production site as Cloudflare would build it, from the committed artifacts alone.
       - run: bun run site:build
+
+  status:
+    name: ${{ github.event_name == 'pull_request' && 'contracts-status' || 'contracts-status (dispatch)' }}
+    needs: [changes, test]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: ./.github/actions/status
+        with:
+          needs: ${{ toJSON(needs) }}
