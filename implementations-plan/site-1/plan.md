@@ -10,7 +10,7 @@ eli5_mode: skipped (orchestrator-owned)
 quality_bar: production
 hardening: not scheduled
 budget: "recon: 1 Sonnet sweep + the driver's clean-room runs; codex gpt-6.1-sol at high; code-review off"
-status: drafted 2026-10-25; codex audit → conditional approve (folded); final fresh pass → conditional approve ×2 (folded) → approve (§7); awaiting the orchestrator
+status: drafted 2026-10-25; codex approve (§7); Phase 1 ✓ 2026-10-25 → outcome H (every probe red); Phase 2 not run; blocked on the owner's log reading
 created: 2026-10-25
 ---
 
@@ -136,7 +136,7 @@ recorded, never decided on. A timeout (25 min), a cancel or a missing check is i
 
 ## 6. Phases
 
-### Phase 1 — Separate the tree from the dashboard with paired probes
+### Phase 1 — Separate the tree from the dashboard with paired probes ✓ (outcome H)
 1. Wait until no Cloudflare build of this repo is in flight (`gh api …/commits/<sha>/check-suites`).
 2. For each probe in §4 order, run `git switch -c site-1-probe-<id> origin/main`. Commit the probe and push it, then
    run `git switch worktree-site-1`.
@@ -147,7 +147,7 @@ recorded, never decided on. A timeout (25 min), a cancel or a missing check is i
 **Validation gate**: one outcome (B, B′, B″, H, P or S) is reached. `lessons/phase-1.md` and `STATUS.md` hold every
 probe. `git ls-remote origin 'refs/heads/site-1-probe-*'` prints nothing. Layers: live Workers Builds.
 
-### Phase 2 — Pin what Cloudflare builds (outcomes B, B′, B″ only)
+### Phase 2 — Pin what Cloudflare builds (outcomes B, B′, B″ only) — not run (outcome H)
 1. Apply the §4 change map.
 2. Move one pin alone, and see the new test fail. Restore the pin, and log the run.
 

@@ -6,3 +6,4 @@
 - 2026-10-25 Codex audit (gpt-6.1-sol, high): conditional approve — byte gate must pin the commit, timing diagnoses removed, A1 resolved, outcome T bounded. All four folded.
 - 2026-10-25 Codex final fresh pass: conditional approve (7 findings, all folded); resumed round 2: conditional approve (3 small conditions, all folded).
 - 2026-10-25 Codex final pass round 3: approve. Plan committed.
+- 2026-10-25 Phase 1 gate ✓: Q0, Q1, Q3, Q4 and Q2 all red 8–9 s after opening; probe branches deleted; outcome H. Codex (resumed): stop at H, no orphan probe. Phase 2 not run; no PR. LEAD_BLOCKED on the owner's reading of the build log.
