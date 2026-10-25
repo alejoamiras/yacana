@@ -483,6 +483,11 @@ findings. Opus 5.5 beside it: *nothing material*, three findings, each verified 
 **Implementation review, round 2** (Codex, resumed, on the fix commit): *nothing material*. It compared the old and
 new estimate against a mocked RPC (same inputs, same gas) and saw only the new path keep `VersionPaused`. Converged.
 
+**Implementation review, round 3** (Codex, resumed, on the CI fixes after the PR opened; the last round): *material
+findings*, one. Medium: `untilInboxSynced`'s deadline did not bound its RPCs, so a stalled node held the warp past it
+(demonstrated in memory). **Fixed**: the deadline races the whole wait; a test against a server that never answers
+ends at it (and hangs on the previous code). The node pin and the stats teardown drew no findings.
+
 ## 9. Post-implementation (no repository standard exists; written out)
 
 While implementing: comments state invariants only, never a plan or phase. Log every attempt in

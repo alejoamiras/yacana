@@ -11,9 +11,27 @@ const POLL_MS = 250;
 
 /**
  * Resolves once the node's archiver holds the last message on its rollup's Inbox; the archiver
- * syncs the Inbox in order, so every earlier one is held too. Throws after `timeoutMs`.
+ * syncs the Inbox in order, so every earlier one is held too. Throws after `timeoutMs`, a stalled
+ * RPC included.
  */
 export async function untilInboxSynced(nodeUrl: string, l1RpcUrl: string, timeoutMs = 60_000): Promise<void> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const expired = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error(`the node at ${nodeUrl} has not synced its Inbox after ${timeoutMs / 1000} s`)),
+      timeoutMs,
+    );
+  });
+  const live = { done: false };
+  try {
+    await Promise.race([poll(nodeUrl, l1RpcUrl, live), expired]);
+  } finally {
+    live.done = true;
+    clearTimeout(timer);
+  }
+}
+
+async function poll(nodeUrl: string, l1RpcUrl: string, live: { done: boolean }): Promise<void> {
   const node = createAztecNodeClient(nodeUrl);
   const { l1ChainId, l1ContractAddresses } = await node.getNodeInfo();
   const l1 = getPublicClient({ l1RpcUrls: [l1RpcUrl], l1ChainId });
@@ -25,12 +43,6 @@ export async function untilInboxSynced(nodeUrl: string, l1RpcUrl: string, timeou
   });
   const last = sent.at(-1)?.args.hash;
   if (!last) return;
-  const deadline = Date.now() + timeoutMs;
-  while ((await node.getL1ToL2MessageIndex(Fr.fromHexString(last))) === undefined) {
-    if (Date.now() > deadline)
-      throw new Error(
-        `the node at ${nodeUrl} has not synced Inbox message ${last} after ${timeoutMs / 1000} s`,
-      );
+  while (!live.done && (await node.getL1ToL2MessageIndex(Fr.fromHexString(last))) === undefined)
     await Bun.sleep(POLL_MS);
-  }
 }
