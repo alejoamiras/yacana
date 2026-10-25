@@ -76,7 +76,11 @@ portal and YACA on Sepolia, and point the site at it. V5 balances and epochs are
   `site.env` line. **Settled** by owner decision P1-01 (below, UI impact).
 - A3. **Headless Presto goes to 1.2.1** (≥ 1.1.3 for bb.js 6; recon records its four digests).
 - A4. **K runs no earlier than 2026-10-29T17:06Z**, so no key sits in a process that loads a package still inside
-  its seven-day window. P1–P5 take longer than that anyway.
+  its seven-day window. P1–P5 take longer than that anyway. **Lifted** by owner decision ask8: "The seven-day
+  package-age wait before the keyed testnet run does not apply to packages published under @alejoamiras,
+  @aztec-labs or @aztec-foundation. Every package in the 6.0.0 closure younger than seven days is one of those, so
+  the keyed steps (plan section 7) start now instead of at 2026-10-29T17:06Z. The repository's own gate in
+  bunfig.toml is unchanged."
 
 ## 1. Scope
 
@@ -213,8 +217,8 @@ npm lock: a new supply-chain gate G1 does not allow (D4).
 - **Supply chain.** G1's exemption lists exact names, never scopes (bun ignores globs). It lives only between the
   install and the frozen re-install, and the frozen install must pass without it. Every new pin is a digest:
   installer sha, binaries, wasm, forge-std tree, nargo commits, and Presto 1.2.1's assets from GitHub's published
-  `digest` fields. The installer's npm lock stays undigested, as in 5.2.0 (D4). No key runs before every package
-  is of age (A4). The local toolchain was installed by another project, so CI's fresh install
+  `digest` fields. The installer's npm lock stays undigested, as in 5.2.0 (D4). No key ran before every package
+  was of age (A4) until ask8 exempted the three publishers the young closure comes from. The local toolchain was installed by another project, so CI's fresh install
   re-proves the hashes (`toolchain.test.ts`, `YACANA_REQUIRE_TOOLCHAIN=1`). A mismatch stops the phase.
   Actions stay SHA-pinned; tokens stay `contents: read`.
 - **Cryptography.** No new primitive. The reducedness check stays, and its inputs are unchanged (F2).
@@ -334,11 +338,13 @@ cause is a stop. `bun run lint:actions` exits 0. Layers: CI.
    record's `minerClassId` and `tokenClassId`.
 4. Merge `origin/main`. Resume Codex on this delta (§9). Mark the PR ready.
 **After K the PR takes only P6's files** (the change map's P6 row, the plan folder). Any other change that
-touches what K deployed, a merge of `origin/main` included, reopens K. The PR body names K's SHA.
+touches what K deployed, a merge of `origin/main` included, reopens K. The PR body names K1's SHA (d267f17) and
+K2's.
 **Validation gate**:
 - Both class ids are equal.
-- `git diff --exit-code <K SHA> HEAD -- protocol/ yacana.params.json packages/bridge/src/policy.ts bun.lock` is
-  clean (registration is write-once, `YacanaPortal.sol:222`: a miner fix after K needs a new portal).
+- `git diff --exit-code d267f17 HEAD -- protocol/portal/ packages/bridge/src/policy.ts` is clean (what K1
+  deployed), and `git diff --exit-code <K2 SHA> HEAD -- protocol/ yacana.params.json packages/bridge/src/policy.ts
+  bun.lock` is clean (registration is write-once, `YacanaPortal.sol:222`: a miner fix after K needs a new portal).
 - `bun test` exits 0: the new effect fixture clears P2's two expected failures.
 - `YACANA_TESTNET_NODE_URL=https://aztec-testnet.drpc.org bun test tools/deploy/src/example-claim.test.ts`
   passes.
@@ -361,8 +367,7 @@ check on `main` and on every branch cut from it until the records land, and that
 
 ## 7. Keyed steps (for the orchestrator; the lead runs none)
 
-All steps run from a clean checkout of the PR's head SHA (K's SHA) after P5 is green, and no earlier than
-2026-10-29T17:06Z (A4). The template is
+All steps run from a clean checkout of a reviewed PR head after P5 is green (A4's date lifted by ask8). The template is
 `deployments/testnet.env.example` (op:// references for `YACANA_L1_PRIVATE_KEY` and `YACANA_DEPLOYER_SECRET`;
 public `YACANA_L1_RPC_URL`, `AZTEC_NODE_URL`, `YACANA_REGISTRY`). Steps K1–K3 are one keyed run. Outputs (records,
 transaction hashes, logs with no secret) go to `~/.cache/orchy/alejoamiras-yacana/scratch/v6-1/keyed-out/`.
@@ -375,6 +380,15 @@ transaction hashes, logs with no secret) go to `~/.cache/orchy/alejoamiras-yacan
 | K3 | `YACANA_RECORD=deployments/testnet.json bun run bridge -- register`; `… set-forwarder 0x6792D5eb75e1F025438349d454AC91378d9F8bac on`; `… status` | L1 key | registered at Registry index 8; forwarder listed | `status` exit 0, headroom > 0 |
 | K4 | `AZTEC_NODE_URL=https://aztec-testnet.drpc.org bun run soak -- --hours 0.5 --report <keyed-out>/soak.jsonl`; pick an account with two `claim` rows; `bun tools/deploy/scripts/record-example-claim.ts <its second claim's txHash> --keep-effect tools/deploy/fixtures/example-claim-effect.json` | none | ≥ 2 mints by one account; `testnet.example-claim.json` and the effect fixture | the tx on `VITE_EXPLORER_URL` (if it does not index V6, an owner ask before P6) |
 | K5 | `bun tools/deploy/scripts/l1-verify.ts deployments/testnet.json` (template `deployments/etherscan.env.example`) | Etherscan key | both contracts verified | Etherscan "Contract Source Code Verified" |
+
+**Run so far.** K1 ran at d267f17. Portal `0x12D46b6878a4Dc0506CD15f94CA9E56Ae06BC4D2` and YACA
+`0xC7cc767BaaE1E979bED8a3C118587bfAea67ac2A` were created on Sepolia in block 11993997 by tx `0x2ac8c122…b4fb2c`.
+Read back: status 1, 15,317 and 2,202 bytes of code, `YACA.PORTAL()` = the portal, `operators()` =
+`0xc9b7…Cbb7`. The creation was forge's own initcode, sent with the node's estimate × 1.3, because forge's
+broadcast ran out of gas (lessons/keyed.md; #80). K2 failed before sending anything: dRPC's free plan refuses a
+batch above 3 requests, and the 6.0.0 client batches up to 100. **K2 onward runs from the head of the arc that caps
+every node client at `NODE_MAX_BATCH`**. That arc changes no file under `protocol/`, `yacana.params.json`,
+`packages/bridge/src/policy.ts` or `bun.lock`. P6's pin gates name both SHAs: K1's d267f17 and K2's.
 
 The account's first claim carries the delivery handshake's note hash, so the example claim must be its second
 (lessons.md). After the merge, `https://yacana.network/build.json` must name the V6 miner.
@@ -464,6 +478,13 @@ cleared failures; a gate for every part of ask3's Check; §4's replay and reduce
   `~/.aztec/current` first), the live burst taking turns at proving (bb.js 6.0.0 interleaves concurrent Chonk
   proofs in one process), `no-prover.ts` exporting `CircuitKind` (the read-only apps and `site:build` did not
   build), and the pruned-anchor fault reading 6.0.0's `{ number, hash }` block parameter.
+- K: forge's simulated gas underprices a contract creation under Sepolia's code-deposit pricing, so K1's creation
+  was sent with the node's estimate. `l1-deploy.ts` is unchanged here (the deployed sources stay put); #80 holds
+  the fix. dRPC's free plan refuses a batch above 3 requests, and the 6.0.0 client batches every request of one
+  event-loop turn, up to 100. Every node client outside `tools/localnet` now passes `maxBatchSize: NODE_MAX_BATCH`
+  (`packages/miner-core/src/node-client.ts`). The exceptions are `tools/localnet`'s three clients and the
+  debug/admin clients: they reach only the run's own node, and capping them would add a localnet → miner-core edge
+  for no behaviour.
 - P5: CI found one cause no local gate could: the runner's system Node is 22, and 6.0.0's `aztec start` needs 24
   (`DisposableStack`). `setup-aztec` sets up Node 24 before the install; a CI change ask3 does need.
   Its second run found a rig race 6.0.0 created: a warp right after an Inbox write proposes without the message and
