@@ -147,19 +147,16 @@ describe('switchableNode', () => {
 describe('the node clients', () => {
   test('no HTTP call carries more than NODE_MAX_BATCH requests, however many one turn issues', async () => {
     const sizes: number[] = [];
-    const server = Bun.serve({
-      port: 0,
-      hostname: '127.0.0.1',
-      async fetch(req) {
-        const body = (await req.json()) as { id: number } | { id: number }[];
-        const calls = Array.isArray(body) ? body : [body];
-        sizes.push(calls.length);
-        const out = calls.map((c) => ({ jsonrpc: '2.0', id: c.id, result: 1 }));
-        return Response.json(Array.isArray(body) ? out : out[0]);
-      },
-    });
-    const url = `http://127.0.0.1:${server.port}`;
-    const release = guard.allowCandidate(url, 60_000);
+    // Other suites in this process leave their own stand-in as the global fetch; this one is restored.
+    const before = globalThis.fetch;
+    globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body)) as { id: number } | { id: number }[];
+      const calls = Array.isArray(body) ? body : [body];
+      sizes.push(calls.length);
+      const out = calls.map((c) => ({ jsonrpc: '2.0', id: c.id, result: 1 }));
+      return Response.json(Array.isArray(body) ? out : out[0]);
+    }) as typeof fetch;
+    const url = 'https://node.example';
     const burst = (node: ReturnType<typeof mod.nodeClient>) =>
       Promise.all(Array.from({ length: 10 }, () => node.getBlockNumber()));
     try {
@@ -172,8 +169,7 @@ describe('the node clients', () => {
         expect(Math.max(...sizes)).toBe(NODE_MAX_BATCH);
       }
     } finally {
-      release();
-      server.stop(true);
+      globalThis.fetch = before;
     }
   });
 });
