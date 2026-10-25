@@ -1,8 +1,8 @@
-// An account's address depends on the account contract's class as much as on the master: an SDK
-// that ships a new class gives every master a new address. The vault therefore knows two classes —
-// the build's and the one before it — and a master fingerprint that names the master without any
-// class, so a record made under the old class opens under the new one exactly once and only when
-// the master is the same.
+// An account's address depends on the account class and the address separator as much as on the
+// master: an SDK that moves either gives every master a new address. The vault therefore knows two
+// recipes — the build's and the one before it — and a master fingerprint that names the master
+// without any recipe, so a record made under the old recipe opens under the new one exactly once
+// and only when the master is the same.
 import { SchnorrInitializerlessAccountContractArtifact } from '@aztec-labs/accounts/schnorr';
 import { Grumpkin } from '@aztec-labs/foundation/crypto/grumpkin';
 import { poseidon2Hash, poseidon2HashWithSeparator } from '@aztec-labs/foundation/crypto/poseidon';
@@ -39,7 +39,7 @@ export const currentAccountClassId = (): Promise<string> => {
  * Account `index` of `master` under `classId`: the initializerless Schnorr account's instance
  * (no initializer, the signing key's hash as the immutables hash, the secret's public keys, the
  * derived salt, no deployer), with the class id set rather than taken from the artifact. With a
- * `separator`, the address is the SDK's own `computeAddress` under that separator instead of its
+ * `separator`, the address is the SDK's `computeAddress` recipe under that separator instead of its
  * current one: `((poseidon2([publicKeysHash, partialAddress], separator) · G) + ivpk_m).x`.
  */
 export async function addressUnderClass(
@@ -81,7 +81,7 @@ export async function fingerprintOf(master: Uint8Array): Promise<string> {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-/** The two classes a record is checked against; tests substitute their own. */
+/** The two recipes a record is checked against; tests substitute their own. */
 export interface AccountClasses {
   current: { id: string; addressOf: (master: Uint8Array, index: number) => Promise<string> };
   previous: { id: string; addressOf: (master: Uint8Array, index: number) => Promise<string> };

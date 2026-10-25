@@ -10,7 +10,7 @@ import { masterFromPrf } from '@yacana/miner-core/keys/derive';
 import { type Hex, hashTypedData, recoverTypedDataAddress } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { claimContent, exitContent, MAX_AMOUNT, retireContent, sendAheadContent } from './content.ts';
-import { inboxLeaf } from './inbox.ts';
+import { INBOX_BUCKET_GAS, inboxLeaf } from './inbox.ts';
 import { deriveCrossingSecrets, exitLogTag } from './secrets.ts';
 import { PORTAL_DOMAIN, SIGNED_TYPES, signForward } from './signatures.ts';
 import { outboxLeaf } from './witness.ts';
@@ -185,4 +185,11 @@ describe('bridge vectors', () => {
     expect(() => claimContent(MAX_AMOUNT + 1n)).toThrow(/u128/);
     expect(claimContent(MAX_AMOUNT)).toBeInstanceOf(Fr);
   });
+});
+
+test("the portal's gas suite holds the clients' Inbox margin: a costlier Inbox fails there, not on a wallet", async () => {
+  const suite = await Bun.file(resolve(import.meta.dir, '../../../protocol/portal/test/Gas.t.sol')).text();
+  expect(/INBOX_BUCKET_GAS = ([\d_]+);/.exec(suite)?.[1]?.replaceAll('_', '')).toBe(
+    INBOX_BUCKET_GAS.toString(),
+  );
 });

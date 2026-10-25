@@ -3,8 +3,8 @@
 // is null, never zero: a wallet that might have paid must not be refused.
 import { INBOX_BUCKET_GAS } from '@yacana/bridge/inbox';
 import type { Abi, ContractFunctionArgs, ContractFunctionName, Hex } from 'viem';
-import { encodeFunctionData } from 'viem';
-import { estimateFeesPerGas, estimateGas, getBalance, getPublicClient } from 'wagmi/actions';
+import { estimateContractGas } from 'viem/actions';
+import { estimateFeesPerGas, getBalance, getPublicClient } from 'wagmi/actions';
 import type { WagmiConfig } from './eth.ts';
 
 export interface PayerFunds {
@@ -70,15 +70,13 @@ export async function inboxWriteGas<
   return (await estimateCall(config, account, call)) + INBOX_BUCKET_GAS;
 }
 
+/** Through the ABI, so a refusal is the portal's named error, as the wallet's own estimate made it. */
 function estimateCall<abi extends Abi, name extends ContractFunctionName<abi, 'nonpayable' | 'payable'>>(
   config: WagmiConfig,
   account: Hex,
   call: PortalCall<abi, name>,
 ): Promise<bigint> {
-  const data = encodeFunctionData({
-    abi: call.abi,
-    functionName: call.functionName,
-    args: call.args,
-  } as never);
-  return estimateGas(config, { account, to: call.address, data });
+  const client = getPublicClient(config);
+  if (!client) throw new Error("no RPC for the portal's chain");
+  return estimateContractGas(client, { ...call, account } as never);
 }

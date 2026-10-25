@@ -465,6 +465,16 @@ cleared failures; a gate for every part of ask3's Check; §4's replay and reduce
   proofs in one process), `no-prover.ts` exporting `CircuitKind` (the read-only apps and `site:build` did not
   build), and the pruned-anchor fault reading 6.0.0's `{ number, hash }` block parameter.
 
+**Implementation review, round 1** (on `5b85e40..158fab3`). Codex (gpt-6.1-sol, high): *nothing material*, no
+findings. Opus 5.5 beside it: *nothing material*, three findings, each verified and fixed:
+1. Low: `inboxWriteGas` estimated a deposit or forward from raw calldata, so a refused write (a paused version, a
+   closed deposit) reached the dialog as viem's `EstimateGasExecutionError` without the portal's error name, and the
+   row's own words were lost. **Fixed**: the estimate goes through the ABI (`estimateContractGas`), as the wallet's
+   own did; a test refuses with `VersionPaused` and reads the name back.
+2. Low: the 45,000 margin was written in both `Gas.t.sol` and `inbox.ts` with nothing tying them. **Fixed**:
+   `vectors.test.ts` reads the suite's constant and fails on a drift (checked by mutating it).
+3. Nit: `classes.ts` still spoke of two classes after D3 made them two recipes (class and separator). **Fixed**.
+
 ## 9. Post-implementation (no repository standard exists; written out)
 
 While implementing: comments state invariants only, never a plan or phase. Log every attempt in

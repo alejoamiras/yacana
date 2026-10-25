@@ -4,7 +4,8 @@
 import { describe, expect, test } from 'bun:test';
 import { INBOX_BUCKET_GAS } from '@yacana/bridge/inbox';
 import { yacanaPortalAbi } from '@yacana/bridge/portal';
-import { custom, type Hex } from 'viem';
+import { revertNameOf } from '@yacana/bridge/revert';
+import { custom, encodeErrorResult, type Hex } from 'viem';
 import { anvil } from 'viem/chains';
 import { createConfig } from 'wagmi';
 import type { WagmiConfig } from '../src/bridge/eth.ts';
@@ -110,5 +111,15 @@ describe("the payer's ETH against a call", () => {
     expect(await inboxWriteGas(rpc, ACCOUNT, CALL)).toBe(21_000n + INBOX_BUCKET_GAS);
     expect(await inboxWriteGas(rpc, ACCOUNT, forward(2))).toBe(21_000n + INBOX_BUCKET_GAS);
     expect(await inboxWriteGas(rpc, ACCOUNT, forward(1))).toBeUndefined();
+  });
+
+  test("a refused Inbox write names the portal's error, so the dialog keeps the row's own words", async () => {
+    const data = encodeErrorResult({ abi: yacanaPortalAbi, errorName: 'VersionPaused', args: [5n] });
+    const paused = config({
+      eth_estimateGas: Object.assign(new Error('execution reverted'), { code: 3, data }),
+    });
+    expect(revertNameOf(await inboxWriteGas(paused, ACCOUNT, CALL).catch((e: unknown) => e))).toBe(
+      'VersionPaused',
+    );
   });
 });
