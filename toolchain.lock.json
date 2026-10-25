@@ -1,27 +1,28 @@
 {
-  "aztec": "5.2.0",
+  "aztec": "6.0.0",
   "installer": {
-    "url": "https://install.aztec-labs.com/5.2.0/install",
-    "sha256": "ee9f7f32dbac9ec929209fe77fd69aa145938391b7f5121109c67ea0b283bab6"
+    "url": "https://install.aztec-labs.com/6.0.0/install",
+    "sha256": "f7a00e039647cb4101a0011da10070ae0a559f7a032adfdc65513a380ab603b1"
   },
   "binaries": {
     "linux-x64": {
-      "node_modules/@aztec/bb.js/build/amd64-linux/bb": "5a1c1ccd835e257217880936f837847fd74c8d5993497527f070fb2308f9145b",
-      "internal-bin/nargo": "b22dbfac734182440ca92647c8b97a5bc59e099bf5f0602782dbabdca1d98325",
-      "internal-bin/forge": "ddf84da591756ebc58fa4cdad8cf28576fb01c9d3fc561f2349a15503ba1fcc3",
-      "internal-bin/anvil": "bffff16e087003cb510e8fcdbc7db644f343e652fb68fe9eaff6d6875e602c73",
-      "internal-bin/cast": "17b2720b6019cfad9678b143613b9e0673bee37117b059bf6dacc70484747cee"
+      "node_modules/@aztec-foundation/bb.js/build/amd64-linux/bb": "5bbb64800d431c6760a70d8723be4eaf37ed10e8fbfe2842bb85b8436180c130",
+      "internal-bin/nargo": "764b4fc1b27c8dad8a107043f915fe1b2cccc3184284ea00f31e9b390633d6f5",
+      "internal-bin/forge": "06c477aee83d0996e57aa92b0841fdf06382cb172fd69bbb88920bb0054dfd7f",
+      "internal-bin/anvil": "00f97668e1ae0fcca118fd7d2d1b6d25c0496447a523ca6bc2dfd10958c99604",
+      "internal-bin/cast": "1eb1eecfdadaad8da2173ccf0c7c0be86fe237b0a267042a40d7ca12d0fa2af7"
     }
   },
   "bbjs": {
-    "dest/node/barretenberg_wasm/barretenberg-threads.wasm.gz": "9106f6164e4714a87ce1cf13ceac4d22109767a16e6fb997f1af7e7fcc81ae45"
+    "dest/node/barretenberg_wasm/barretenberg-threads.wasm.gz": "37cdf1b493602e7b625f70564ba09716930adcbbfa606595bca7703d877d83b6"
   },
   "trees": {
-    "node_modules/@aztec/l1-artifacts/l1-contracts/lib/forge-std/src": "33eb015af48ee10615c9801f99ff2257851d8cdb66cf1eb7db600836e88bac79"
+    "node_modules/@aztec-foundation/l1-artifacts/l1-contracts/lib/forge-std/src": "33eb015af48ee10615c9801f99ff2257851d8cdb66cf1eb7db600836e88bac79"
   },
   "nargo": {
-    "AztecProtocol/aztec-packages/v5.2.0": "49a592109ec4f18d79212b43d621891aaf36f7b6",
-    "AztecProtocol/aztec-standards/v5.2.0": "6fd2912de1fecd477e53861e95e7e551d0cae067",
+    "AztecProtocol/aztec-packages/v6.0.0": "0219f11d8133970df3974fe5ae65e006bf8c193a",
+    "AztecProtocol/aztec-standards/v6.0.0": "ed402d82fd81339d8b2442c2f14ec6213316ed5d",
+    "aztec-labs-eng/aztec-nr/v6.0.0": "0472012201fdff1429d184f8d25cecf13ca94326",
     "noir-lang/keccak256/v0.1.3": "f64ab3af714aa1a1e2699243037e0f11fe5bf706",
     "noir-lang/poseidon/v0.3.0": "0880c371e88e583d39515fd3f877538657ac41eb"
   }

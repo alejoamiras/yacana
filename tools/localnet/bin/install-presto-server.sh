@@ -6,16 +6,16 @@
 #   tools/localnet/bin/install-presto-server.sh [dest-dir]   (default ~/.local/bin; CI passes the runner's PATH dir)
 set -euo pipefail
 
-VERSION="1.1.1"
+VERSION="1.2.1"
 TAG="presto-v${VERSION}"
 REPO="alejoamiras/presto"
 DEST="${1:-$HOME/.local/bin}"
 
 case "$(uname -s)-$(uname -m)" in
-  Linux-x86_64)  ASSET="presto-server-${VERSION}-linux-x86_64.tar.gz";  SHA="48f524b159fe84947f767ca2903e06c82eb555eec99ab46052cb3d92bd1b33ef" ;;
-  Linux-aarch64) ASSET="presto-server-${VERSION}-linux-arm64.tar.gz";   SHA="bb65f8c93556cb348a7061ddeff8a98e1bee5ac34e46cd109e5973ab1dec8639" ;;
-  Darwin-arm64)  ASSET="presto-server-${VERSION}-macos-arm64.tar.gz";   SHA="b3efa1d897b1a380b669d630ca52b1b41fe927a8b21bfafaf80f45d330a468b9" ;;
-  Darwin-x86_64) ASSET="presto-server-${VERSION}-macos-x86_64.tar.gz";  SHA="27dc1100c5fb9acb02e5349b2317b28bdeefa6d23e0a8f6f92c4a1a287124a13" ;;
+  Linux-x86_64)  ASSET="presto-server-${VERSION}-linux-x86_64.tar.gz";  SHA="87008a9ad2a27c68d03be41957503d0aa31143a21b35d0411932178389e5bb62" ;;
+  Linux-aarch64) ASSET="presto-server-${VERSION}-linux-arm64.tar.gz";   SHA="c18d3f84a4ff4ca5944ef233c53db0233b0ca2fc13e6064efb2a039fc44f7880" ;;
+  Darwin-arm64)  ASSET="presto-server-${VERSION}-macos-arm64.tar.gz";   SHA="20680164a5ea81fc0b3b0e2bf2557f35a4c69c54c8b244389030b37910ef1d48" ;;
+  Darwin-x86_64) ASSET="presto-server-${VERSION}-macos-x86_64.tar.gz";  SHA="740c484fa51bba6383fdb95a4c24ec12ac36f5c2a119b51756cdc451350419d2" ;;
   *) echo "no presto-server ${VERSION} build for $(uname -s)-$(uname -m)" >&2; exit 1 ;;
 esac
 

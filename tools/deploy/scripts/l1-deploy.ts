@@ -20,7 +20,7 @@ import type { BridgeRecord } from '../src/deploy.ts';
 const portalDir = resolve(repoRoot, 'protocol/portal');
 const forgeStd = resolve(
   toolchainBin('aztec-forge'),
-  '../../node_modules/@aztec/l1-artifacts/l1-contracts/lib/forge-std/src',
+  '../../node_modules/@aztec-foundation/l1-artifacts/l1-contracts/lib/forge-std/src',
 );
 
 /** Anvil's first funded account: throwaway, and only ever used on a chain nobody else runs. */

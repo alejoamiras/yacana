@@ -17,13 +17,13 @@ import { join } from 'node:path';
 
 const root = process.env.AZTEC_TOOLCHAIN_ROOT;
 if (!root) throw new Error('AZTEC_TOOLCHAIN_ROOT is not set');
-const packageJson = join(root, 'node_modules', '@aztec', 'aztec', 'package.json');
+const packageJson = join(root, 'node_modules', '@aztec-labs', 'aztec', 'package.json');
 const require = createRequire(packageJson);
 const load = (spec) => import(require.resolve(spec));
 const toolchainVersion = JSON.parse(readFileSync(packageJson, 'utf8')).version;
 if (process.env.AZTEC_VERSION && toolchainVersion !== process.env.AZTEC_VERSION)
   throw new Error(
-    `the toolchain at ${root} is @aztec/aztec ${toolchainVersion}, not the pinned ${process.env.AZTEC_VERSION}`,
+    `the toolchain at ${root} is @aztec-labs/aztec ${toolchainVersion}, not the pinned ${process.env.AZTEC_VERSION}`,
   );
 
 const [
@@ -42,20 +42,20 @@ const [
   { RegistryContract, RollupContract },
   { getPublicClient },
 ] = await Promise.all([
-  load('@aztec/aztec-node/config'),
-  load('@aztec/aztec-node'),
-  load('@aztec/foundation/json-rpc/server'),
-  load('@aztec/foundation/timer'),
-  load('@aztec/foundation/config'),
-  load('@aztec/foundation/eth-address'),
-  load('@aztec/stdlib/aztec-address'),
-  load('@aztec/world-state/testing'),
-  load('@aztec/blob-client/client'),
-  load('@aztec/telemetry-client'),
+  load('@aztec-labs/aztec-node/config'),
+  load('@aztec-labs/aztec-node'),
+  load('@aztec-labs/foundation/json-rpc/server'),
+  load('@aztec-labs/foundation/timer'),
+  load('@aztec-labs/foundation/config'),
+  load('@aztec-labs/foundation/eth-address'),
+  load('@aztec-labs/stdlib/aztec-address'),
+  load('@aztec-labs/world-state/testing'),
+  load('@aztec-labs/blob-client/client'),
+  load('@aztec-labs/telemetry-client'),
   load('viem/accounts'),
-  load('@aztec/bb.js'),
-  load('@aztec/ethereum/contracts'),
-  load('@aztec/ethereum/client'),
+  load('@aztec-foundation/bb.js'),
+  load('@aztec-labs/ethereum/contracts'),
+  load('@aztec-labs/ethereum/client'),
 ]);
 
 const mnemonic = process.env.MNEMONIC ?? 'test test test test test test test test test test test junk';

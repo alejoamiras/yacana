@@ -234,7 +234,7 @@ npm lock: a new supply-chain gate G1 does not allow (D4).
 
 ## 5. Phases (a phase is ✓ only when its gate passes; toolchain on PATH: `~/.aztec/versions/6.0.0/bin` and its `node_modules/.bin`)
 
-### P1: toolchain pins and Noir homes ☐
+### P1: toolchain pins and Noir homes ✓
 1. Set `.aztecrc` to 6.0.0. Install 6.0.0 only through the digested installer. If `~/.aztec/versions/6.0.0`
    exists, do not reinstall over it: other projects use it. Hash it, and let CI's fresh install confirm.
 2. Write `toolchain.lock.json` (change map), the toolchain paths (`toolchain.test.ts`, localnet, the two

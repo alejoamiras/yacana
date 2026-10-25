@@ -25,7 +25,7 @@ describe.skipIf(!existsSync(versionDir) && !process.env.YACANA_REQUIRE_TOOLCHAIN
 
   test('bb.js WASM matches its hash', () => {
     for (const [file, hash] of Object.entries(lock.bbjs)) {
-      expect(sha256(join(versionDir, 'node_modules', '@aztec', 'bb.js', file))).toBe(hash);
+      expect(sha256(join(versionDir, 'node_modules', '@aztec-foundation', 'bb.js', file))).toBe(hash);
     }
   });
 

@@ -8,3 +8,4 @@
 - 2026-10-25 ORCHY-STEER: #77 moved to lane site-1 (lands first); dropped from this plan; issues none again; the record commits keep a working Workers Build as a precondition. Evidence gathered for it before the move (failing runs end 3 s after queueing; successful ones took ~100 s; no build ran 2026-09-30 → 2026-10-25) goes in the final report.
 - 2026-10-25 panel: codex round 1 reject (8 of 9 accepted; delivery rejected), opus conditional approve (outline A; findings folded); OWNER-ASKS OA1 is now the default node's operator; codex round 2 running.
 - 2026-10-25 panel: codex round 2 conditional approve (now outline A); final fresh codex pass conditional approve (3 findings folded); plan at the approval gate.
+- 2026-10-25 P1 gate pass: toolchain + work-circuit tests 23/23, codegen idempotent (proof + layout version only), contracts:compile, lint:shell, lint.

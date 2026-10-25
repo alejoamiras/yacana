@@ -23,7 +23,7 @@ export function nativeBbPath(): string {
     'versions',
     pin,
     'node_modules',
-    '@aztec',
+    '@aztec-foundation',
     'bb.js',
     'build',
     `${arch}-${os}`,

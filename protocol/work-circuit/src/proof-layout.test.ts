@@ -4,11 +4,11 @@ import { describe, expect, test } from 'bun:test';
 import { resolve } from 'node:path';
 import layout from './generated/proof-layout.json';
 
-const PINNED_SHA256 = '2c913f7e65b40f9d706c5badaeb3122525c41d8e2a4b976ed0122883e9b7f6c3';
+const PINNED_SHA256 = '2e27e5b7486a86d37bd94a9523728b91e10c9406c7ae4b417019703a4f499742';
 
 describe('proof-layout manifest', () => {
-  test('has 410 contiguous slots in the bb 5.2.0 phase order', () => {
-    expect(layout.aztecVersion).toBe('5.2.0');
+  test('has 410 contiguous slots in the bb 6.0.0 phase order', () => {
+    expect(layout.aztecVersion).toBe('6.0.0');
     expect(layout.slots).toHaveLength(410);
     for (const [i, s] of layout.slots.entries()) expect(s.index).toBe(i);
     expect(Object.entries(layout.phases).map(([k, v]) => [k, v.from, v.count])).toEqual([
