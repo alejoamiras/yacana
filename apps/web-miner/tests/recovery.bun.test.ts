@@ -4,8 +4,8 @@
 // is checked against a node that answers as the pinned SDK does (receipts as its classes, a block's
 // effects only with `includeTransactions`, reads per tip) before anything is sent again.
 import { beforeAll, beforeEach, describe, expect, test } from 'bun:test';
-import { AztecAddress } from '@aztec/aztec.js/addresses';
-import { Fr } from '@aztec/aztec.js/fields';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { Fr } from '@aztec-labs/aztec.js/fields';
 import {
   DroppedTxReceipt,
   MinedTxReceipt,
@@ -14,7 +14,7 @@ import {
   TxExecutionResult,
   TxHash,
   TxStatus,
-} from '@aztec/stdlib/tx';
+} from '@aztec-labs/stdlib/tx';
 import { ticketNullifier } from '@yacana/miner-core/proof';
 import { createStore } from 'jotai';
 import type { Deployment, Fee } from '../src/chain.ts';

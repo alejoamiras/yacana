@@ -3,9 +3,9 @@
 // pin a node to the new version and see it settle. Every warp's headroom against the proof window
 // and the whole run's wall time are printed for the CI budget.
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import { createAztecNodeClient } from '@aztec/aztec.js/node';
-import { createExtendedL1Client } from '@aztec/ethereum/client';
-import { OutboxContract, RegistryContract, RollupContract } from '@aztec/ethereum/contracts';
+import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
+import { createExtendedL1Client } from '@aztec-labs/ethereum/client';
+import { OutboxContract, RegistryContract, RollupContract } from '@aztec-labs/ethereum/contracts';
 import { type RigVersion, startUpgradeRig, type UpgradeRig } from '@yacana/localnet/upgrade-rig';
 import { foundry } from 'viem/chains';
 import { sponsoredTransaction } from '../src/sponsored.ts';

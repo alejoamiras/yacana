@@ -3,9 +3,9 @@
 // as the unit test's fixture). The node must be the record's deployment (chain, rollup, contracts).
 //   AZTEC_NODE_URL=… bun tools/deploy/scripts/record-example-claim.ts <txHash> [deployments/<profile>.json] [--keep-effect <file>]
 import { resolve } from 'node:path';
-import { AztecAddress } from '@aztec/aztec.js/addresses';
-import { createAztecNodeClient } from '@aztec/aztec.js/node';
-import { TxHash } from '@aztec/stdlib/tx';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
+import { TxHash } from '@aztec-labs/stdlib/tx';
 import {
   assertDeployment,
   expectedFromStrings,

@@ -4,16 +4,16 @@
 // launch_at; `open` calls launch() once the window has closed. Anyone may run any phase.
 //   AZTEC_NODE_URL=… bun tools/deploy/scripts/launch.ts commit|reveal|open [deployments/<profile>.json]
 import { resolve } from 'node:path';
-import { loadContractArtifact } from '@aztec/aztec.js/abi';
-import { AztecAddress } from '@aztec/aztec.js/addresses';
-import { Contract, getContractInstanceFromInstantiationParams } from '@aztec/aztec.js/contracts';
-import { SponsoredFeePaymentMethod } from '@aztec/aztec.js/fee';
-import { Fr } from '@aztec/aztec.js/fields';
-import { SPONSORED_FPC_SALT } from '@aztec/constants';
-import { poseidon2Hash } from '@aztec/foundation/crypto/poseidon';
-import { SponsoredFPCContract } from '@aztec/noir-contracts.js/SponsoredFPC';
-import { deriveMasterMessageSigningSecretKey } from '@aztec/stdlib/keys';
-import { EmbeddedWallet } from '@aztec/wallets/embedded';
+import { loadContractArtifact } from '@aztec-labs/aztec.js/abi';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { Contract, getContractInstanceFromInstantiationParams } from '@aztec-labs/aztec.js/contracts';
+import { SponsoredFeePaymentMethod } from '@aztec-labs/aztec.js/fee';
+import { Fr } from '@aztec-labs/aztec.js/fields';
+import { SPONSORED_FPC_SALT } from '@aztec-labs/constants';
+import { poseidon2Hash } from '@aztec-labs/foundation/crypto/poseidon';
+import { SponsoredFPCContract } from '@aztec-labs/noir-contracts.js/SponsoredFPC';
+import { deriveMasterMessageSigningSecretKey } from '@aztec-labs/stdlib/keys';
+import { EmbeddedWallet } from '@aztec-labs/wallets/embedded';
 import { PARAMS, PROFILE } from '@yacana/miner-core/generated/params';
 import { DOM_LAUNCH } from '@yacana/miner-core/proof';
 import type { Deployment } from '../src/deploy.ts';

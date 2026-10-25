@@ -1,7 +1,7 @@
 // An AztecAsyncKVStore that lives and dies with the page. The embedded wallet writes every
 // account's sk, salt and signing key to its WalletDB; on this store they never reach disk.
 // Only the map is real (the WalletDB uses maps); the other collections would be a silent bug.
-import type { AztecAsyncKVStore, AztecAsyncMap, Key, Range } from '@aztec/kv-store';
+import type { AztecAsyncKVStore, AztecAsyncMap, Key, Range } from '@aztec-labs/kv-store';
 
 // The store's value type is not exported; the WalletDB stores Buffers.
 type Value = unknown;
@@ -42,6 +42,10 @@ class MemoryMap<K extends Key, V extends Value> implements AztecAsyncMap<K, V> {
 
   async getAsync(key: K): Promise<V | undefined> {
     return this.entries.get(id(key))?.value;
+  }
+
+  async getManyAsync(keys: K[]): Promise<(V | undefined)[]> {
+    return keys.map((k) => this.entries.get(id(k))?.value);
   }
 
   async hasAsync(key: K): Promise<boolean> {

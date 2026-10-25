@@ -2,10 +2,10 @@
 // they pin reads to answer, and the answers have the shapes the checks read. Nothing is deployed at the
 // address read, so its slots are zero: epoch 0 open, the version not retired.
 import { describe, expect, test } from 'bun:test';
-import { AztecAddress } from '@aztec/aztec.js/addresses';
-import { Fr } from '@aztec/aztec.js/fields';
-import { createAztecNodeClient } from '@aztec/aztec.js/node';
-import { TxHash } from '@aztec/stdlib/tx';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { Fr } from '@aztec-labs/aztec.js/fields';
+import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
+import { TxHash } from '@aztec-labs/stdlib/tx';
 import type { Deployment } from '../src/chain.ts';
 import { absentAt, canMint, carrier, fate, tipAt } from '../src/claim-check.ts';
 

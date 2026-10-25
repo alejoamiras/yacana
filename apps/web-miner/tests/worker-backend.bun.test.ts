@@ -3,7 +3,7 @@
 // The guard's verdict is read the way the SDK meets it: a fetch to Presto's health route.
 import { afterAll, describe, expect, test } from 'bun:test';
 import { resolve } from 'node:path';
-import type { Barretenberg } from '@aztec/bb.js';
+import type { Barretenberg } from '@aztec-foundation/bb.js';
 import type { WorkArtifact } from '@yacana/miner-core/work';
 import { installNodeGuard, setAcceleratorEndpoints } from '@yacana/web-kit/browser/node-guard';
 import type { PrestoEndpoint } from '../src/presto.ts';

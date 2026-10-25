@@ -1,10 +1,10 @@
 // Runs against an isolated local network: bun run e2e:agent -- bun test packages/miner-core
 import { describe, expect, test } from 'bun:test';
-import { loadContractArtifact } from '@aztec/aztec.js/abi';
-import { AztecAddress } from '@aztec/aztec.js/addresses';
-import { Fr } from '@aztec/aztec.js/fields';
-import { createAztecNodeClient } from '@aztec/aztec.js/node';
 import { TokenContract } from '@aztec-foundation/aztec-standards/artifacts/src/artifacts/Token.js';
+import { loadContractArtifact } from '@aztec-labs/aztec.js/abi';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { Fr } from '@aztec-labs/aztec.js/fields';
+import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
 import { loadMinerArtifact } from '@yacana/miner-core/artifacts';
 import { PARAMS } from '@yacana/miner-core/generated/params';
 import {

@@ -5,7 +5,7 @@
 //   bun tools/deploy/scripts/record-rollup-address.ts [deployments/<profile>.json]
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { createAztecNodeClient } from '@aztec/aztec.js/node';
+import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
 import type { Deployment } from '../src/deploy.ts';
 
 const path = resolve(process.argv[2] ?? 'deployments/testnet.json');

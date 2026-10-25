@@ -1,6 +1,6 @@
 // The portal and YACA as viem sees them: the committed ABIs (typed `as const`, so every call and
 // event is checked) and the argument shapes the portal's forward path takes.
-import type { L2ToL1MembershipWitness } from '@aztec/stdlib/messaging';
+import type { L2ToL1MembershipWitness } from '@aztec-labs/stdlib/messaging';
 import { yacaAbi } from '@yacana/portal/abi/YACA';
 import { yacanaPortalAbi } from '@yacana/portal/abi/YacanaPortal';
 import { type Client, getContract, type Hex } from 'viem';

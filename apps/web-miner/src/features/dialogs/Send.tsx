@@ -1,7 +1,7 @@
 // Send to an account. The address is judged when its field is left, not per keystroke; the
 // unknown-recipient probe is advisory; the send re-validates the exact values it submits and uses
 // nothing the probe saw.
-import { AztecAddress } from '@aztec/aztec.js/addresses';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
 import { PARAMS } from '@yacana/miner-core/generated/params';
 import { Alert, AlertDescription, AmountField, ExternalLink, Note, Stepper, Textarea } from '@yacana/ui';
 import { type ComponentProps, useRef, useState } from 'react';

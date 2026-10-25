@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
-import { createAztecNodeClient } from '@aztec/aztec.js/node';
-import { computePublicDataTreeLeafSlot, deriveStorageSlotInMap } from '@aztec/stdlib/hash';
-import { TxHash } from '@aztec/stdlib/tx';
+import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
+import { computePublicDataTreeLeafSlot, deriveStorageSlotInMap } from '@aztec-labs/stdlib/hash';
+import { TxHash } from '@aztec-labs/stdlib/tx';
 import { TABLE_EPOCHS } from '@yacana/miner-core/reader';
 import { loadLayouts } from '@yacana/miner-core/slots';
 import {

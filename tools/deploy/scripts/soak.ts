@@ -8,17 +8,17 @@ import { appendFileSync, mkdirSync } from 'node:fs';
 import { cpus } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
-import { AztecAddress } from '@aztec/aztec.js/addresses';
-import { Contract, getContractInstanceFromInstantiationParams } from '@aztec/aztec.js/contracts';
-import { SponsoredFeePaymentMethod } from '@aztec/aztec.js/fee';
-import { Fr } from '@aztec/aztec.js/fields';
-import { createAztecNodeClient } from '@aztec/aztec.js/node';
-import { BackendType, Barretenberg } from '@aztec/bb.js';
-import { SPONSORED_FPC_SALT } from '@aztec/constants';
-import { SponsoredFPCContract } from '@aztec/noir-contracts.js/SponsoredFPC';
-import { deriveMasterMessageSigningSecretKey } from '@aztec/stdlib/keys';
-import { EmbeddedWallet } from '@aztec/wallets/embedded';
 import { TokenContract } from '@aztec-foundation/aztec-standards/artifacts/src/artifacts/Token.js';
+import { BackendType, Barretenberg } from '@aztec-foundation/bb.js';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { Contract, getContractInstanceFromInstantiationParams } from '@aztec-labs/aztec.js/contracts';
+import { SponsoredFeePaymentMethod } from '@aztec-labs/aztec.js/fee';
+import { Fr } from '@aztec-labs/aztec.js/fields';
+import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
+import { SPONSORED_FPC_SALT } from '@aztec-labs/constants';
+import { SponsoredFPCContract } from '@aztec-labs/noir-contracts.js/SponsoredFPC';
+import { deriveMasterMessageSigningSecretKey } from '@aztec-labs/stdlib/keys';
+import { EmbeddedWallet } from '@aztec-labs/wallets/embedded';
 import { loadMinerArtifact, loadWorkArtifact } from '@yacana/miner-core/artifacts';
 import { buildClaim, claimGasLimits, isDeliveryBlockedError } from '@yacana/miner-core/claim';
 import { readOpenEpoch, readRules } from '@yacana/miner-core/epoch';
@@ -210,14 +210,24 @@ for (let s = 0; !(await done()); s = (s + 1) % schedule.length) {
           });
         const sent = await claim();
         const receipt = (
-          sent as { receipt?: { executionResult?: string; blockNumber?: number; transactionFee?: bigint } }
+          sent as {
+            receipt?: {
+              txHash?: { toString(): string };
+              executionResult?: string;
+              blockNumber?: number;
+              transactionFee?: bigint;
+            };
+          }
         ).receipt;
         const ok = receipt?.executionResult === 'success';
         if (ok) claims++;
         else stale++;
+        // The account and the hash pick an account's second claim for the example-claim record.
         await line({
           event: ok ? 'claim' : 'reverted',
           epoch: view.epoch.toString(),
+          account: from.toString(),
+          txHash: receipt?.txHash?.toString(),
           block: receipt?.blockNumber,
           fee: receipt?.transactionFee?.toString(),
           ms: Date.now() - t0,

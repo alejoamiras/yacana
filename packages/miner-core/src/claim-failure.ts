@@ -18,7 +18,7 @@ export type ClaimFailure =
 export const NO_EFFECTS = 'no effects for';
 
 // The node refuses or evicts an expired claim with the validator's "Invalid expiration timestamp"
-// (`@aztec/stdlib` error_texts); aztec.js `waitForTx` reports "Transaction 0x… was dropped.
+// (`@aztec-labs/stdlib` error_texts); aztec.js `waitForTx` reports "Transaction 0x… was dropped.
 // Reason: …" and "Transaction 0x… reverted: app_logic_reverted. Reason: …". The stuck delivery index
 // surfaces as a nullifier read failure at simulation. The miner's "epoch is not open" is its
 // private check (`main.nr`), failed at simulation before anything was proved or sent.
@@ -55,8 +55,8 @@ export function classifyClaimFailure(e: unknown): ClaimFailure {
 /**
  * Why a claim reverted, as far as the message says: `stale` for the miner's own "stale claim" (the
  * epoch closed first), else the reason after the SDK's "Reason:". A mined revert's receipt carries no
- * reason on Aztec 5.2.0 (the SDK then writes "Reason: unknown"): no reason at all, and the epoch's
- * state decides whether the claim was stale.
+ * reason (the SDK then writes "Reason: unknown"): no reason at all, and the epoch's state decides
+ * whether the claim was stale.
  */
 export function revertCause(message: string): { stale: true } | { stale: false; reason?: string } {
   if (STALE.test(message)) return { stale: true };

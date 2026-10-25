@@ -9,3 +9,4 @@
 - 2026-10-25 panel: codex round 1 reject (8 of 9 accepted; delivery rejected), opus conditional approve (outline A; findings folded); OWNER-ASKS OA1 is now the default node's operator; codex round 2 running.
 - 2026-10-25 panel: codex round 2 conditional approve (now outline A); final fresh codex pass conditional approve (3 findings folded); plan at the approval gate.
 - 2026-10-25 P1 gate pass: toolchain + work-circuit tests 23/23, codegen idempotent (proof + layout version only), contracts:compile, lint:shell, lint.
+- 2026-10-25 P2 gate pass: lint, typecheck, components 347, bun test (expected: 2 example-claim + 2 replay-binding until P4), contracts:test 90, check:proofs 4/4, generators clean.

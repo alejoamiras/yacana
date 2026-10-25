@@ -1,8 +1,8 @@
 // Compiled artifacts are build outputs (contracts:compile, work-circuit compile), not committed;
 // Node-side consumers resolve them from the sibling packages, the web miner bundles the same files.
 import { resolve } from 'node:path';
-import { loadContractArtifact } from '@aztec/aztec.js/abi';
-import type { ContractArtifact } from '@aztec/stdlib/abi';
+import { loadContractArtifact } from '@aztec-labs/aztec.js/abi';
+import type { ContractArtifact } from '@aztec-labs/stdlib/abi';
 import type { WorkArtifact } from './work.ts';
 
 const repo = resolve(import.meta.dir, '../../..');

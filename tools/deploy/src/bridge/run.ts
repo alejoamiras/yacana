@@ -4,7 +4,7 @@
 // functions. Anvil's account 1 pays and operates.
 import { rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { createAztecNodeClient } from '@aztec/aztec.js/node';
+import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
 import type { Hex } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { deployL1 } from '../../scripts/l1-deploy.ts';

@@ -2,10 +2,10 @@
 // portal's Foundry suite assert the same values, so a drift on any side fails its own tests.
 import { describe, expect, test } from 'bun:test';
 import { resolve } from 'node:path';
-import { Fr } from '@aztec/foundation/curves/bn254';
-import { EthAddress } from '@aztec/foundation/eth-address';
-import { AztecAddress } from '@aztec/stdlib/aztec-address';
-import { computeSecretHash } from '@aztec/stdlib/hash';
+import { Fr } from '@aztec-labs/foundation/curves/bn254';
+import { EthAddress } from '@aztec-labs/foundation/eth-address';
+import { AztecAddress } from '@aztec-labs/stdlib/aztec-address';
+import { computeSecretHash } from '@aztec-labs/stdlib/hash';
 import { masterFromPrf } from '@yacana/miner-core/keys/derive';
 import { type Hex, hashTypedData, recoverTypedDataAddress } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';

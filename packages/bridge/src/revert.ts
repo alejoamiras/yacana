@@ -1,7 +1,7 @@
 // The name of the custom error a portal call reverted with. The portal's own errors decode from
 // its ABI; a revert that bubbles up from a version's Outbox (a nullified leaf, an epoch with no
 // root, a witness off its root) carries that contract's error, so both ABIs are consulted.
-import { OutboxAbi } from '@aztec/l1-artifacts/OutboxAbi';
+import { OutboxAbi } from '@aztec-foundation/l1-artifacts/OutboxAbi';
 import { type BaseError, ContractFunctionRevertedError, decodeErrorResult, type Hex } from 'viem';
 import type { CrossingState } from './journal.ts';
 import { yacanaPortalAbi } from './portal.ts';

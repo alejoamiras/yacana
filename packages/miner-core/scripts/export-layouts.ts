@@ -3,7 +3,7 @@
 // on a diff.
 //   bun packages/miner-core/scripts/export-layouts.ts
 import { resolve } from 'node:path';
-import { loadContractArtifact } from '@aztec/aztec.js/abi';
+import { loadContractArtifact } from '@aztec-labs/aztec.js/abi';
 import { loadMinerArtifact } from '../src/artifacts.ts';
 
 export const LAYOUTS_PATH = resolve(import.meta.dir, '../fixtures/storage-layout.json');

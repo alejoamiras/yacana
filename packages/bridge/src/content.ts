@@ -2,10 +2,10 @@
 // does: the first four bytes of keccak256 of the ABI-style signature, then each argument as a
 // 32-byte big-endian word, then sha256 truncated into a field (`Hash.sol` / `sha256_to_field`).
 // The signature makes each kind's content unique; nothing on either side ever calls it.
-import { keccak256 } from '@aztec/foundation/crypto/keccak';
-import { sha256ToField } from '@aztec/foundation/crypto/sha256';
-import type { Fr } from '@aztec/foundation/curves/bn254';
-import type { EthAddress } from '@aztec/foundation/eth-address';
+import { keccak256 } from '@aztec-labs/foundation/crypto/keccak';
+import { sha256ToField } from '@aztec-labs/foundation/crypto/sha256';
+import type { Fr } from '@aztec-labs/foundation/curves/bn254';
+import type { EthAddress } from '@aztec-labs/foundation/eth-address';
 
 export const EXIT_SIGNATURE = 'exit_to_l1(address,uint256,bytes32)';
 export const SEND_AHEAD_SIGNATURE = 'send_ahead(uint256,bytes32,address)';

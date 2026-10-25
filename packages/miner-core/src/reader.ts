@@ -2,11 +2,11 @@
 // serves the deployment the build was made for, and the epoch history straight from public
 // storage through a precomputed slot table. No hashing here: a page must never pull bb.js in
 // through this module (the table is derived in slots.ts, Bun-side).
-import { AztecAddress } from '@aztec/aztec.js/addresses';
-import { Fr } from '@aztec/aztec.js/fields';
-import type { createAztecNodeClient } from '@aztec/aztec.js/node';
-import { EthAddress } from '@aztec/foundation/eth-address';
-import type { ContractArtifact } from '@aztec/stdlib/abi';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { Fr } from '@aztec-labs/aztec.js/fields';
+import type { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
+import { EthAddress } from '@aztec-labs/foundation/eth-address';
+import type { ContractArtifact } from '@aztec-labs/stdlib/abi';
 import { PARAMS } from './generated/params.ts';
 
 export type Node = ReturnType<typeof createAztecNodeClient>;

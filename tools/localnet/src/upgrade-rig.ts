@@ -8,31 +8,31 @@
 import { mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { getInitialTestAccountsData } from '@aztec/accounts/testing';
-import { getContractInstanceFromInstantiationParams } from '@aztec/aztec.js/contracts';
-import { createAztecNodeClient } from '@aztec/aztec.js/node';
-import { SPONSORED_FPC_SALT } from '@aztec/constants';
-import { createExtendedL1Client, getPublicClient } from '@aztec/ethereum/client';
-import { getL1ContractsConfigEnvVars } from '@aztec/ethereum/config';
-import { RegistryContract, RollupContract } from '@aztec/ethereum/contracts';
-import { deployRollupForUpgrade } from '@aztec/ethereum/deploy-aztec-l1-contracts';
-import { deployL1Contract } from '@aztec/ethereum/deploy-l1-contract';
-import type { L1ContractAddresses } from '@aztec/ethereum/l1-contract-addresses';
-import { getL1ContractsConfig } from '@aztec/ethereum/queries';
-import type { ExtendedViemWalletClient, ViemPublicClient } from '@aztec/ethereum/types';
-import { CheckpointNumber } from '@aztec/foundation/branded-types';
-import { Fr } from '@aztec/foundation/curves/bn254';
-import { EthAddress } from '@aztec/foundation/eth-address';
-import { GovernanceAbi } from '@aztec/l1-artifacts/GovernanceAbi';
-import { RegisterNewRollupVersionPayloadAbi } from '@aztec/l1-artifacts/RegisterNewRollupVersionPayloadAbi';
-import { RegisterNewRollupVersionPayloadBytecode } from '@aztec/l1-artifacts/RegisterNewRollupVersionPayloadBytecode';
-import { RollupAbi } from '@aztec/l1-artifacts/RollupAbi';
-import { TestERC20Abi } from '@aztec/l1-artifacts/TestERC20Abi';
-import { SponsoredFPCContract } from '@aztec/noir-contracts.js/SponsoredFPC';
-import { getVKTreeRoot } from '@aztec/noir-protocol-circuits-types/vk-tree';
-import { protocolContractsHash } from '@aztec/protocol-contracts';
-import { createAztecNodeAdminClient, createAztecNodeDebugClient } from '@aztec/stdlib/interfaces/client';
-import { getGenesisValues } from '@aztec/world-state/testing';
+import { GovernanceAbi } from '@aztec-foundation/l1-artifacts/GovernanceAbi';
+import { RegisterNewRollupVersionPayloadAbi } from '@aztec-foundation/l1-artifacts/RegisterNewRollupVersionPayloadAbi';
+import { RegisterNewRollupVersionPayloadBytecode } from '@aztec-foundation/l1-artifacts/RegisterNewRollupVersionPayloadBytecode';
+import { RollupAbi } from '@aztec-foundation/l1-artifacts/RollupAbi';
+import { TestERC20Abi } from '@aztec-foundation/l1-artifacts/TestERC20Abi';
+import { getInitialTestAccountsData } from '@aztec-labs/accounts/testing';
+import { getContractInstanceFromInstantiationParams } from '@aztec-labs/aztec.js/contracts';
+import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
+import { SPONSORED_FPC_SALT } from '@aztec-labs/constants';
+import { createExtendedL1Client, getPublicClient } from '@aztec-labs/ethereum/client';
+import { getL1ContractsConfigEnvVars } from '@aztec-labs/ethereum/config';
+import { RegistryContract, RollupContract } from '@aztec-labs/ethereum/contracts';
+import { deployRollupForUpgrade } from '@aztec-labs/ethereum/deploy-aztec-l1-contracts';
+import { deployL1Contract } from '@aztec-labs/ethereum/deploy-l1-contract';
+import type { L1ContractAddresses } from '@aztec-labs/ethereum/l1-contract-addresses';
+import { getL1ContractsConfig } from '@aztec-labs/ethereum/queries';
+import type { ExtendedViemWalletClient, ViemPublicClient } from '@aztec-labs/ethereum/types';
+import { CheckpointNumber } from '@aztec-labs/foundation/branded-types';
+import { Fr } from '@aztec-labs/foundation/curves/bn254';
+import { EthAddress } from '@aztec-labs/foundation/eth-address';
+import { SponsoredFPCContract } from '@aztec-labs/noir-contracts.js/SponsoredFPC';
+import { getVKTreeRoot } from '@aztec-labs/noir-protocol-circuits-types/vk-tree';
+import { protocolContractsHash } from '@aztec-labs/protocol-contracts';
+import { createAztecNodeAdminClient, createAztecNodeDebugClient } from '@aztec-labs/stdlib/interfaces/client';
+import { getGenesisValues } from '@aztec-labs/world-state/testing';
 import { getContract, type Hex, parseEventLogs } from 'viem';
 import { mnemonicToAccount, privateKeyToAccount } from 'viem/accounts';
 import { foundry } from 'viem/chains';
@@ -175,7 +175,7 @@ async function describeVersion(
 }
 
 async function deployNextVersion(ctx: RigContext, bump: bigint): Promise<RigVersion> {
-  // @aztec/ethereum looks for forge under ~/.aztec/current, ~/.foundry and PATH; the pinned
+  // @aztec-labs/ethereum looks for forge under ~/.aztec/current, ~/.foundry and PATH; the pinned
   // toolchain lives under ~/.aztec/versions/<pin> (the only one CI installs), so name it.
   process.env.FORGE_BIN ??= toolchainBin('aztec-forge');
   const canonical = ctx.versions[ctx.versions.length - 1] as RigVersion;

@@ -4,7 +4,7 @@
 // YACANA_L1_PRIVATE_KEY — the operators key, or a listed forwarder's for forwards.
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { RegistryAbi } from '@aztec/l1-artifacts/RegistryAbi';
+import { RegistryAbi } from '@aztec-foundation/l1-artifacts/RegistryAbi';
 import { yacaAbi, yacanaPortalAbi } from '@yacana/bridge/portal';
 import {
   type Chain,

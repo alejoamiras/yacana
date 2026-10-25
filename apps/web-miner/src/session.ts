@@ -1,8 +1,8 @@
 // The key flows the screens drive: create a passkey or words key, open a known one, restore one,
 // back it up, forget it; the wallet's withdraw. Each resolves to a running miner or leaves the
 // screen with a message.
-import { AztecAddress } from '@aztec/aztec.js/addresses';
-import type { EmbeddedWallet } from '@aztec/wallets/embedded';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import type { EmbeddedWallet } from '@aztec-labs/wallets/embedded';
 import { masterFromPrf } from '@yacana/miner-core/keys/derive';
 import {
   entropyOf,

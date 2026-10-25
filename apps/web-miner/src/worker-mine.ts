@@ -1,7 +1,7 @@
 // The Worker's mining run over a prover, kept free of the Worker globals so it can be tested: the
 // winning attempt of a native proof is announced only after the proof verified against the job's
 // own public inputs, and a proof that fails that check never reaches the ledger.
-import { Fr } from '@aztec/foundation/curves/bn254';
+import { Fr } from '@aztec-labs/foundation/curves/bn254';
 import { score } from '@yacana/miner-core/metrics';
 import { mineEpoch, type Winner } from '@yacana/miner-core/miner';
 import { isWinner, secretCommitment } from '@yacana/miner-core/proof';

@@ -1,21 +1,25 @@
 // Runs against an isolated local network: bun run e2e:agent -- bun test packages/miner-core
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { cpus } from 'node:os';
-import { AztecAddress } from '@aztec/aztec.js/addresses';
-import { Contract, getContractInstanceFromInstantiationParams } from '@aztec/aztec.js/contracts';
-import { SponsoredFeePaymentMethod } from '@aztec/aztec.js/fee';
-import { Fr } from '@aztec/aztec.js/fields';
-import { createAztecNodeClient } from '@aztec/aztec.js/node';
-import { BackendType, Barretenberg } from '@aztec/bb.js';
-import { SPONSORED_FPC_SALT } from '@aztec/constants';
-import { poseidon2Hash } from '@aztec/foundation/crypto/poseidon';
-import { SponsoredFPCContract } from '@aztec/noir-contracts.js/SponsoredFPC';
-import type { Gas } from '@aztec/stdlib/gas';
-import { computePublicDataTreeLeafSlot, deriveStorageSlotInMap, siloNullifier } from '@aztec/stdlib/hash';
-import { deriveMasterMessageSigningSecretKey } from '@aztec/stdlib/keys';
-import type { PrivateCallExecutionResult, TxReceipt } from '@aztec/stdlib/tx';
-import { EmbeddedWallet } from '@aztec/wallets/embedded';
 import { TokenContract } from '@aztec-foundation/aztec-standards/artifacts/src/artifacts/Token.js';
+import { BackendType, Barretenberg } from '@aztec-foundation/bb.js';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { Contract, getContractInstanceFromInstantiationParams } from '@aztec-labs/aztec.js/contracts';
+import { SponsoredFeePaymentMethod } from '@aztec-labs/aztec.js/fee';
+import { Fr } from '@aztec-labs/aztec.js/fields';
+import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
+import { SPONSORED_FPC_SALT } from '@aztec-labs/constants';
+import { poseidon2Hash } from '@aztec-labs/foundation/crypto/poseidon';
+import { SponsoredFPCContract } from '@aztec-labs/noir-contracts.js/SponsoredFPC';
+import type { Gas } from '@aztec-labs/stdlib/gas';
+import {
+  computePublicDataTreeLeafSlot,
+  deriveStorageSlotInMap,
+  siloNullifier,
+} from '@aztec-labs/stdlib/hash';
+import { deriveMasterMessageSigningSecretKey } from '@aztec-labs/stdlib/keys';
+import type { PrivateCallExecutionResult, TxReceipt } from '@aztec-labs/stdlib/tx';
+import { EmbeddedWallet } from '@aztec-labs/wallets/embedded';
 import { loadMinerArtifact, loadWorkArtifact } from '@yacana/miner-core/artifacts';
 import { buildClaim, claimGasLimits } from '@yacana/miner-core/claim';
 import { classifyClaimFailure } from '@yacana/miner-core/claim-failure';

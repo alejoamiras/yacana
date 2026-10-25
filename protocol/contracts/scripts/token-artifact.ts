@@ -1,5 +1,5 @@
 // The TXE looks up every contract a test deploys under target/, including git dependencies it
-// never compiled; the aztec-standards token artifact ships in its npm package for 5.2.0.
+// never compiled; the aztec-standards token artifact ships in its npm package at the pinned version.
 import { copyFileSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 

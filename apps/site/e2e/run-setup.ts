@@ -8,7 +8,7 @@ import { type ChildProcess, spawn } from 'node:child_process';
 import { openSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
-import { Fr } from '@aztec/aztec.js/fields';
+import { Fr } from '@aztec-labs/aztec.js/fields';
 import { type Deployment, deployYacana, TEST_PORTAL } from '@yacana/deploy/deploy';
 import { lanePortBase, runPortWindowBase } from '@yacana/localnet/port-window';
 import { claim, release } from '@yacana/localnet/registry';

@@ -1,10 +1,10 @@
 // bun test (not Vitest): the kv-store suite uses the jest globals bun provides.
 import { describe, expect, test } from 'bun:test';
-import { Fq, Fr } from '@aztec/foundation/curves/bn254';
-import { AztecAddress } from '@aztec/stdlib/aztec-address';
+import { Fq, Fr } from '@aztec-labs/foundation/curves/bn254';
+import { AztecAddress } from '@aztec-labs/stdlib/aztec-address';
 // Not exported by the package barrel; the hoisted layout makes the path stable.
-import { describeAztecMap } from '../../../node_modules/@aztec/kv-store/dest/interfaces/map_test_suite.js';
-import { WalletDB } from '../../../node_modules/@aztec/wallets/dest/embedded/wallet_db.js';
+import { describeAztecMap } from '../../../node_modules/@aztec-labs/kv-store/dest/interfaces/map_test_suite.js';
+import { WalletDB } from '../../../node_modules/@aztec-labs/wallets/dest/embedded/wallet_db.js';
 import { MemoryKvStore } from '../src/wallet/memory-store.ts';
 
 describeAztecMap('MemoryKvStore', () => Promise.resolve(new MemoryKvStore()), true);

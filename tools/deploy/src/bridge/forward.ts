@@ -5,12 +5,12 @@
 // when the miner that version registered is the announced one.
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { loadContractArtifact } from '@aztec/aztec.js/abi';
-import { createAztecNodeClient } from '@aztec/aztec.js/node';
-import { EthAddress } from '@aztec/foundation/eth-address';
-import { OutboxAbi } from '@aztec/l1-artifacts/OutboxAbi';
-import { RollupAbi } from '@aztec/l1-artifacts/RollupAbi';
-import { AztecAddress } from '@aztec/stdlib/aztec-address';
+import { OutboxAbi } from '@aztec-foundation/l1-artifacts/OutboxAbi';
+import { RollupAbi } from '@aztec-foundation/l1-artifacts/RollupAbi';
+import { loadContractArtifact } from '@aztec-labs/aztec.js/abi';
+import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
+import { EthAddress } from '@aztec-labs/foundation/eth-address';
+import { AztecAddress } from '@aztec-labs/stdlib/aztec-address';
 import { exitRecordedEvent, readExits } from '@yacana/bridge/exits';
 import { type ForwardArgs, yacanaPortalAbi } from '@yacana/bridge/portal';
 import { leafIdOf } from '@yacana/bridge/signatures';

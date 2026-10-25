@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { resolve } from 'node:path';
-import { Fr } from '@aztec/foundation/curves/bn254';
+import { Fr } from '@aztec-labs/foundation/curves/bn254';
 import { computeDigest, isWinner, low128, proofToFields, secretCommitment } from './proof.ts';
 
 const fixture = resolve(import.meta.dir, '../../../protocol/work-circuit/fixtures/yacana_work/proof');

@@ -3,8 +3,8 @@
 // retarget ratio and what closed it.
 //   AZTEC_NODE_URL=… bun tools/deploy/scripts/epoch-stats.ts [deployments/<profile>.json] [--json out.json]
 import { resolve } from 'node:path';
-import { AztecAddress } from '@aztec/aztec.js/addresses';
-import { createAztecNodeClient } from '@aztec/aztec.js/node';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
 import { PROFILE } from '@yacana/miner-core/generated/params';
 import { difficulty } from '@yacana/miner-core/metrics';
 import {

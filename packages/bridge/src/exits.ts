@@ -1,11 +1,11 @@
 // The miner's exits as its public logs record them: the `ExitRecorded` event under its type tag
 // (everyone's enumeration, with a cursor), and the same payload under the exit's own tag (the
 // owner's handful of candidates in one call).
-import { type EventCursor, getPublicEvents } from '@aztec/aztec.js/events';
-import type { ContractArtifact, StructType } from '@aztec/stdlib/abi';
-import { decodeFunctionSignature, type EventMetadataDefinition, EventSelector } from '@aztec/stdlib/abi';
-import type { AztecAddress } from '@aztec/stdlib/aztec-address';
-import type { AztecNode } from '@aztec/stdlib/interfaces/client';
+import { type EventCursor, getPublicEvents } from '@aztec-labs/aztec.js/events';
+import type { ContractArtifact, StructType } from '@aztec-labs/stdlib/abi';
+import { decodeFunctionSignature, type EventMetadataDefinition, EventSelector } from '@aztec-labs/stdlib/abi';
+import type { AztecAddress } from '@aztec-labs/stdlib/aztec-address';
+import type { AztecNode } from '@aztec-labs/stdlib/interfaces/client';
 import type { Hex } from 'viem';
 import type { ExitKind } from './portal.ts';
 import type { RecordedExit } from './witness.ts';

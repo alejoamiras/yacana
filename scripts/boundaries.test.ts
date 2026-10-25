@@ -38,8 +38,8 @@ const UNOWNED = [
   /^yacana\.params\.json$/,
   /^toolchain\.lock\.json$/,
   /^deployments\//,
-  // Two files the SDK does not export, read by one test of the wallet's store.
-  /^node_modules\/@aztec\//,
+  // Files the SDK does not export, read by tests: the wallet store's suite, bb.js's WASM loader.
+  /^node_modules\/@aztec-(labs|foundation)\//,
 ];
 
 const files = await tracked();

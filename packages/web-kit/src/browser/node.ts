@@ -1,8 +1,8 @@
 // The node as a setting: what a pasted URL must be, how a candidate is checked before it is used,
 // and the one handle every holder of the node keeps so the node can change under them.
-import { createAztecNodeClient } from '@aztec/aztec.js/node';
-import { jsonStringify } from '@aztec/foundation/json-rpc';
-import { makeFetch } from '@aztec/foundation/json-rpc/client';
+import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
+import { jsonStringify } from '@aztec-labs/foundation/json-rpc';
+import { makeFetch } from '@aztec-labs/foundation/json-rpc/client';
 import {
   assertDeployment,
   type ExpectedDeployment,
@@ -32,7 +32,7 @@ export function parseNodeUrl(text: string, mode: SiteMode): URL {
 }
 
 /** A client that fails in one deadline: the SDK's default retries retryable failures three times. */
-export const nodeClient = (url: string): Node => createAztecNodeClient(url, {}, makeFetch([], false));
+export const nodeClient = (url: string): Node => createAztecNodeClient(url, { fetch: makeFetch([], false) });
 
 /**
  * A client for optional reads beside the page's own: each request quiet (it never opens nor extends a
@@ -40,10 +40,8 @@ export const nodeClient = (url: string): Node => createAztecNodeClient(url, {}, 
  * transport builds each `init` itself and takes neither mark nor signal, so this one mirrors it with both.
  */
 export const quietNodeClient = (url: string, deadlineMs: number, turn?: () => Promise<void>): Node =>
-  createAztecNodeClient(
-    url,
-    {},
-    async (host: string, body: unknown, extraHeaders: Record<string, string> = {}) => {
+  createAztecNodeClient(url, {
+    fetch: async (host: string, body: unknown, extraHeaders: Record<string, string> = {}) => {
       await turn?.();
       const init: QuietInit = {
         method: 'POST',
@@ -64,7 +62,7 @@ export const quietNodeClient = (url: string, deadlineMs: number, turn?: () => Pr
         throw new Error(`Error ${res.status} from server ${host}: ${json?.error?.message ?? text}`);
       return { response: json, headers: res.headers };
     },
-  );
+  });
 
 export interface NodeProbe {
   chainId: bigint;

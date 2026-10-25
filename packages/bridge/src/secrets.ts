@@ -3,10 +3,10 @@
 // tag an exit to Ethereum carries, and the secp256k1 key that alone may forward or redeem a held
 // send. One index per crossing, per version; the labels are pinned by the vectors — changing one
 // orphans every crossing ever made.
-import { poseidon2Hash, poseidon2HashWithSeparator } from '@aztec/foundation/crypto/poseidon';
-import { Fr } from '@aztec/foundation/curves/bn254';
-import { EthAddress } from '@aztec/foundation/eth-address';
-import { computeSecretHash } from '@aztec/stdlib/hash';
+import { poseidon2Hash, poseidon2HashWithSeparator } from '@aztec-labs/foundation/crypto/poseidon';
+import { Fr } from '@aztec-labs/foundation/curves/bn254';
+import { EthAddress } from '@aztec-labs/foundation/eth-address';
+import { computeSecretHash } from '@aztec-labs/stdlib/hash';
 import { DOMAINS, SEPARATORS } from '@yacana/miner-core/generated/params';
 import { hkdf } from '@yacana/miner-core/keys/derive';
 import { privateKeyToAccount } from 'viem/accounts';

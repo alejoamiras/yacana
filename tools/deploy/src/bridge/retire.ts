@@ -3,9 +3,9 @@
 // and the message consumed on the old chain — from then on no claim mints there, while exits and
 // arrivals go on. The L1 step is idempotent: sent already, it yields the same index from the log.
 
-import { waitForL1ToL2MessageReady } from '@aztec/aztec.js/messaging';
-import { EthAddress } from '@aztec/foundation/eth-address';
-import { AztecAddress } from '@aztec/stdlib/aztec-address';
+import { waitForL1ToL2MessageReady } from '@aztec-labs/aztec.js/messaging';
+import { EthAddress } from '@aztec-labs/foundation/eth-address';
+import { AztecAddress } from '@aztec-labs/stdlib/aztec-address';
 import { retireLeaf } from '@yacana/bridge/inbox';
 import { scanLogs } from '@yacana/bridge/logs';
 import { yacanaPortalAbi } from '@yacana/bridge/portal';

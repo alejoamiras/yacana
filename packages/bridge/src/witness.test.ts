@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { sha256Trunc } from '@aztec/foundation/crypto/sha256';
-import { Fr } from '@aztec/foundation/curves/bn254';
+import { sha256Trunc } from '@aztec-labs/foundation/crypto/sha256';
+import { Fr } from '@aztec-labs/foundation/curves/bn254';
 import {
   type ArchivedExit,
   archiveLine,
@@ -60,8 +60,8 @@ describe('the witness archive', () => {
   });
 
   test('an archived entry is the crossing’s by its fields and its fold, never by its index or its hash', async () => {
-    const { AztecAddress } = await import('@aztec/stdlib/aztec-address');
-    const { EthAddress } = await import('@aztec/foundation/eth-address');
+    const { AztecAddress } = await import('@aztec-labs/stdlib/aztec-address');
+    const { EthAddress } = await import('@aztec-labs/foundation/eth-address');
     const { exitMessageContent, outboxLeaf, verifiedArchiveEntry } = await import('./witness.ts');
     const miner = AztecAddress.fromStringUnsafe(`0x${'0a'.repeat(32)}`);
     const other = AztecAddress.fromStringUnsafe(`0x${'0b'.repeat(32)}`);

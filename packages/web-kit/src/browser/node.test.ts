@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
-import { AztecAddress } from '@aztec/aztec.js/addresses';
-import { Fr } from '@aztec/aztec.js/fields';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { Fr } from '@aztec-labs/aztec.js/fields';
 import type { ExpectedDeployment } from '@yacana/miner-core/reader';
 
 let mod: typeof import('./node.ts');

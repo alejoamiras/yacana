@@ -1,5 +1,5 @@
 // Bun 1.4.0 injects its `expect` into every module it transpiles under `bun test`, including
-// @aztec/foundation's field module, which then calls `expect.addEqualityTesters` (a Jest/Vitest API
+// @aztec-labs/foundation's field module, which then calls `expect.addEqualityTesters` (a Jest/Vitest API
 // Bun lacks) and throws at import. A warm transpiler cache hides this locally; CI is always cold.
 // Mirror the module's own fallback so the testers land where it would have put them.
 import { expect } from 'bun:test';

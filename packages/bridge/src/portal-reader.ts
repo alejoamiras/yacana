@@ -1,9 +1,9 @@
 // The portal and the Registry read through an Ethereum RPC: a version's standing and flows, the
 // canonical version, the events a crossing's fate is in. No wallet, no signature — the miner's
 // bridge, the operator script and the stats page read through the same functions.
-import { OutboxAbi } from '@aztec/l1-artifacts/OutboxAbi';
-import { RegistryAbi } from '@aztec/l1-artifacts/RegistryAbi';
-import { RollupAbi } from '@aztec/l1-artifacts/RollupAbi';
+import { OutboxAbi } from '@aztec-foundation/l1-artifacts/OutboxAbi';
+import { RegistryAbi } from '@aztec-foundation/l1-artifacts/RegistryAbi';
+import { RollupAbi } from '@aztec-foundation/l1-artifacts/RollupAbi';
 import type { Hex, PublicClient } from 'viem';
 import { scanLogs } from './logs.ts';
 import { yacanaPortalAbi } from './portal.ts';

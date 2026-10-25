@@ -14,6 +14,6 @@
     "typecheck": "tsc -b --force"
   },
   "devDependencies": {
-    "@aztec-foundation/aztec-standards": "5.2.0"
+    "@aztec-foundation/aztec-standards": "6.0.0"
   }
 }

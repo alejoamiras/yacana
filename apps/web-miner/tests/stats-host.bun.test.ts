@@ -3,8 +3,8 @@
 // Then when a hosted request may leave, and the path composed: the host, the stats runtime, the quiet
 // client through the guard and the reader, against a JSON-RPC stand-in for the node.
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import { AztecAddress } from '@aztec/aztec.js/addresses';
-import { Fr } from '@aztec/aztec.js/fields';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { Fr } from '@aztec-labs/aztec.js/fields';
 import { CHUNK, type ReadLimits, readEpochs, readSlot, type SlotTable } from '@yacana/miner-core/reader';
 import type { StatsRuntime, StatsSources } from '@yacana/stats-view/runtime';
 import { type Fixed, historyAtom, statusAtom } from '@yacana/stats-view/state';

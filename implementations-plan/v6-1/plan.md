@@ -253,7 +253,7 @@ npm lock: a new supply-chain gate G1 does not allow (D4).
 - `bun run contracts:compile` and `bun run lint:shell` exit 0.
 - Layers: typecheck/lint, unit, integration (bb).
 
-### P2: npm 6.0.0, the TS fallout, the regenerated proof artifacts ☐
+### P2: npm 6.0.0, the TS fallout, the regenerated proof artifacts ✓
 1. Apply the scope map, viem 2.57.1 and the Presto SDK pins to every `package.json`.
 2. **Before `bun install`, if it is earlier than 2026-10-29T17:06Z**: compute the young set (lessons/phase-0.md has
    the method). Add exactly those names to `minimumReleaseAgeExcludes`, then run `bun install`. Check that
@@ -448,6 +448,12 @@ P5's CI scope and make K1's verification command use the declared RPC)*. Finding
 3. `recon.md` still states D4's dropped hashing and contradicts F8. **Accepted**: recon aligned.
 Looks fine (its list): prove before codegen; the change map; K0 before any spend; the K order; P6's class ids and
 cleared failures; a gate for every part of ask3's Check; §4's replay and reducedness claims.
+
+**Implementation deviations** (the tree wins; each in `lessons/`):
+- P1: the `nargo` pins keep 5.2.0's shape (the deps our `Nargo.toml` files name); `poseidon v0.4.0` is fetched by
+  nothing here and `sha256 v0.3.0` is a transitive 5.2.0's lock did not pin either.
+- P2: `replay-binding.bun.test.ts`'s two tests refuse the 5.2.0 recording until P4 re-records it; they join the two
+  example-claim failures in P2's and P3's gates, and P4 clears them.
 
 ## 9. Post-implementation (no repository standard exists; written out)
 

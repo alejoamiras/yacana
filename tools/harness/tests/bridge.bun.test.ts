@@ -5,7 +5,7 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { relative } from 'node:path';
-import { EthAddress } from '@aztec/foundation/eth-address';
+import { EthAddress } from '@aztec-labs/foundation/eth-address';
 import { policyFor } from '@yacana/bridge/policy';
 import { yacanaPortalAbi } from '@yacana/bridge/portal';
 import { signRedeem } from '@yacana/bridge/signatures';

@@ -23,7 +23,7 @@ beforeEach(() => {
   }));
   vi.stubEnv('VITE_SOURCE_COMMIT', '0d9d1ea1db43abcdef');
   vi.stubEnv('VITE_SITE_MODE', 'e2e');
-  vi.stubEnv('VITE_BB_VERSION', '5.2.0');
+  vi.stubEnv('VITE_BB_VERSION', '6.0.0');
   vi.stubEnv('VITE_AZTEC_NODE_URL', 'https://node.example/rpc');
 });
 

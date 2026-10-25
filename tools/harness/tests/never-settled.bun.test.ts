@@ -8,11 +8,11 @@
 // claims nothing about the balance beyond those Ethereum facts.
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { relative } from 'node:path';
-import { createAztecNodeClient } from '@aztec/aztec.js/node';
-import { RollupContract } from '@aztec/ethereum/contracts';
-import { CheckpointNumber } from '@aztec/foundation/branded-types';
-import { OutboxAbi } from '@aztec/l1-artifacts/OutboxAbi';
-import { RollupAbi } from '@aztec/l1-artifacts/RollupAbi';
+import { OutboxAbi } from '@aztec-foundation/l1-artifacts/OutboxAbi';
+import { RollupAbi } from '@aztec-foundation/l1-artifacts/RollupAbi';
+import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
+import { RollupContract } from '@aztec-labs/ethereum/contracts';
+import { CheckpointNumber } from '@aztec-labs/foundation/branded-types';
 import { forwardAll } from '@yacana/deploy/bridge/forward';
 import { type Operator, writeOpts } from '@yacana/deploy/bridge/operator';
 import { registerVersion } from '@yacana/deploy/bridge/register';

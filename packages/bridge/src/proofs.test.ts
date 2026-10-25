@@ -2,9 +2,9 @@
 // testnet's own Rollup, and `bun run e2e:agent -- bun test packages/bridge` against a real anvil.
 import { describe, expect, test } from 'bun:test';
 import { resolve } from 'node:path';
-import { createAztecNodeClient } from '@aztec/aztec.js/node';
-import { RollupAbi } from '@aztec/l1-artifacts/RollupAbi';
-import { createAztecNodeDebugClient } from '@aztec/stdlib/interfaces/client';
+import { RollupAbi } from '@aztec-foundation/l1-artifacts/RollupAbi';
+import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
+import { createAztecNodeDebugClient } from '@aztec-labs/stdlib/interfaces/client';
 import { createPublicClient, decodeEventLog, type Hex, http } from 'viem';
 import { LOG_WINDOW } from './logs.ts';
 import { type ProofClient, type ProofFloor, proofReader } from './proofs.ts';

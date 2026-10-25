@@ -1,10 +1,10 @@
 // A message the portal sent into a version's Inbox — a deposit, a forwarded send-ahead, the retire
 // signal — as the L2 side must name it to consume it: the same leaf the Inbox inserted.
-import { Fr } from '@aztec/foundation/curves/bn254';
-import type { EthAddress } from '@aztec/foundation/eth-address';
-import type { AztecAddress } from '@aztec/stdlib/aztec-address';
-import { computeSecretHash } from '@aztec/stdlib/hash';
-import { L1Actor, L1ToL2Message, L2Actor } from '@aztec/stdlib/messaging';
+import { Fr } from '@aztec-labs/foundation/curves/bn254';
+import type { EthAddress } from '@aztec-labs/foundation/eth-address';
+import type { AztecAddress } from '@aztec-labs/stdlib/aztec-address';
+import { computeSecretHash } from '@aztec-labs/stdlib/hash';
+import { L1Actor, L1ToL2Message, L2Actor } from '@aztec-labs/stdlib/messaging';
 import { claimContent, retireContent } from './content.ts';
 
 export interface InboundScope {

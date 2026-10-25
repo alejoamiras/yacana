@@ -1,15 +1,15 @@
 // The bridge's operations from the page: each runs through the one queue, under the miner's `bridge`
 // pause so a proof never fights the prover for memory, and writes its crossing before it sends and
 // after it lands.
-import type { AztecAddress } from '@aztec/aztec.js/addresses';
-import { type Contract, NO_WAIT } from '@aztec/aztec.js/contracts';
-import { waitForL1ToL2MessageReady } from '@aztec/aztec.js/messaging';
-import { waitForTx } from '@aztec/aztec.js/node';
-import { EthAddress } from '@aztec/foundation/eth-address';
-import type { AztecNode } from '@aztec/stdlib/interfaces/client';
-import { Tag } from '@aztec/stdlib/logs';
-import { TxExecutionResult, type TxHash, TxStatus } from '@aztec/stdlib/tx';
-import type { EmbeddedWallet } from '@aztec/wallets/embedded';
+import type { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { type Contract, NO_WAIT } from '@aztec-labs/aztec.js/contracts';
+import { waitForL1ToL2MessageReady } from '@aztec-labs/aztec.js/messaging';
+import { waitForTx } from '@aztec-labs/aztec.js/node';
+import { EthAddress } from '@aztec-labs/foundation/eth-address';
+import type { AztecNode } from '@aztec-labs/stdlib/interfaces/client';
+import { Tag } from '@aztec-labs/stdlib/logs';
+import { TxExecutionResult, type TxHash, TxStatus } from '@aztec-labs/stdlib/tx';
+import type { EmbeddedWallet } from '@aztec-labs/wallets/embedded';
 import { claimLeaf } from '@yacana/bridge/inbox';
 import { advance, type Crossing, type CrossingKind, crossingId } from '@yacana/bridge/journal';
 import type { OperationQueue } from '@yacana/bridge/queue';
@@ -96,7 +96,7 @@ async function guarded<T>(ctx: BridgeContext, op: () => Promise<T>): Promise<T> 
 
 /** The burn the miner performs on the holder's behalf, authorised for this one call. */
 async function burnAuthwit(ctx: BridgeContext, amount: bigint) {
-  const nonce = (await import('@aztec/aztec.js/fields')).Fr.random();
+  const nonce = (await import('@aztec-labs/aztec.js/fields')).Fr.random();
   const { wallet, miner, token } = ctx.l2();
   const call = await token.methods.burn_private(ctx.from, amount, nonce).getFunctionCall();
   const witness = await wallet.createAuthWit(ctx.from, { caller: miner.address, call });

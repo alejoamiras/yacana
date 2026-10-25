@@ -1,7 +1,7 @@
 // A send is safe only once its epoch's proof is on Ethereum, and each epoch has a deadline for that
 // proof: `getTimestampForEpoch(e + proofSubmissionEpochs + 1)` on the version's Rollup, read over
 // the Ethereum RPC. Past it, the rollup prunes the epoch and the burn is undone.
-import { RollupAbi } from '@aztec/l1-artifacts/RollupAbi';
+import { RollupAbi } from '@aztec-foundation/l1-artifacts/RollupAbi';
 import { type Client, getContract, type Hex } from 'viem';
 
 export interface RollupReads {

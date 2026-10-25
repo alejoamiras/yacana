@@ -2,7 +2,7 @@
 // earlier version and deposits from Ethereum, both found by the secret hash the account's master
 // derives — under the source version's labels for the former, this version's for the latter —
 // against the portal's events. Nothing is claimed here: each is a card with a Claim on it.
-import type { EthAddress } from '@aztec/foundation/eth-address';
+import type { EthAddress } from '@aztec-labs/foundation/eth-address';
 import {
   advance,
   type Crossing,

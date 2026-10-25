@@ -4,7 +4,7 @@
 // one is refused.
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { relative } from 'node:path';
-import { EthAddress } from '@aztec/foundation/eth-address';
+import { EthAddress } from '@aztec-labs/foundation/eth-address';
 import { yacanaPortalAbi } from '@yacana/bridge/portal';
 import { portalReader } from '@yacana/bridge/portal-reader';
 import { forwardAll } from '@yacana/deploy/bridge/forward';

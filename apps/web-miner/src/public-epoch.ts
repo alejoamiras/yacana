@@ -2,7 +2,7 @@
 // table (the stats page's path, no account and no simulation) and written to `epochAtom` until the
 // controller's first read takes the atom over. A write is dropped once the poll is stopped, or when
 // the atom already holds a newer epoch, so a late public read can never overwrite fresher claims.
-import type { AztecAddress } from '@aztec/aztec.js/addresses';
+import type { AztecAddress } from '@aztec-labs/aztec.js/addresses';
 import { readEpochs, readOpenEpochNumber } from '@yacana/miner-core/reader';
 import { readTip } from '@yacana/web-kit/browser/node';
 import { markRead, recordTip } from '@yacana/web-kit/browser/node-health';

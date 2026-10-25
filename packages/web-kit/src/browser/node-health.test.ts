@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
-import { makeFetch } from '@aztec/foundation/json-rpc/client';
-import { NoRetryError } from '@aztec/foundation/retry';
+import { makeFetch } from '@aztec-labs/foundation/json-rpc/client';
+import { NoRetryError } from '@aztec-labs/foundation/retry';
 import type { NodeRequestOutcome } from './node-guard.ts';
 
 // The fake network the guard sits over: per-path behaviour, a call log, a delay per request.

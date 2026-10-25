@@ -5,7 +5,7 @@
 // head has been read: one found with newer blocks still unread would date the last proof too early.
 // `unknown` is that unfinished state, and the state of a floor that is only a guess; `none` is an
 // absence, which only an exact floor can prove.
-import { RollupAbi } from '@aztec/l1-artifacts/RollupAbi';
+import { RollupAbi } from '@aztec-foundation/l1-artifacts/RollupAbi';
 import type { Hex, PublicClient } from 'viem';
 import { LOG_WINDOW, type LogClient } from './logs.ts';
 

@@ -268,7 +268,7 @@ describe('node guard', () => {
 
   test('data: and blob: loads pass untouched — bb.js fetches its bundled WASM as data: URLs', async () => {
     const { fetchCode } = await import(
-      '../../../../node_modules/@aztec/bb.js/dest/browser/barretenberg_wasm/fetch_code/browser/index.js'
+      '../../../../node_modules/@aztec-foundation/bb.js/dest/browser/barretenberg_wasm/fetch_code/browser/index.js'
     );
     const bytes = new Uint8Array(await fetchCode(false));
     expect(bytes.byteLength).toBeGreaterThan(1_000_000);

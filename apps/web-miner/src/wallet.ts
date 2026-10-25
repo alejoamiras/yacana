@@ -1,16 +1,16 @@
 // The page's own wallet: an embedded PXE with the prover on, a persistent PXE store keyed by the
 // rollup, and an in-memory WalletDB so no spend secret ever reaches disk. Accounts come from the
 // vault (a passkey or the twelve words) and are registered again on every open.
-import type { AztecAddress } from '@aztec/aztec.js/addresses';
-import { getContractInstanceFromInstantiationParams } from '@aztec/aztec.js/contracts';
-import { SponsoredFeePaymentMethod } from '@aztec/aztec.js/fee';
-import { Fr } from '@aztec/aztec.js/fields';
-import { SPONSORED_FPC_SALT } from '@aztec/constants';
-import { createLogger } from '@aztec/foundation/log';
-import { AztecIndexedDBStore } from '@aztec/kv-store/deprecated/indexeddb';
-import { SponsoredFPCContract } from '@aztec/noir-contracts.js/SponsoredFPC';
-import type { Tx } from '@aztec/stdlib/tx';
-import { EmbeddedWallet } from '@aztec/wallets/embedded';
+import type { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { getContractInstanceFromInstantiationParams } from '@aztec-labs/aztec.js/contracts';
+import { SponsoredFeePaymentMethod } from '@aztec-labs/aztec.js/fee';
+import { Fr } from '@aztec-labs/aztec.js/fields';
+import { SPONSORED_FPC_SALT } from '@aztec-labs/constants';
+import { createLogger } from '@aztec-labs/foundation/log';
+import { AztecIndexedDBStore } from '@aztec-labs/kv-store/deprecated/indexeddb';
+import { SponsoredFPCContract } from '@aztec-labs/noir-contracts.js/SponsoredFPC';
+import type { Tx } from '@aztec-labs/stdlib/tx';
+import { EmbeddedWallet } from '@aztec-labs/wallets/embedded';
 import { claimGasLimits } from '@yacana/miner-core/claim';
 import type { AccountFields } from '@yacana/miner-core/keys/derive';
 import { PROVERLESS_MARKER } from '@yacana/web-kit/config';

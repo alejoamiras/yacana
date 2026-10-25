@@ -4,14 +4,20 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { cpus } from 'node:os';
 import { resolve } from 'node:path';
-import { BackendType, Barretenberg } from '@aztec/bb.js';
-import { Fr } from '@aztec/foundation/curves/bn254';
+import { BackendType, Barretenberg } from '@aztec-foundation/bb.js';
+import { Fr } from '@aztec-labs/foundation/curves/bn254';
 import { PROOF_FIELDS } from '@yacana/miner-core/proof';
 import type { WorkArtifact, WorkInputs } from '@yacana/miner-core/work';
 import crsLock from '@yacana/web-kit/crs.lock.json';
+import { bbVersion } from '@yacana/web-kit/vite-base';
 import { W_VK_BYTES } from '@yacana/work-circuit/generated/vk';
-import { acceleratorUrls, type PrestoEndpoint, type ProverKind } from '../src/presto.ts';
-import { PrestoWorkProver, type ProverTransition } from '../src/presto-prover.ts';
+import {
+  acceleratorUrls,
+  PRESTO_AZTEC_VERSION,
+  type PrestoEndpoint,
+  type ProverKind,
+} from '../src/presto.ts';
+import { BB_VERSION, PrestoWorkProver, type ProverTransition } from '../src/presto-prover.ts';
 
 const circuit = resolve(import.meta.dir, '../../../protocol/work-circuit');
 const artifact = (await Bun.file(resolve(circuit, 'artifacts/yacana_work.json')).json()) as WorkArtifact;
@@ -31,6 +37,12 @@ const fixtureInputs = new Uint8Array(
 );
 const b64 = (u: Uint8Array) => Buffer.from(u).toString('base64');
 
+// A literal left behind by an SDK bump would ask Presto for a prover whose proofs differ from WASM's.
+test('the bb release Presto is asked for is the installed bb.js', () => {
+  expect(BB_VERSION).toBe(bbVersion());
+  expect(PRESTO_AZTEC_VERSION).toBe(bbVersion());
+});
+
 type Answer = { status: number; body: unknown } | 'fixture';
 
 /** One fake per suite: `/health` says a current Presto; `/prove/ultra-honk` answers from the script. */
@@ -49,10 +61,10 @@ function fakePresto() {
           status: 'ok',
           api_version: 1,
           schemes: ['chonk', 'ultra_honk'],
-          version: '1.1.1',
-          aztec_version: '5.2.0',
-          available_versions: ['5.2.0'],
-          versions: [{ aztec_version: '5.2.0', bb_version: '5.2.0' }],
+          version: '1.2.1',
+          aztec_version: '6.0.0',
+          available_versions: ['6.0.0'],
+          versions: [{ aztec_version: '6.0.0', bb_version: '6.0.0' }],
           bb_available: true,
         });
       const next = script.shift();

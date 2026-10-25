@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { OutboxAbi } from '@aztec/l1-artifacts/OutboxAbi';
+import { OutboxAbi } from '@aztec-foundation/l1-artifacts/OutboxAbi';
 import { BaseError, ContractFunctionRevertedError, encodeErrorResult } from 'viem';
 import { yacanaPortalAbi } from './portal.ts';
 import { errorName, revertNameOf, revertRow } from './revert.ts';

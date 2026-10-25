@@ -3,12 +3,12 @@
 // fee-juice write on the sponsor's balance. Public storage keeps counts and a digest per epoch,
 // never a nullifier or a note hash, so the landing's ledger example can only come from an effect,
 // recorded once and committed.
-import { AztecAddress } from '@aztec/aztec.js/addresses';
-import { getContractInstanceFromInstantiationParams } from '@aztec/aztec.js/contracts';
-import { Fr } from '@aztec/aztec.js/fields';
-import { FEE_JUICE_ADDRESS, FEE_JUICE_BALANCES_SLOT, SPONSORED_FPC_SALT } from '@aztec/constants';
-import { SponsoredFPCContract } from '@aztec/noir-contracts.js/SponsoredFPC';
-import { computePublicDataTreeLeafSlot, deriveStorageSlotInMap } from '@aztec/stdlib/hash';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { getContractInstanceFromInstantiationParams } from '@aztec-labs/aztec.js/contracts';
+import { Fr } from '@aztec-labs/aztec.js/fields';
+import { FEE_JUICE_ADDRESS, FEE_JUICE_BALANCES_SLOT, SPONSORED_FPC_SALT } from '@aztec-labs/constants';
+import { SponsoredFPCContract } from '@aztec-labs/noir-contracts.js/SponsoredFPC';
+import { computePublicDataTreeLeafSlot, deriveStorageSlotInMap } from '@aztec-labs/stdlib/hash';
 import { ticketNullifier } from '@yacana/miner-core/proof';
 import { fixedSlot, type StorageLayout } from '@yacana/miner-core/reader';
 

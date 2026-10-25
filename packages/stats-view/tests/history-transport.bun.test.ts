@@ -3,9 +3,9 @@
 // and it is measured here rather than assumed (the client batches concurrent methods).
 
 import { describe, expect, test } from 'bun:test';
-import { AztecAddress } from '@aztec/aztec.js/addresses';
-import { Fr } from '@aztec/aztec.js/fields';
-import { createAztecNodeClient } from '@aztec/aztec.js/node';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { Fr } from '@aztec-labs/aztec.js/fields';
+import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
 import { CHUNK, DEFAULT_LIMITS, type SlotTable } from '@yacana/miner-core/reader';
 import type { Reader } from '../src/chain';
 import { readWindowRows } from '../src/read-window';

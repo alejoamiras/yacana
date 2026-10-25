@@ -3,7 +3,7 @@
 // rejected one leaves no trace and its nonce is proved again in WASM, a Stop during the check
 // reports nothing, and a WASM proof under a native prover is never held.
 import { describe, expect, test } from 'bun:test';
-import { Fr } from '@aztec/foundation/curves/bn254';
+import { Fr } from '@aztec-labs/foundation/curves/bn254';
 import { PROOF_FIELDS } from '@yacana/miner-core/proof';
 import type { ProverKind } from '../src/presto.ts';
 import { mineFrom, type NativeAwareProver } from '../src/worker-mine.ts';

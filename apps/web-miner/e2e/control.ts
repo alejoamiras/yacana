@@ -4,7 +4,7 @@
 //
 //   bun e2e/control.ts <port> <record-path> <node-url> <l1-rpc-url> <archive-path>
 //   YACANA_L1_PRIVATE_KEY names the operators key (a throwaway anvil account).
-import { createAztecNodeDebugClient } from '@aztec/stdlib/interfaces/client';
+import { createAztecNodeDebugClient } from '@aztec-labs/stdlib/interfaces/client';
 import { forwardAll } from '@yacana/deploy/bridge/forward';
 import { openOperator } from '@yacana/deploy/bridge/operator';
 import { serveControl } from '@yacana/localnet/control';

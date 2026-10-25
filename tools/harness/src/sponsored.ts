@@ -2,13 +2,13 @@
 // runs (the local network's own setup, the pinned node's prefund list), pays for a fresh account's
 // own deployment. A real ClientIVC proof, sent and mined: the cheapest transaction that proves the
 // version takes user transactions at all.
-import { NO_FROM } from '@aztec/aztec.js/account';
-import { getContractInstanceFromInstantiationParams } from '@aztec/aztec.js/contracts';
-import { SponsoredFeePaymentMethod } from '@aztec/aztec.js/fee';
-import { SPONSORED_FPC_SALT } from '@aztec/constants';
-import { Fq, Fr } from '@aztec/foundation/curves/bn254';
-import { SponsoredFPCContract } from '@aztec/noir-contracts.js/SponsoredFPC';
-import { EmbeddedWallet } from '@aztec/wallets/embedded';
+import { NO_FROM } from '@aztec-labs/aztec.js/account';
+import { getContractInstanceFromInstantiationParams } from '@aztec-labs/aztec.js/contracts';
+import { SponsoredFeePaymentMethod } from '@aztec-labs/aztec.js/fee';
+import { SPONSORED_FPC_SALT } from '@aztec-labs/constants';
+import { Fq, Fr } from '@aztec-labs/foundation/curves/bn254';
+import { SponsoredFPCContract } from '@aztec-labs/noir-contracts.js/SponsoredFPC';
+import { EmbeddedWallet } from '@aztec-labs/wallets/embedded';
 
 export interface SponsoredReceipt {
   txHash: string;

@@ -1,7 +1,7 @@
 // Golden vectors: a fixed PRF output and a fixed phrase must always yield these masters, fields
 // and addresses. A change here is a change of every user's address.
 import { describe, expect, test } from 'bun:test';
-import { getSchnorrInitializerlessAccountContractAddress } from '@aztec/accounts/schnorr';
+import { getSchnorrInitializerlessAccountContractAddress } from '@aztec-labs/accounts/schnorr';
 import { deriveAccountFields, masterFromPrf } from './derive.ts';
 import { masterFromMnemonic, normaliseWords, validWords } from './mnemonic.ts';
 
@@ -22,10 +22,10 @@ describe('key derivation', () => {
       '0x14449033ab81659820cf2a340bfed443564e978ed2c6aee7e6aa2fea91ac84b6',
     ]);
     expect(await address(master, 0)).toBe(
-      '0x1362161bb2ff9ebba63f4e42484fcdfade31b6ed33e8226a686cd0f5443e474b',
+      '0x0c8828f3e685ff951d3e0d82d2161c27fcd7c5e841f69a596c435679f336df87',
     );
     expect(await address(master, 1)).toBe(
-      '0x02979e139de8899030bca0c3cce3794bc78804d2aabf09285f960d77c9340ba9',
+      '0x2b5d5cf352990e5e74650d490be3eef0f1411574366a2a6d80b15df421910b69',
     );
   });
 
@@ -35,7 +35,7 @@ describe('key derivation', () => {
     const master = await masterFromMnemonic(phrase);
     expect(hex(master)).toBe('fec5845639b745673ee03414f585b1ea47bbc1491a37ba20fc85b21094113660');
     expect(await address(master, 0)).toBe(
-      '0x1d344823544184dcd59804da14432bb50f4f71d0aef001afd581b06638d5ebc1',
+      '0x09c2aa4b065334789de7ab2a232867fd9bd0136bcbd55e6399910e58b97af4c7',
     );
     expect(hex(await masterFromMnemonic(`  ${phrase.toUpperCase().replace(/ /g, '\n ')} `))).toBe(
       hex(master),

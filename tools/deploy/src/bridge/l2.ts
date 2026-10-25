@@ -1,18 +1,19 @@
 // The operator's Aztec side: a wallet on one version's node, its account (the deployer's, or any
 // funded one — every L2 bridge call the operator makes is one anyone may make), the miner as a
 // contract handle, and the sponsored fee every call pays with.
-import { loadContractArtifact } from '@aztec/aztec.js/abi';
-import { AztecAddress } from '@aztec/aztec.js/addresses';
-import { Contract, getContractInstanceFromInstantiationParams } from '@aztec/aztec.js/contracts';
-import { SponsoredFeePaymentMethod } from '@aztec/aztec.js/fee';
-import { Fr } from '@aztec/aztec.js/fields';
-import { createAztecNodeClient } from '@aztec/aztec.js/node';
-import { SPONSORED_FPC_SALT } from '@aztec/constants';
-import { SponsoredFPCContract } from '@aztec/noir-contracts.js/SponsoredFPC';
-import type { AztecNode } from '@aztec/stdlib/interfaces/client';
-import { deriveMasterMessageSigningSecretKey } from '@aztec/stdlib/keys';
-import { EmbeddedWallet } from '@aztec/wallets/embedded';
+
 import { TokenContract } from '@aztec-foundation/aztec-standards/artifacts/src/artifacts/Token.js';
+import { loadContractArtifact } from '@aztec-labs/aztec.js/abi';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { Contract, getContractInstanceFromInstantiationParams } from '@aztec-labs/aztec.js/contracts';
+import { SponsoredFeePaymentMethod } from '@aztec-labs/aztec.js/fee';
+import { Fr } from '@aztec-labs/aztec.js/fields';
+import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
+import { SPONSORED_FPC_SALT } from '@aztec-labs/constants';
+import { SponsoredFPCContract } from '@aztec-labs/noir-contracts.js/SponsoredFPC';
+import type { AztecNode } from '@aztec-labs/stdlib/interfaces/client';
+import { deriveMasterMessageSigningSecretKey } from '@aztec-labs/stdlib/keys';
+import { EmbeddedWallet } from '@aztec-labs/wallets/embedded';
 import { MINER_ARTIFACT_PATH } from '@yacana/miner-core/artifacts';
 import type { Deployment } from '../deploy.ts';
 

@@ -1,7 +1,7 @@
 // The prover Worker's backend behind the loop: builds the prover a config asks for, mines over it,
 // and withdraws Presto's authority at once when told. Its Worker globals are injected so a revoke
 // that lands in the middle of a build can be tested outside a Worker.
-import type { Barretenberg } from '@aztec/bb.js';
+import type { Barretenberg } from '@aztec-foundation/bb.js';
 import { BbJsWorkProver, type WorkArtifact, type WorkProver } from '@yacana/miner-core/work';
 import { setAcceleratorEndpoints } from '@yacana/web-kit/browser/node-guard';
 import { ACCELERATOR_DEADLINE_MS, acceleratorUrls, downloadPhases, type PrestoEndpoint } from './presto';

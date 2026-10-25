@@ -2,7 +2,7 @@
 // is injected (`recover`); what is checked is the order — pause, drain, the handle moved and the
 // guard's endpoint with it, the rebuild from the new node, mining resumed on the rebuilt view.
 import { afterEach, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
-import { AztecAddress } from '@aztec/aztec.js/addresses';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
 import type { SwitchableNode } from '@yacana/web-kit/browser/node';
 import { createStore } from 'jotai';
 import type { Deployment, Fee } from '../src/chain.ts';

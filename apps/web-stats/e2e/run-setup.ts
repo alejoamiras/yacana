@@ -4,8 +4,8 @@
 import type { ChildProcess } from 'node:child_process';
 import { openSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { Fr } from '@aztec/aztec.js/fields';
-import { EthAddress } from '@aztec/foundation/eth-address';
+import { Fr } from '@aztec-labs/aztec.js/fields';
+import { EthAddress } from '@aztec-labs/foundation/eth-address';
 import { deployBridgeForRun, registerForRun } from '@yacana/deploy/bridge/run';
 import { type BridgeRecord, type Deployment, deployYacana, TEST_PORTAL } from '@yacana/deploy/deploy';
 import { release } from '@yacana/localnet/registry';

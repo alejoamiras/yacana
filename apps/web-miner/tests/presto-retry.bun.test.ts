@@ -2,7 +2,7 @@
 // nothing, a forced one rebuilds, the page's view of Presto follows the Worker's messages and is
 // cleared by a rebuild, and Stop is counted so a probe that outlived one can tell.
 import { describe, expect, test } from 'bun:test';
-import { AztecAddress } from '@aztec/aztec.js/addresses';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
 import { createStore } from 'jotai';
 import type { Deployment, Fee } from '../src/chain.ts';
 import { MinerController } from '../src/controller.ts';

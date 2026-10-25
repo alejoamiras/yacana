@@ -34,7 +34,7 @@ export const PRESTO_DEFAULT: PrestoEndpoint = {
 };
 
 /** The Aztec release this miner proves with; Presto downloads that bb once if it lacks it. */
-export const PRESTO_AZTEC_VERSION = '5.2.0';
+export const PRESTO_AZTEC_VERSION = '6.0.0';
 
 export const prestoConfig = (e: PrestoEndpoint): PrestoConfig => ({
   host: e.host,
