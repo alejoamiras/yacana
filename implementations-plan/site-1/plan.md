@@ -10,9 +10,26 @@ eli5_mode: skipped (orchestrator-owned)
 quality_bar: production
 hardening: not scheduled
 budget: "recon: 1 Sonnet sweep + the driver's clean-room runs; codex gpt-6.1-sol at high; code-review off"
-status: drafted 2026-10-25; codex approve (§7); Phase 1 ✓ 2026-10-25 → outcome H (every probe red); Phase 2 not run; blocked on the owner's log reading
+status: completed 2026-10-25 — outcome S (a dashboard setting, no tree change); codex approve (§7); Phase 1 ✓ → H, then S after the owner's fix; Phase 2 not run
 created: 2026-10-25
 ---
+
+## Outcome
+
+- **Date**: 2026-10-25. **Status**: completed, outcome S: no tree change was needed.
+- **Cause**: the `yacana` Worker's Workers Builds token had been deleted or rolled. The log of build `3a892308…`
+  (read by the owner) says: "The build token selected for this build has been deleted or rolled and cannot be used
+  for this build". So every build, on every branch and on the known-good `513bd01`, failed seconds after it was
+  queued, before any command ran.
+- **Fix**: the owner selected a new build token in the dashboard (Workers & Pages → `yacana` → Settings → Build).
+  Proof: a retried branch build and PR #75's head `290529c` built green, and so did `main`'s production build of
+  `e57a379` (2026-10-25 18:58 UTC; production's `build.json` names `e57a379`).
+- **Evidence that the tree was not involved**: the clean room of `513bd01` is byte-identical to production
+  (`recon.md`), and five probe builds failed 8–9 s after opening, whatever the Bun tool fields said
+  (`lessons/phase-1.md`). The npm-10.9.2 lead in #77 did not hold.
+- **Shipped**: this close-out PR (the plan, the probe record, one lesson). **Dropped**: Phase 2 (the 1.4.2 pin, the
+  pin-agreement test, the docs line), because outcome S motivates none of them. The pin stays `bun@1.4.0`.
+- **Known limits**: none. **Open items**: none. The `/goal` and `/loop` seeds below are retired.
 
 # site-1: Workers Builds green again (#77)
 
