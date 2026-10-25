@@ -6,6 +6,7 @@
   "type": "module",
   "exports": {
     "./control": "./src/control.ts",
+    "./inbox-sync": "./src/inbox-sync.ts",
     "./isolated-node": "./src/isolated-node.ts",
     "./port-window": "./src/port-window.ts",
     "./presto": "./src/presto.ts",

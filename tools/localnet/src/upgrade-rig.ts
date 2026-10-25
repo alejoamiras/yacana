@@ -36,6 +36,7 @@ import { getGenesisValues } from '@aztec-labs/world-state/testing';
 import { getContract, type Hex, parseEventLogs } from 'viem';
 import { mnemonicToAccount, privateKeyToAccount } from 'viem/accounts';
 import { foundry } from 'viem/chains';
+import { untilInboxSynced } from './inbox-sync.ts';
 import { type IsolatedNode, startIsolatedNode } from './isolated-node.ts';
 import { lanePortBase, runPortWindowBase } from './port-window.ts';
 import { claim, release } from './registry.ts';
@@ -421,16 +422,21 @@ async function proofHeadroom(ctx: RigContext, live: RigVersion): Promise<number 
  */
 async function warpNodeBy(ctx: RigContext, rig: UpgradeRig, node: RigNode, seconds: number): Promise<void> {
   const live = ctx.versions.find((v) => v.version === node.version);
+  await untilInboxSynced(node.nodeUrl, ctx.network.l1RpcUrl);
   // viem answers `getBlockNumber` from a four-second cache by default; a warp is faster than that.
   const fromBlock = (await ctx.publicClient.getBlockNumber({ cacheTime: 0 })) + 1n;
   await node.debug.warpL2TimeAtLeastBy(seconds);
+  const toBlock = await ctx.publicClient.getBlockNumber({ cacheTime: 0 });
+  // The node answers a refused checkpoint with success and leaves L1 where it was.
+  if (toBlock < fromBlock)
+    throw new Error(`a ${seconds}s warp on version ${node.version} mined nothing: its node's log says why`);
   if (live) {
     const pruned = await ctx.publicClient.getContractEvents({
       address: live.rollup.toString() as Hex,
       abi: RollupAbi,
       eventName: 'PrunedPending',
       fromBlock,
-      toBlock: await ctx.publicClient.getBlockNumber({ cacheTime: 0 }),
+      toBlock,
     });
     if (pruned.length > 0)
       throw new Error(
@@ -515,9 +521,8 @@ export async function startUpgradeRig(
     },
     async nudge(checkpoints = 4) {
       if (!rig.node) throw new Error('no live node to build on');
-      // A message sent while checkpoint N is the tip goes into the Inbox tree of N+3 and is served
-      // once the tip reaches it; a block within the same slot lands in the same checkpoint, a warp
-      // lands on the next slot, so four warps cover it with one to spare.
+      // The first checkpoint built once the node holds a message consumes it (6.0.0's streaming
+      // Inbox); each warp lands on a new slot, and four leave room to spare.
       for (let i = 0; i < checkpoints; i++) await rig.warpBy(72);
     },
     async prune(version) {

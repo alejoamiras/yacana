@@ -8,6 +8,7 @@ import { createAztecNodeDebugClient } from '@aztec-labs/stdlib/interfaces/client
 import { forwardAll } from '@yacana/deploy/bridge/forward';
 import { openOperator } from '@yacana/deploy/bridge/operator';
 import { serveControl } from '@yacana/localnet/control';
+import { untilInboxSynced } from '@yacana/localnet/inbox-sync';
 import type { Hex } from 'viem';
 
 const [port, record, nodeUrl, l1RpcUrl, archive] = process.argv.slice(2);
@@ -21,17 +22,21 @@ if (!port || !record || !nodeUrl || !l1RpcUrl || !archive || !key)
 const SLOT_SECONDS = 72;
 const debug = createAztecNodeDebugClient(nodeUrl);
 const op = await openOperator({ record, rpcUrl: l1RpcUrl, key });
+const warp = async (seconds: number) => {
+  await untilInboxSynced(nodeUrl, l1RpcUrl);
+  await debug.warpL2TimeAtLeastBy(seconds);
+};
 
 const { url } = serveControl(Number(port), {
   ping: async () => 'pong',
   // Five slots close the exit's epoch whatever slot it landed in; the prove settles it on Ethereum.
   settle: async () => {
-    await debug.warpL2TimeAtLeastBy(SLOT_SECONDS * 5);
+    await warp(SLOT_SECONDS * 5);
     await debug.prove();
   },
-  // A message sent while checkpoint N is the tip is served once the tip reaches N+3; four slots cover it.
+  // The first checkpoint built once the node holds a message consumes it; four slots leave room to spare.
   nudge: async () => {
-    for (let i = 0; i < 4; i++) await debug.warpL2TimeAtLeastBy(SLOT_SECONDS);
+    for (let i = 0; i < 4; i++) await warp(SLOT_SECONDS);
   },
   forward: async () => {
     const report = await forwardAll(op, { source: op.record, sourceNodeUrl: nodeUrl, archive });
