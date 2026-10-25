@@ -8,3 +8,10 @@
 - Review round 1: Codex found nothing; the Opus leg found three lows and nits (plan §8), all fixed. The one with
   behaviour: a raw-calldata gas estimate loses the revert's ABI, so a refusal surfaces as viem's generic
   `EstimateGasExecutionError`. Estimate through `estimateContractGas` wherever the error's name is read.
+- **CI's first run: every `aztec start` died before readiness.** `ReferenceError: DisposableStack is not defined`
+  in `@aztec-labs/sequencer-client`'s `SequencerPublisher`: the `aztec` launcher execs the system `node`, the
+  ubuntu-24.04 runner's is v22.23.3, and `DisposableStack` arrived in Node 24 (this machine runs 24.22, so no local
+  gate could see it). The package's `engines` still says `>=20.16`. `aztec compile` and the TXE do not reach the
+  sequencer, so `contracts` and `work-circuit` passed on 22. `setup-aztec` now sets up Node 24 first
+  (`actions/setup-node` v7.1.0 by SHA); every job that starts a network goes through it. Only the two expected
+  example-claim failures remained in `miner-core` and `deploy`.

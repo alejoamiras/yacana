@@ -464,6 +464,8 @@ cleared failures; a gate for every part of ask3's Check; §4's replay and reduce
   `~/.aztec/current` first), the live burst taking turns at proving (bb.js 6.0.0 interleaves concurrent Chonk
   proofs in one process), `no-prover.ts` exporting `CircuitKind` (the read-only apps and `site:build` did not
   build), and the pruned-anchor fault reading 6.0.0's `{ number, hash }` block parameter.
+- P5: CI found one cause no local gate could: the runner's system Node is 22, and 6.0.0's `aztec start` needs 24
+  (`DisposableStack`). `setup-aztec` sets up Node 24 before the install; a CI change ask3 does need.
 
 **Implementation review, round 1** (on `5b85e40..158fab3`). Codex (gpt-6.1-sol, high): *nothing material*, no
 findings. Opus 5.5 beside it: *nothing material*, three findings, each verified and fixed:

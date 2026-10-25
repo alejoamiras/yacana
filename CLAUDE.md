@@ -35,7 +35,8 @@ Four folders, one layer each, and production code imports its own layer or below
 
 - **Aztec 6.0.0 only** (`.aztecrc`): `aztec-nargo` (Noir 1.0.0-rc.3), `aztec compile` (transpiles public bytecode
   and writes Chonk VKs — plain `aztec-nargo compile` is not enough for contracts), `aztec-txe`, `bb` from
-  `~/.aztec/versions/6.0.0`. Never bare `nargo`. `bb --version` prints `6.0.0` for this release.
+  `~/.aztec/versions/6.0.0`. Never bare `nargo`. `bb --version` prints `6.0.0` for this release. The `aztec` CLI
+  runs on the system `node`, which must be ≥ 24 (`aztec start` needs `DisposableStack`; its engines field says ≥ 20.16).
 - **Bun ≥ 1.4** for everything (PM, runtime, `bun:test`). Biome lints and formats. Vitest only for React components.
 - Supply chain: `bunfig.toml` enforces a 7-day npm min-age; the linker is **hoisted** (Vite's pre-bundler cannot
   resolve the aztec packages' transitive imports under the isolated layout); CI installs with a frozen lockfile;
