@@ -2,7 +2,7 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { cpus } from 'node:os';
 import { TokenContract } from '@aztec-foundation/aztec-standards/artifacts/src/artifacts/Token.js';
-import { BackendType, Barretenberg } from '@aztec-foundation/bb.js';
+import { AztecClientBackend, BackendType, Barretenberg } from '@aztec-foundation/bb.js';
 import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
 import { Contract, getContractInstanceFromInstantiationParams } from '@aztec-labs/aztec.js/contracts';
 import { SponsoredFeePaymentMethod } from '@aztec-labs/aztec.js/fee';
@@ -71,6 +71,27 @@ describe.skipIf(!nodeUrl)('miner-core against a live node', () => {
     );
 
   const newWallet = () => EmbeddedWallet.create(nodeUrl, { ephemeral: true, pxe: { proverEnabled: true } });
+  /**
+   * bb.js proves a transaction as stateful steps on one process-wide instance and awaits between them,
+   * so two wallets proving at once in one process interleave each other's steps; miners are processes
+   * of their own. Until the returned undo runs, this process's proofs take turns; simulating and
+   * sending stay concurrent.
+   */
+  const provingInTurn = () => {
+    const prove = AztecClientBackend.prototype.prove;
+    let turn: Promise<unknown> = Promise.resolve();
+    AztecClientBackend.prototype.prove = function (
+      this: AztecClientBackend,
+      ...args: Parameters<typeof prove>
+    ) {
+      const run = turn.then(() => prove.apply(this, args));
+      turn = run.catch(() => {});
+      return run;
+    };
+    return () => {
+      AztecClientBackend.prototype.prove = prove;
+    };
+  };
   const registerFpc = async (w: EmbeddedWallet) => {
     const fpc = await getContractInstanceFromInstantiationParams(SponsoredFPCContract.artifact, {
       salt: new Fr(SPONSORED_FPC_SALT),
@@ -404,11 +425,13 @@ describe.skipIf(!nodeUrl)('miner-core against a live node', () => {
     for (const c of claimants) winners.push(await mine(m, newEpochSecret(), c.account));
     const t0 = performance.now();
     let results: Awaited<ReturnType<typeof submit>>[];
+    const undo = provingInTurn();
     try {
       results = await Promise.all(
         winners.map((w, i) => submit(claimants[i] as (typeof claimants)[number], w)),
       );
     } finally {
+      undo();
       await Promise.all(claimants.map((c) => c.wallet.stop().catch(() => {})));
     }
     const accepted = results.filter((r) => r.ok);
