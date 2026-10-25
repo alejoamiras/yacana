@@ -42,7 +42,8 @@
       limit; concurrent reads and a deploy's proving do.
   - A batch now leaves as several calls, and three places counted calls as batches:
     - the node-health store let a failed burst's later calls stretch its silent window from 20 s to 60 s, and a
-      failure sent before its cooldown opened now lengthens nothing;
+      failure sent before its cooldown opened now lengthens nothing (a 429 from the burst may still make silence
+      a throttle, or carry the node's later `Retry-After`);
     - two stats-host tests and the node-switch e2e asserted exact call counts, and now count what was out when a
       claim, a hide or a switch began;
     - another suite's leftover global fetch stub broke the first version of the batch-size test in a full run.

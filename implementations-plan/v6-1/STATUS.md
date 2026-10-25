@@ -15,3 +15,4 @@
 - 2026-10-25 P4 gate pass: smoke, live (2 expected), replay 9/9 + check-chunks, visual 8/8 (data-only diffs), shards cockpit 8 / chain 14 / bridge 5 / canary 5 at retry 0, stats 7, landing 5, site:e2e 3, rig 13/13.
 - 2026-10-25 a2 (keyed run fix): ask8 lifts A4; K1 done at d267f17 (portal 0x12D4…C4D2, YACA 0xC7cc…7a2A, read back on Sepolia); K2 refused by dRPC (batch > 3): NODE_MAX_BATCH at every node client outside tools/localnet and the debug/admin clients; #80 filed for l1-deploy gas.
 - 2026-10-25 a2 gates: lint, lint:shell, lint:actions, typecheck, components, contracts:test, portal:test 0; bun test 698 pass / 2 expected; codex r1 (1 medium = a test-order fault, 1 nit) and opus (K2 record wrong: it mined a token; node-health growth; batch-shaped counts) folded.
+- 2026-10-25 a2 codex r2: 1 low (a predating Retry-After was dropped under a shorter throttle) fixed in 482c1b5; r3 next, the last.

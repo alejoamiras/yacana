@@ -499,6 +499,12 @@ cleared failures; a gate for every part of ask3's Check; §4's replay and reduce
    - STATUS's exceptions (fixed);
    - the singular "K's SHA" in round 1's audit text, left as the record of what was argued then.
 
+**Round 2** (Codex, on `e9bb873..6125d0e`): one low, demonstrated. A 503 opens silence and three opaque failures
+make it a 15 s throttle; a real 429 with `Retry-After: 90`, sent before the cooldown opened, was dropped, so the page
+retried after 15 s. **Fixed** in 482c1b5: a predating 429 may still carry the node's own later deadline, never a
+shorter one, and a predating opaque or 5xx failure still lengthens nothing. The test's trace fails with either half
+of the rule removed.
+
 **Implementation deviations** (the tree wins; each in `lessons/`):
 - P1: the `nargo` pins keep 5.2.0's shape (the deps our `Nargo.toml` files name); `poseidon v0.4.0` is fetched by
   nothing here and `sha256 v0.3.0` is a transitive 5.2.0's lock did not pin either.
