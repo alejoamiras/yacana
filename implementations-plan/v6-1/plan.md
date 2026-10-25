@@ -475,6 +475,9 @@ findings. Opus 5.5 beside it: *nothing material*, three findings, each verified 
    `vectors.test.ts` reads the suite's constant and fails on a drift (checked by mutating it).
 3. Nit: `classes.ts` still spoke of two classes after D3 made them two recipes (class and separator). **Fixed**.
 
+**Implementation review, round 2** (Codex, resumed, on the fix commit): *nothing material*. It compared the old and
+new estimate against a mocked RPC (same inputs, same gas) and saw only the new path keep `VersionPaused`. Converged.
+
 ## 9. Post-implementation (no repository standard exists; written out)
 
 While implementing: comments state invariants only, never a plan or phase. Log every attempt in
