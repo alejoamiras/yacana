@@ -6,3 +6,4 @@
 - 2026-10-25 codex final: conditional approve, 3 conditions folded; resumed verification → approve. Plan gate passed (auto-continue).
 - 2026-10-25 P1 gate green: bun test scripts/ci-status.test.ts (14 pass), lint, typecheck.
 - 2026-10-25 P2 gate green: lint:actions, lint, typecheck, test:components (347 pass); bun test 689 pass / 1 fail (vk-pinning.test.ts: aztec-nargo not on PATH, the lessons.md gotcha; passes with the 5.2.0 toolchain prefixed). Five planted defects each turned G1–G3 red.
+- 2026-10-25 codex fix loop converged (r1: 1 finding + Opus 3, fixed; r2 clean). Final-head gates green: lint:actions, lint, typecheck, bun test 690 pass (toolchain on PATH), test:components 347 pass.

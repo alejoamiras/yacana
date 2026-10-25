@@ -197,6 +197,7 @@ Title `ci: one status check per pull-request workflow`; body: what and why, the 
 | final-v | same session, resumed | **approve** | folds verified, no regression | — |
 | fix r1 | Codex gpt-6.1-sol high | findings: 1 | header comment of `scripts/ci-status.ts` cut to one sentence | — |
 | fix r1 | Opus 5.5 diff review | findings: 3 | 1 a dispatch run on a PR head posted a second check under the required name: the status name is now `<name>` on `pull_request`, `<name> (dispatch)` otherwise (G2 pins it); 2 G1–G3 skipped a workflow whose `on:` is a list or string: events normalised; 3 the name-uniqueness check now counts an unnamed job under its id | — |
+| fix r2 | Codex, resumed | **clean** | fixes verified; loop converged in 2 rounds | — |
 
 Size: about 200 lines against light's 150; the quoted ask, the verbatim fix-loop rules and the P3 evidence steps
 carry the excess.
