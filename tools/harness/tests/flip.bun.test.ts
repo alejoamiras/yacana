@@ -11,6 +11,7 @@ import { foundry } from 'viem/chains';
 import { sponsoredTransaction } from '../src/sponsored.ts';
 
 const enabled = process.env.YACANA_RIG === '1';
+if (process.env.CI) throw new Error('status evidence: a deliberate failure');
 
 describe.skipIf(!enabled)('the flip alone (H0)', () => {
   let rig: UpgradeRig;
