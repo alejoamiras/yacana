@@ -15,3 +15,21 @@
   sequencer, so `contracts` and `work-circuit` passed on 22. `setup-aztec` now sets up Node 24 first
   (`actions/setup-node` v7.1.0 by SHA); every job that starts a network goes through it. Only the two expected
   example-claim failures remained in `miner-core` and `deploy`.
+- **CI's second run: the `browser` rig case failed at its first nudge, after the page's deposit.** The warp's
+  checkpoint reverted in simulation with `Rollup__UnconsumedInboxMessages(1)`. 6.0.0's rollup refuses a checkpoint
+  that leaves an Inbox bucket past its cutoff unconsumed (`ProposeLib.validateInboxConsumption`), and the automine
+  sequencer builds from what its archiver's message store holds (`localSyncedCount`). The nudge followed the
+  deposit's receipt before the archiver's next poll, so the propose dropped, the node answered the warp with
+  success, and L1 did not move. The rig's `PrunedPending` scan then asked anvil for `fromBlock > toBlock`, which
+  6.0.0's L1 transport reports only as `L1 RPC request failed` (probed: the cause is "Invalid parameters").
+  Locally the archiver always won the race (eight warps across two probes, the second under `pauseSync`, which does not hold the
+  message sync). Fix: `untilInboxSynced` (`tools/localnet/src/inbox-sync.ts`) waits until the node's
+  `getL1ToL2MessageIndex` knows the last `MessageSent` on its Inbox. Both that and the automine's count read one
+  message store. The rig and the bridge shard's control both warp through it, and a warp that mines nothing now
+  fails under its own name. A timestamp barrier (`getSyncedL1Timestamp`) is not enough, because anvil gives blocks
+  in the same second the same timestamp (probed).
+- **web-stats: `route.fetch: Test ended`.** All 7 tests passed, but the last test using the mocked node ended with a
+  poll still being forwarded, and Playwright failed the run on the closing page. `afterEach` now runs
+  `page.unrouteAll({ behavior: 'wait' })`, which lets in-flight answers finish rather than ignoring errors.
+- A `test:components` timeout in `stats-view`'s `continuation.vitest.tsx` (5.6 s against 5 s) came at load average
+  107 from other runs on this machine. Its rerun passed 83/83, and no timeout was raised.

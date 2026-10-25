@@ -466,6 +466,9 @@ cleared failures; a gate for every part of ask3's Check; §4's replay and reduce
   build), and the pruned-anchor fault reading 6.0.0's `{ number, hash }` block parameter.
 - P5: CI found one cause no local gate could: the runner's system Node is 22, and 6.0.0's `aztec start` needs 24
   (`DisposableStack`). `setup-aztec` sets up Node 24 before the install; a CI change ask3 does need.
+  Its second run found a rig race 6.0.0 created: a warp right after an Inbox write proposes without the message and
+  mines nothing. The rig and the bridge shard's control now warp once the node holds the Inbox's last message.
+  The stats spec's mocked node waits out its in-flight answers.
 
 **Implementation review, round 1** (on `5b85e40..158fab3`). Codex (gpt-6.1-sol, high): *nothing material*, no
 findings. Opus 5.5 beside it: *nothing material*, three findings, each verified and fixed:
