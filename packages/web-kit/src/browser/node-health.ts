@@ -152,6 +152,14 @@ export function recordOutcome(o: NodeRequestOutcome): void {
     opaque = [...opaque.filter((t) => now - t < OPAQUE_WINDOW_MS), now];
     if (opaque.length >= OPAQUE_BURST) event = { type: '429', retryAfterS: null };
   } else if (event.type === 'ok') opaque = [];
+  // A failure sent before the request that opened the cooldown is that burst's (a batch leaves as several
+  // calls): it lengthens nothing, and may only turn silence into a throttle.
+  if (
+    health.transport.kind !== 'ok' &&
+    o.startedAt < cooldownFrom &&
+    !(event.type === '429' && health.transport.kind === 'silent')
+  )
+    return;
   const transport = nextTransport(health.transport, event, now);
   // The cooldown is observed now, not when the failing request was sent: a success already in flight
   // when the throttle began does not prove it has lifted, so it must not clear the cooldown either.

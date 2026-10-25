@@ -151,6 +151,19 @@ describe('the store', () => {
     expect(health.nodeHealth().transport.kind).toBe('throttled');
   });
 
+  test('failures sent before the cooldown opened lengthen nothing; an opaque burst of them still reads as a throttle', () => {
+    const sent = performance.now();
+    for (let i = 0; i < 3; i++) health.recordOutcome(outcome({ status: 503, startedAt: sent }));
+    expect(health.nodeHealth().transport).toMatchObject({ kind: 'silent', backoffMs: 20_000 });
+    // Sent after the cooldown opened (the recovery), a failure does lengthen it.
+    health.recordOutcome(outcome({ status: 503, startedAt: performance.now() }));
+    expect(health.nodeHealth().transport).toMatchObject({ kind: 'silent', backoffMs: 40_000 });
+    health.resetNodeHealth();
+    const burst = performance.now();
+    for (let i = 0; i < 3; i++) health.recordOutcome(outcome({ status: 'network', startedAt: burst }));
+    expect(health.nodeHealth().transport.kind).toBe('throttled');
+  });
+
   test('an outcome that started before a reset is dropped (A → B → A, a late answer from the first A)', () => {
     const before = performance.now();
     health.resetNodeHealth();
