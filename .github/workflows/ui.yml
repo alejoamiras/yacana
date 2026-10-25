@@ -40,7 +40,7 @@ jobs:
       - run: bun run --cwd packages/ui test:components
 
   status:
-    name: ui-status
+    name: ${{ github.event_name == 'pull_request' && 'ui-status' || 'ui-status (dispatch)' }}
     needs: [changes, test]
     if: always()
     runs-on: ubuntu-latest

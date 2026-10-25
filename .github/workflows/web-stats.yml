@@ -82,7 +82,7 @@ jobs:
           retention-days: 14
 
   status:
-    name: web-stats-status
+    name: ${{ github.event_name == 'pull_request' && 'web-stats-status' || 'web-stats-status (dispatch)' }}
     needs: [changes, test, visual]
     if: always()
     runs-on: ubuntu-latest

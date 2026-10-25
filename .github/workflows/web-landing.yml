@@ -53,7 +53,7 @@ jobs:
       - run: bun test apps/site packages/miner-core/src/metrics.test.ts
 
   status:
-    name: web-landing-status
+    name: ${{ github.event_name == 'pull_request' && 'web-landing-status' || 'web-landing-status (dispatch)' }}
     needs: [changes, test]
     if: always()
     runs-on: ubuntu-latest

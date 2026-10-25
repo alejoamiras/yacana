@@ -102,7 +102,8 @@ bun run --cwd protocol/work-circuit manifest       # the proof-layout manifest (
   `web-stats`, `work-circuit`). It always runs, needs every other job, and `.github/actions/status` runs
   `scripts/ci-status.ts`, which fails it unless each job ended `success` where the change filter said relevant and
   `skipped` where it did not. A new job joins its workflow's `status.needs`; `scripts/layout.test.ts` holds the
-  shape. A `[skip ci]` head or an invalid workflow file reports no status, so the PR stays blocked.
+  shape. A dispatch run posts `<name> (dispatch)`, so it never answers for a pull request's head. A `[skip ci]` head
+  or an invalid workflow file reports no status, so the PR stays blocked.
 - Conventional commits (commitlint), signed. Feature branches only; PRs open only at the Delivery step of plan §9.
 - Tests: the smallest set that proves the behaviour and catches the expected failures. External-system code gets one
   real-data integration test under `describe.skipIf(!ENV)`.

@@ -28,7 +28,7 @@ jobs:
       - run: bun test packages/miner-core packages/bridge tools/deploy scripts tools/localnet
 
   status:
-    name: miner-core-status
+    name: ${{ github.event_name == 'pull_request' && 'miner-core-status' || 'miner-core-status (dispatch)' }}
     needs: [test]
     if: always()
     runs-on: ubuntu-latest

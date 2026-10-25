@@ -68,17 +68,20 @@ interface Workflow {
 const ciDir = (dir: string): string[] => readdirSync(join(repo, dir)).map((f) => `${dir}/${f}`);
 const workflows: Workflow[] = ciDir('.github/workflows').map((file) => {
   const doc = YAML.parse(readFileSync(join(repo, file), 'utf8')) as {
-    on?: Record<string, unknown>;
+    on?: Record<string, unknown> | string[] | string;
     jobs?: Record<string, Job>;
   };
   const jobs = Object.values(doc.jobs ?? {});
+  // `on:` may be one event, a list of events, or a map of events to their settings.
+  const on = typeof doc.on === 'string' ? [doc.on] : (doc.on ?? {});
+  const pullRequest = Array.isArray(on) ? on.includes('pull_request') : 'pull_request' in on;
   const filter = jobs.flatMap((j) =>
     j.with?.filters ? ((YAML.parse(j.with.filters) as { relevant?: string[] }).relevant ?? []) : [],
   );
   return {
     file,
-    pullRequest: 'pull_request' in (doc.on ?? {}),
-    pullRequestFilter: doc.on?.pull_request,
+    pullRequest,
+    pullRequestFilter: Array.isArray(on) ? null : on.pull_request,
     filter,
     steps: jobs.flatMap((j) =>
       (j.steps ?? []).map((st) => ({
@@ -273,6 +276,9 @@ function testGlobs(config: string): { include: string[]; exclude: string[] } | u
 // exactly when its workflow has a `changes` job.
 const STATUS = 'status';
 const statusName = (file: string): string => `${file.replace(/^.*\//, '').replace(/\.yml$/, '')}-status`;
+// A dispatch run on a pull request's head commit posts its own name, so it never answers for the required one.
+const statusJobName = (file: string): string =>
+  `\${{ github.event_name == 'pull_request' && '${statusName(file)}' || '${statusName(file)} (dispatch)' }}`;
 const needsOf = (j: Job): string[] => (j.needs === undefined ? [] : [j.needs].flat());
 
 /** What would make the verdict misread a job: a gate other than the change filter, or a failure read as success. */
@@ -378,7 +384,7 @@ describe('workflows', () => {
       expect({ file: w.file, job: job && { ...job, needs: needsOf(job).sort() } }).toEqual({
         file: w.file,
         job: {
-          name: statusName(w.file),
+          name: statusJobName(w.file),
           needs: others.sort(),
           if: 'always()',
           'runs-on': expect.any(String),
@@ -397,11 +403,12 @@ describe('workflows', () => {
       { uses: './.github/actions/setup-bun', with: { install: 'false' } },
       { shell: 'bash', run: 'bun scripts/ci-status.ts', env: { NEEDS: `\${{ inputs.needs }}` } },
     ]);
-    const names = workflows.flatMap((w) => Object.values(w.byId).map((j) => j.name));
+    // A job without a name is checked under its id.
+    const names = workflows.flatMap((w) => Object.entries(w.byId).map(([id, j]) => j.name ?? id));
     const shared = workflows
       .filter((w) => w.pullRequest)
       .map((w) => statusName(w.file))
-      .filter((n) => names.filter((x) => x === n).length !== 1);
+      .filter((n) => names.includes(n));
     expect(shared).toEqual([]);
   });
 

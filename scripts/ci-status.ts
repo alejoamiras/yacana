@@ -1,8 +1,5 @@
-// The verdict of a pull-request workflow's `<workflow>-status` job, the one check branch protection requires.
-// A gated job that is skipped reports "Success" to protection, so the status job compares every job it needs
-// with what the change filter implies: `success` where `changes` said relevant (or the workflow has no
-// `changes`), `skipped` where it said not. Anything else — failed, cancelled, never started, or a filter that
-// never concluded — fails it. Usage: NEEDS='${{ toJSON(needs) }}' bun scripts/ci-status.ts
+// The verdict behind each `<workflow>-status` check. A skipped job satisfies branch protection, so every job's
+// result is compared with what the change filter implies.
 
 export interface Need {
   result: string;

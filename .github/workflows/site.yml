@@ -54,7 +54,7 @@ jobs:
       - run: bun test apps/site
 
   status:
-    name: site-status
+    name: ${{ github.event_name == 'pull_request' && 'site-status' || 'site-status (dispatch)' }}
     needs: [changes, test]
     if: always()
     runs-on: ubuntu-latest

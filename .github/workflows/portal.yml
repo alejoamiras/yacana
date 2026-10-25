@@ -49,7 +49,7 @@ jobs:
       - run: bun tools/deploy/scripts/l1-deploy.ts --anvil
 
   status:
-    name: portal-status
+    name: ${{ github.event_name == 'pull_request' && 'portal-status' || 'portal-status (dispatch)' }}
     needs: [changes, test]
     if: always()
     runs-on: ubuntu-latest

@@ -50,7 +50,7 @@ jobs:
           YACANA_REQUIRE_TOOLCHAIN: '1'
 
   status:
-    name: work-circuit-status
+    name: ${{ github.event_name == 'pull_request' && 'work-circuit-status' || 'work-circuit-status (dispatch)' }}
     needs: [changes, test]
     if: always()
     runs-on: ubuntu-latest

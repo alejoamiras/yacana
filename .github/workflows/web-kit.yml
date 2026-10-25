@@ -49,7 +49,7 @@ jobs:
       - run: bun test packages/web-kit
 
   status:
-    name: web-kit-status
+    name: ${{ github.event_name == 'pull_request' && 'web-kit-status' || 'web-kit-status (dispatch)' }}
     needs: [changes, test]
     if: always()
     runs-on: ubuntu-latest

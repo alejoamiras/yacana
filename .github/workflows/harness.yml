@@ -84,7 +84,7 @@ jobs:
           retention-days: 14
 
   status:
-    name: harness-status
+    name: ${{ github.event_name == 'pull_request' && 'harness-status' || 'harness-status (dispatch)' }}
     needs: [changes, rig]
     if: always()
     runs-on: ubuntu-latest

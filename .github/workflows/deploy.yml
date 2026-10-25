@@ -44,7 +44,7 @@ jobs:
       - run: bun test tools/deploy --pass-with-no-tests
 
   status:
-    name: deploy-status
+    name: ${{ github.event_name == 'pull_request' && 'deploy-status' || 'deploy-status (dispatch)' }}
     needs: [changes, test]
     if: always()
     runs-on: ubuntu-latest

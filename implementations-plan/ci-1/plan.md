@@ -195,6 +195,8 @@ Title `ci: one status check per pull-request workflow`; body: what and why, the 
 | r1 | Codex gpt-6.1-sol high | conditional approve | 1 `[skip ci]`/invalid YAML → F9; 2 cancel wording → F3, P3.5; 3 → F5; 4 rerun → P3.6; 5 G2 exact rules, P1 rows; 6 TS, `install` input, shallow checkout (agrees); 7 F2 exception and 300-file caveat; 8 P3 lint warning, SHAs and URLs | none |
 | final | Codex gpt-6.1-sol high, fresh session | conditional approve | 1 G3 rejects job-level `continue-on-error` on covered jobs; 2 G2 pins the status action's verdict wiring; 3 P3.6 reruns `rig` by job id if `--failed` skips it, I3 promoted only on observed reruns | none |
 | final-v | same session, resumed | **approve** | folds verified, no regression | — |
+| fix r1 | Codex gpt-6.1-sol high | findings: 1 | header comment of `scripts/ci-status.ts` cut to one sentence | — |
+| fix r1 | Opus 5.5 diff review | findings: 3 | 1 a dispatch run on a PR head posted a second check under the required name: the status name is now `<name>` on `pull_request`, `<name> (dispatch)` otherwise (G2 pins it); 2 G1–G3 skipped a workflow whose `on:` is a list or string: events normalised; 3 the name-uniqueness check now counts an unnamed job under its id | — |
 
 Size: about 200 lines against light's 150; the quoted ask, the verbatim fix-loop rules and the P3 evidence steps
 carry the excess.

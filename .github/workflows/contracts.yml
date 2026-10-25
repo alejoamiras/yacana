@@ -67,7 +67,7 @@ jobs:
       - run: bun run site:build
 
   status:
-    name: contracts-status
+    name: ${{ github.event_name == 'pull_request' && 'contracts-status' || 'contracts-status (dispatch)' }}
     needs: [changes, test]
     if: always()
     runs-on: ubuntu-latest
