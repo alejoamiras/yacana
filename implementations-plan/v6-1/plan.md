@@ -505,6 +505,13 @@ retried after 15 s. **Fixed** in 482c1b5: a predating 429 may still carry the no
 shorter one, and a predating opaque or 5xx failure still lengthens nothing. The test's trace fails with either half
 of the rule removed.
 
+**Round 3, the last** (Codex, on `6125d0e..482c1b5`): one low, demonstrated. Under silence, a predating 429 still
+went through as a throttle with its own deadline. So a 503's 20 s became 5 s with `Retry-After: 5`, and 15 s after
+an opaque burst. **Fixed** in 822acd6: a throttle from the burst keeps silence's deadline when that is later. The
+opaque-burst unmasking moved to its own function (`unmask`), so `recordOutcome` stays within the complexity budget
+with no change in behaviour. The test fails under each of three mutations: no floor, no later Retry-After under a
+throttle, and a shorter one taken. The loop stops at three rounds, so no fourth Codex round reviewed this fix.
+
 **Implementation deviations** (the tree wins; each in `lessons/`):
 - P1: the `nargo` pins keep 5.2.0's shape (the deps our `Nargo.toml` files name); `poseidon v0.4.0` is fetched by
   nothing here and `sha256 v0.3.0` is a transitive 5.2.0's lock did not pin either.
