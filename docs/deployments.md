@@ -189,22 +189,15 @@ deployed byte at about 1,542 gas, and forge's own broadcast,
 [`0x533825f2…def305`](https://sepolia.etherscan.io/tx/0x533825f20d7c0e8813e586d14741dbc13f21c8db188e22a5678726af87def305)
 (block 11993956), ran out of gas at its simulated limit of 5,174,925 and created nothing.
 
-The versioned origin: a retired version's last build, assembled with `YACANA_APP_ROLE=old bun run site:build` into
-`apps/site/dist-old` and deployed to the `yacana-v5` Worker (`apps/site/v5/wrangler.jsonc`, custom domain
-`v5.yacana.network`, versions at `<id>-yacana-v5.<account>.workers.dev`). It restores accounts and never creates
-one, sends ahead and exits; mining there has ended. It is kept until the version's deadline has passed
-(`docs/upgrades.md`). Its custom domain is created by its first production deploy, after the merge, never from a
-branch; before that a version of the Worker serving the frozen record proves the role and the headers on a preview
-host. Rehearsed 2026-09-13: the Worker created without its route from a copy of `v5/wrangler.jsonc` minus `routes`
-(so nothing but version previews is reachable), version `86e77d40-bbf3-4716-b8c7-b8ad82372aa7` of commit `bc3cbb4`
-serving the 2026-09-05 record as role `old` at `https://86e77d40-yacana-v5.alejo-amiras.workers.dev` — the same
-policy headers as the apex preview, `build.json` with the role and the old miner, the retired banner, sign-in
-restore-only with the preview notice naming the host.
-First production deploy 2026-09-14, after stack #41 merged: `YACANA_APP_ROLE=old bun run site:build` of `2f56f86`
-and `wrangler deploy -c v5/wrangler.jsonc` (version `00295ec9-ec53-4664-a9ef-5a3625fbc3c6`) created the custom
-domain; `https://v5.yacana.network/build.json` reports role `old` with the 2026-09-13 record, then the live one,
-and still does. The apex was deployed by Workers Builds from the same commit. That origin offers no path to the
-2026-10-26 deployment, which carries nothing from 5.2.0.
+The versioned origin: a retired version's last build on an origin of its own, `v<N>.yacana.network` on the Worker
+`yacana-v<N>` (`apps/site/v<N>/wrangler.jsonc`, versions at `<id>-yacana-v<N>.<account>.workers.dev`), assembled with
+`YACANA_APP_ROLE=old bun run site:build` into `apps/site/dist-old` and deployed by hand at the move
+(`docs/upgrades.md` step 8). It restores accounts and never creates one, sends ahead and exits; mining there has
+ended. It is kept until the version's deadline has passed. Its custom domain is created by its first production
+deploy, after the merge, never from a branch; before that a version of the Worker serving the frozen record proves
+the role and the headers on a preview host. This deployment has none yet: `deployments/site.env` leaves both
+old-origin values empty, and the apps link no old origin, until the next move. V5's (`Archived — 2026-09-13`
+below) is retired.
 
 The witness archive: `deployments/witnesses/<profile>.jsonl`, written by `bun run bridge -- forward` from a
 version's settled exits (every version of the profile in the one file), committed, and served by the site as one
@@ -307,6 +300,21 @@ After them `bun run bridge -- status` reads `exited 1 · inbound 1` for version 
 on the branch preview reads the same from the portal, and the miner's wallet page on that preview shows the
 bridge tile against the live headroom. Every step above ran from the arc-4 branch on preview deployments; the
 apex and the `v5` custom domain are untouched.
+
+Its versioned origin, `v5.yacana.network` on the `yacana-v5` Worker (`apps/site/v5/wrangler.jsonc` until
+2026-10-26), carried this record as role `old`.
+Rehearsed 2026-09-13: the Worker created without its route from a copy of `v5/wrangler.jsonc` minus `routes`
+(so nothing but version previews is reachable), version `86e77d40-bbf3-4716-b8c7-b8ad82372aa7` of commit `bc3cbb4`
+serving the 2026-09-05 record as role `old` at `https://86e77d40-yacana-v5.alejo-amiras.workers.dev` — the same
+policy headers as the apex preview, `build.json` with the role and the old miner, the retired banner, sign-in
+restore-only with the preview notice naming the host.
+First production deploy 2026-09-14, after stack #41 merged: `YACANA_APP_ROLE=old bun run site:build` of `2f56f86`
+and `wrangler deploy -c v5/wrangler.jsonc` (version `00295ec9-ec53-4664-a9ef-5a3625fbc3c6`) created the custom
+domain; `https://v5.yacana.network/build.json` reports role `old` with the 2026-09-13 record, then the live one,
+and still does. The apex was deployed by Workers Builds from the same commit. That origin offers no path to the
+2026-10-26 deployment, which carries nothing from 5.2.0.
+**Retired 2026-10-26**: it had no users beyond the project's own testing; the repository no longer carries it, and
+the owner deletes the Worker and its custom domain in the Cloudflare dashboard (`docs/upgrades.md`, "Retired").
 
 ## Archived — Yacana public testnet before the bridge, `testnet` profile (2026-09-05)
 
