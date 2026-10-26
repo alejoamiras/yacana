@@ -36,9 +36,10 @@ Two follow-ups of the move to V6:
   a later "Use the default", the row reads "· default" once the page reloads. Nothing else changes.
 - **UI impact (a2)**, ask11 (owner): "the only visible effect is the old-tab notice and any link to the old origin
   now naming previous.yacana.network."
-- **Owner asks** (`OWNER-ASKS.md`). The arcs ship without either:
-  - OA1: the row right after "Use the default".
-  - OA2: one previous origin replaces the version before it.
+- **Owner asks** (`OWNER-ASKS.md`):
+  - OA1: the row right after "Use the default" — answered A by the owner (2026-10-26), built in a1: "compare
+    normalized URLs in the row (and the five `onDefault` sites). The row says "· default" and drops the link at once."
+  - OA2: one previous origin replaces the version before it — open with the owner; a2 waits for it.
 - **ask11's check, amended once**: the once-only retirement section of `docs/upgrades.md` names `v5.yacana.network`
   and `yacana-v5`. An instruction that deletes a Worker must name it (§7 r1 #5).
 - **Out**: the Ethereum RPC's "Use the default" (same pattern, no decision); any Cloudflare command; deployment
@@ -143,7 +144,7 @@ Two follow-ups of the move to V6:
 
 ## 6. Phases
 
-### Phase 1 (arc a1): a saved default is no choice
+### Phase 1 (arc a1): a saved default is no choice ✓
 1. Apply §4 a1.
 2. Add `packages/web-kit/src/browser/connection.test.ts` with one test:
    - Stub `localStorage` with a Map, and set `VITE_AZTEC_NODE_URL=https://node.example` around the calls.
@@ -156,9 +157,15 @@ Two follow-ups of the move to V6:
    - A stored current default with a slash stays byte for byte after a save of the RPC alone.
    - Control: a custom node is stored and loads.
 3. In `node-tile.vitest.tsx:120`, add an assertion: after "Use the default", the stored JSON has no `nodeUrl`.
+3b. OA1 = A: export `isDefaultNode(url)` (today's default, compared normalized) from `connection.ts`. Use it in
+    `NodeTile.tsx:71` and the five `onDefault` sites (`apps/web-miner/src/App.tsx:101`, `routes/Stats.tsx:43`,
+    `apps/web-stats/src/App.tsx:114`, `apps/web-landing/src/App.tsx:80`, `sections/HeroLive.tsx:66`). The one unit
+    test reads it in both spellings. One `node-tile.vitest.tsx` test shows the row read "· default" with no link
+    for a slash-spelled default, and "· custom" with the link for another node (control).
 4. Revert the read rule, then the write rule. The new test must fail each time. Log both runs.
 
-**Validation gate**: `bun run lint`, `bun run typecheck`, `bun test` and `bun run test:components` exit 0. Step 4's
+**Validation gate**: `bun run lint`, `bun run typecheck`, `bun test`, `bun run test:components` and
+`bun run --cwd apps/web-miner test:replay` exit 0 (the replay lane added by the orchestrator at approval). Step 4's
 two red runs are in `lessons/phase-1.md`. Layers: lint/typecheck, unit, component. E2E: none. No spec moves, and
 the unit test covers this storage logic; the PR's CI runs the shards.
 
@@ -210,6 +217,10 @@ found no new owner ask:
 
 Resumed (verification): **approve** — "No material regression found in these revisions. No settled disposition
 needs reopening, and no additional owner ask is needed."
+
+**Deviation in a1** (tree over plan): the full `bun test` exposed `stats-view/tests/runtime.bun.test.ts` reassigning
+`process.env`, which detaches `import.meta.env` from every later suite. That suite now restores in place
+(`lessons/phase-1.md`). The plan's module-cache warning holds as well.
 
 ## 8. Post-implementation
 

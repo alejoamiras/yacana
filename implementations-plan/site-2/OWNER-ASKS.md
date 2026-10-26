@@ -15,7 +15,7 @@
     link at once.
   - B: leave it. The row corrects itself on the next reload.
 - **Recommendation**: A. The row then says what the visitor just did.
-- **What ships now**: a1 without it (B's behaviour, with the reload now fixing the row).
+- **Answer** (owner, 2026-10-26): A. Built in a1.
 
 ## OA2: one previous origin replaces the version before it
 
