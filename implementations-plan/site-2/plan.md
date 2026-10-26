@@ -233,6 +233,10 @@ beside it): 3 findings.
 | O2 | A retired default that still serves could never be chosen again (low, needs conditions that do not exist yet) | the append is conditional: "unless the old default also serves" the new deployment (runbook and code comment) |
 | O3 | Two comments garbled or historical (low) | rewritten |
 
+Round 2 (resumed `01a178e5`, on `10340ed..2281c82`): **clean** — "no new material defect"; C1's known-limit
+disposition stands. Converged in 2 rounds. Final head gate: lint 0, typecheck 0, `bun test` 704 pass / 0 fail,
+`test:components` 0, `test:replay` 9 passed.
+
 ## 8. Post-implementation
 
 - Write comments to the bar as you code. Log attempts in `lessons/phase-N.md`. Run `agent-worktree status site-2
