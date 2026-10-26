@@ -10,9 +10,35 @@ eli5_mode: skipped (orchestrator-owned)
 quality_bar: production
 hardening: not scheduled
 budget: "recon 3 agents (Sonnet) + one scratch spike; codex gpt-6.1-sol at high; Opus 5.5 Plan audit; code-review off"
-status: approved by the orchestrator; P1–P5 ✓, K1–K4 run, K5 pending; P6 steps 1–3 ✓, its gate waits on the PR checks
+status: completed 2026-10-26 (PR #79); K5 pending (#81)
 created: 2026-10-25
 ---
+
+## Outcome
+
+- **Date**: 2026-10-26. **Status**: completed. Delivered in PR #79 (ready for review; merging it is the
+  orchestrator's call). It delivers ask3 and ask8.
+- **Shipped**, all in PR #79:
+  - The repository on Aztec 6.0.0 (P1–P5).
+  - Every node client capped at `NODE_MAX_BATCH` = 3 for dRPC's free plan, which the keyed run found.
+  - The fresh V6 testnet deployment. K1 ran at `d267f17` (portal and YACA). K2–K4 ran at `430ae20` (the miner and
+    token, registration at index 8, the forwarder, a 0.5 h soak and the example claim).
+  - The records, dRPC as the default node, and `docs/deployments.md` (P6). All 41 PR checks pass at `c731194`,
+    Workers Builds included.
+- **Dropped, rejected or superseded**:
+  - Outline B, a production guard in a code-only merge, was rejected (§8).
+  - D4, hashing the installer's npm lock, was dropped: G1 allows no new gate, so it stays `docs/roadmap.md`'s item.
+  - A4's date was lifted by ask8.
+  - `l1-deploy.ts`'s gas fix waits for #80, because the deployed sources stay put.
+  - `tools/localnet`'s node clients stay uncapped: they reach only their run's own node.
+  - OA2's code change is left out: it is the owner's call.
+  - Not filed upstream: bb.js 6.0.0 interleaving concurrent Chonk proofs in one process, and 6.0.0's `engines`
+    saying Node ≥ 20.16 while `aztec start` needs 24.
+- **Known limits:** #82 (I3, a send-ahead leaf against a later version's Inbox).
+- **Open items:** #81 (K5, Etherscan verification), #80. OA2 is with the orchestrator, in `OWNER-ASKS.md`.
+- The `/goal` and `/loop` seeds at the end of this file are retired; nobody runs them.
+- This plan is over the mid target of 350 lines. The audit records of four review loops and the keyed run's record
+  are evidence that cannot be cut.
 
 # v6-1: the repository on Aztec 6.0.0, and a fresh V6 testnet deployment
 
@@ -329,7 +355,7 @@ cause is a stop. `bun run lint:actions` exits 0. Layers: CI.
 
 ### K: the keyed deployment (the orchestrator; §7): K1–K4 ✓, K5 pending
 
-### P6: the records and the site move (after K) ☐ (steps 1–3 ✓, the local gate items pass; the PR checks and step 4 next)
+### P6: the records and the site move (after K) ✓
 1. `git mv` the V5 record and its example claim to `testnet-2026-09-28.*`. Commit K's `testnet.json` and
    `testnet.example-claim.json`. Set `VITE_AZTEC_NODE_URL` in `site.env`.
 2. Write the `docs/deployments.md` section. Move the 2026-09-28 section under "Archived".
