@@ -43,8 +43,9 @@ describe('assembly inspects what it emitted', () => {
     const steps = stubbed('fetch("https://node.example/rpc")');
     // The role directories are real deliverables: they are asserted on the pairing, never written by a test.
     await expect(assemble(scratch(), production, steps)).rejects.toThrow(/a production apex build lands in/);
+    // site.env names no old origin until a move: the old role stops before it pairs.
     await expect(assemble(scratch(), { ...production, YACANA_APP_ROLE: 'old' }, steps)).rejects.toThrow(
-      /a production old build lands in .*dist-old/,
+      /an old-role build needs VITE_OLD_APP_ORIGIN/,
     );
     expect(productionOutFor('apex')).toBe(PRODUCTION_OUT);
     expect(productionOutFor('old')).toBe(OLD_OUT);
