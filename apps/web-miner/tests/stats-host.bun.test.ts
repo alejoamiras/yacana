@@ -2,18 +2,28 @@
 // shown or hidden; its end brings a fresh one, started at once if Stats shows, at the next showing if not.
 // Then when a hosted request may leave, and the path composed: the host, the stats runtime, the quiet
 // client through the guard and the reader, against a JSON-RPC stand-in for the node.
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
 import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
 import { Fr } from '@aztec-labs/aztec.js/fields';
 import { CHUNK, type ReadLimits, readEpochs, readSlot, type SlotTable } from '@yacana/miner-core/reader';
 import type { StatsRuntime, StatsSources } from '@yacana/stats-view/runtime';
 import { type Fixed, historyAtom, statusAtom } from '@yacana/stats-view/state';
 import type { Connection } from '@yacana/web-kit/browser/connection';
-import { currentNodeEndpoint, setNodeEndpoint, setOriginalFetch } from '@yacana/web-kit/browser/node-guard';
+import {
+  currentNodeEndpoint,
+  installNodeGuard,
+  setNodeEndpoint,
+  setOriginalFetch,
+  uninstallNodeGuard,
+} from '@yacana/web-kit/browser/node-guard';
 import { resetNodeHealth } from '@yacana/web-kit/browser/node-health';
 import { createStore } from 'jotai';
 import { claimBusy, createStatsHost, createTurns, hostedBusy, hostedRuntime } from '../src/routes/stats-host';
 import { claimReadsAtom, type Endpoints, endpointsAtom, minerAtom } from '../src/state';
+
+// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
+beforeAll(installNodeGuard);
+afterAll(uninstallNodeGuard);
 
 const A: Endpoints = { nodeUrl: 'http://a/', ethRpcUrl: 'http://rpc/', switching: false };
 const B: Endpoints = { ...A, nodeUrl: 'http://b/' };

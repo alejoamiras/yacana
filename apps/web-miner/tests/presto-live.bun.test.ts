@@ -1,13 +1,14 @@
 // The prover against a real headless Presto (`presto-server` on loopback, `PRESTO_URL=http://127.0.0.1:<port>`),
 // as the homelab and the e2e lane run it: one W proof natively, byte-identical to the WASM proof of the same
 // witness and to bb's committed native proof; the winning check on it and on a corrupted copy.
-import { describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { cpus } from 'node:os';
 import { resolve } from 'node:path';
 import { PRESTO_SCHEME_CHONK, PrestoClient } from '@alejoamiras/presto-core';
 import { BackendType, Barretenberg } from '@aztec-foundation/bb.js';
 import { Fr } from '@aztec-labs/foundation/curves/bn254';
 import { BbJsWorkProver, type WorkArtifact, type WorkInputs } from '@yacana/miner-core/work';
+import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/node-guard';
 import {
   acceleratorUrls,
   PRESTO_AZTEC_VERSION,
@@ -15,6 +16,10 @@ import {
   type ProverKind,
 } from '../src/presto.ts';
 import { PrestoWorkProver, type ProverTransition } from '../src/presto-prover.ts';
+
+// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
+beforeAll(installNodeGuard);
+afterAll(uninstallNodeGuard);
 
 const url = process.env.PRESTO_URL;
 

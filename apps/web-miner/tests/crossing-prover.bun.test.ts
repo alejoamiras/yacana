@@ -1,11 +1,16 @@
 // A crossing's row keeps who proved its transaction for as long as it proves or claims: the
 // session's map, so a list mounted later reads it, and a new attempt starts from the promise.
-import { describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import type { Crossing } from '@yacana/bridge/journal';
+import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/node-guard';
 import { createStore } from 'jotai';
 import { BridgeSession } from '../src/bridge/session.ts';
 import type { ProverKind } from '../src/presto.ts';
 import { claimingAtom, crossingProversAtom } from '../src/state.ts';
+
+// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
+beforeAll(installNodeGuard);
+afterAll(uninstallNodeGuard);
 
 interface Attribution {
   claim: (c: Pick<Crossing, 'id'>) => Promise<unknown>;

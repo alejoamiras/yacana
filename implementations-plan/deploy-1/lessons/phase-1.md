@@ -27,3 +27,22 @@
   compensating monkey-patch (a suite restores only state it changed); B adds a driver and an output contract for
   the leak alone. Agreed: the deploy suite keeps the platform's fetch, the leak is filed, and a1's root gate is
   reported blocked rather than bypassed.
+
+## P0 (#83, added to a1 by the orchestrator, 2026-10-26)
+
+- Probe: each of the 133 bun test files alone with an extra preload whose `afterAll` reads the realm. 31 suites
+  left web-kit's guard installed (web-kit 4, stats-view 2, web-landing 2, web-miner 23); the issue named three of
+  the four workspaces. `pinned-crs.bun.test.ts` leaves only the CRS interceptor (no guard).
+- Bun 1.4.2 facts: a preload's `beforeAll`/`afterAll` run once per run, not per file; `afterAll` hooks run in
+  registration order (a describe's before the file's); `bunfig.toml` `[test] isolate` is ignored.
+- Fix: `uninstallNodeGuard()` (tests only) puts back `replaced`, the fetch the guard replaced, and deletes the
+  `Symbol.for('yacana.node-guard')` marker. `original` could not serve: it is bound, and `setOriginalFetch`
+  re-points it. Each suite: `beforeAll(installNodeGuard)` first, the uninstall last. The web-kit suites stopped
+  assigning their fake to `globalThis.fetch` before the install (they arm it through `setOriginalFetch` already),
+  so the uninstall puts back the real fetch. `presto-prover` imports the guard statically and installs it before
+  admitting the fake Presto; its CRS stand-in is put back before the uninstall.
+- Gate: probe over 133 files, no suite leaves the guard, all exit 0. Root `bun test` 703 pass / 44 skip / 0 fail,
+  167 s (it was 262–270 s: the deploy suite no longer waits 60 s at the guard). Control with the guard's refusal
+  disabled: `node-guard.test.ts` alone 7 fail; `chain` → `worker-backend` → `node-guard` 9 fail (the guard is armed
+  after another suite's teardown); unmutated 22 pass. `bun run lint` 0, `bun run typecheck` 0 (after dropping an
+  import the old teardown used).

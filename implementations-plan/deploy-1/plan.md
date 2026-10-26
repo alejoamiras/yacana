@@ -26,7 +26,8 @@ verified (#81). Recon: `recon.md`. Evidence: `lessons/phase-0.md`.
   `docs/deployments.md`, and the forge-gas line of `implementations-plan/lessons.md`.
 - **Out** (lane brief): `protocol/portal`, `deployments/`, every keyed command, the mainnet profile, any CI gate
   made advisory.
-- **Issues**: #80 → a1. #81 → a2. **Asks**: none.
+- **Issues**: #83 and #80 → a1 (#83 joined a1 by the orchestrator's amendment of 2026-10-26). #81 → a2.
+  **Asks**: none.
 
 ## UI impact
 
@@ -140,11 +141,27 @@ rows)". UI impact: none. `OWNER-ASKS.md`: none.
 
 ## Phases
 
-### P1 (a1): the creation at the node's quote — steps 1–4 done; gate red on the root `bun test` only (blocked)
+### P0 (a1, amendment): #83, every guard suite gives the realm back
 
-The root run shares one realm across files. web-kit's fetch guard, which the browser suites install on import
-and never remove, refuses the new suite's anvil URL there. The fix belongs to those suites, outside this lane
-(`lessons/phase-1.md`; #83). Every other command of the gate passed.
+The orchestrator added #83 to a1 (2026-10-26): it was the one red command in P1's gate. The fix: each bun suite
+that loads web-kit's fetch guard installs it in its setup and calls a new tests-only `uninstallNodeGuard()` last
+in its teardown, which puts back the fetch the guard replaced and drops its realm marker. Only the guard knows
+that fetch: `original` is bound, and `setOriginalFetch` re-points it. The guard's behaviour in a page is unchanged.
+
+- The suites (31, by a probe that ran each file alone and read the realm after it): web-kit `eth-rpc`,
+  `node-guard`, `node-health`, `node`; stats-view `history-transport`, `runtime`; web-landing `chain`, `live`; and 23
+  web-miner suites. Those that set a fake as `globalThis.fetch` before the guard now arm the fake only through
+  `setOriginalFetch`, so the uninstall puts back the real fetch.
+- Bun runs `afterAll` hooks in registration order, so the uninstall is the last teardown. A suite's own teardown
+  that puts back a wrapper of the guard (the CRS stand-in in `presto-prover`) runs before it.
+- Left as is: `pinned-crs.bun.test.ts` leaves the CRS interceptor, which forwards to the fetch it found. A leaked
+  `location` breaks nothing demonstrated.
+
+**Validation gate**: the probe over all 133 files finds no suite that leaves the guard. The root `bun test`
+passes at retry 0, with `l1-deploy.test.ts` in it. With the guard's refusal disabled, the suites that test the
+guard fail both alone and after another guard suite's teardown.
+
+### P1 (a1): the creation at the node's quote — steps 1–4 done 2026-10-26
 
 1. Make `forgeScript` async. Run `bun run portal:build && bun tools/deploy/scripts/l1-deploy.ts --anvil`: it must
    still pass.
@@ -178,7 +195,7 @@ exits 0. `git diff --stat origin/main` shows `docs/deployments.md` and the plan 
 ## Delivery
 
 - **a1** = P1 on `worktree-deploy-1`, carrying this plan. PR against `main`: `fix(deploy): send the l1 creation
-  at the node's gas estimate`, `Closes #80`. `code_review: off`.
+  at the node's gas estimate`, `Closes #80`, `Closes #83`. `code_review: off`. a1 = P0 then P1.
 - **a2** = P2 on `deploy-1-a2` from `origin/main`. Start it only after a1 has merged and Etherscan shows both
   contracts verified. PR `docs(deployments): the v6 portal and yaca verified on etherscan`, `Closes #81`. It
   carries the close-out. If Etherscan is not ready when a1 is delivered, stop after a1 and report it.

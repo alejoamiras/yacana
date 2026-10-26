@@ -1,14 +1,19 @@
 // bun: the live node switch against a fake worker, fake contracts and a fake handle. The rebuild
 // is injected (`recover`); what is checked is the order — pause, drain, the handle moved and the
 // guard's endpoint with it, the rebuild from the new node, mining resumed on the rebuilt view.
-import { afterEach, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
 import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
 import type { SwitchableNode } from '@yacana/web-kit/browser/node';
+import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/node-guard';
 import { createStore } from 'jotai';
 import type { Deployment, Fee } from '../src/chain.ts';
 import { MinerController, type Rebound } from '../src/controller.ts';
 import { balanceAtom, epochAtom, minerAtom } from '../src/state.ts';
 import type { FromWorker, ToWorker } from '../src/worker-protocol.ts';
+
+// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
+beforeAll(installNodeGuard);
+afterAll(uninstallNodeGuard);
 
 /** Consent as the controller tests need it: in force, with nothing to remember. */
 const OPEN = { allowed: () => true, promote() {}, forget() {} };

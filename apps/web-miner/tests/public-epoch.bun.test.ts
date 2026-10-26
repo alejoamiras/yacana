@@ -1,8 +1,13 @@
-import { describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/node-guard';
 import { createStore } from 'jotai';
 import type { EpochInfo } from '../src/lib/reducer.ts';
 import { startPublicEpoch } from '../src/public-epoch.ts';
 import { epochAtom } from '../src/state.ts';
+
+// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
+beforeAll(installNodeGuard);
+afterAll(uninstallNodeGuard);
 
 const info = (epoch: number, claims = 0): EpochInfo => ({
   epoch: BigInt(epoch),

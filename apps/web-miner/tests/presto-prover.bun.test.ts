@@ -8,6 +8,11 @@ import { BackendType, Barretenberg } from '@aztec-foundation/bb.js';
 import { Fr } from '@aztec-labs/foundation/curves/bn254';
 import { PROOF_FIELDS } from '@yacana/miner-core/proof';
 import type { WorkArtifact, WorkInputs } from '@yacana/miner-core/work';
+import {
+  installNodeGuard,
+  setAcceleratorEndpoints,
+  uninstallNodeGuard,
+} from '@yacana/web-kit/browser/node-guard';
 import crsLock from '@yacana/web-kit/crs.lock.json';
 import { bbVersion } from '@yacana/web-kit/vite-base';
 import { W_VK_BYTES } from '@yacana/work-circuit/generated/vk';
@@ -149,10 +154,10 @@ let fake: ReturnType<typeof fakePresto>;
 let stopCrs: (() => void) | undefined;
 beforeAll(async () => {
   fake = fakePresto();
-  // Another suite in this process may have armed the node guard over `fetch`: admit the fake as the
-  // Worker admits Presto, or the SDK's requests die at the guard and every test reads as `network`.
-  const guard = await import('@yacana/web-kit/browser/node-guard');
-  guard.setAcceleratorEndpoints(acceleratorUrls(fake.endpoint), 60_000);
+  // The guard as the Worker runs it, with the fake admitted as the Worker admits Presto: without the
+  // admission the SDK's requests die at the guard and every test reads as `network`.
+  installNodeGuard();
+  setAcceleratorEndpoints(acceleratorUrls(fake.endpoint), 60_000);
   // In its own process: by now `fetch` in this one may be the guard, or the miner's CRS interceptor
   // over it, and the download would be turned into a page request no one here can answer.
   const script = Bun.resolveSync('@yacana/web-kit/scripts/fetch-crs', pkg);
@@ -163,9 +168,11 @@ beforeAll(async () => {
   stopCrs = serveCrs();
 }, 120_000);
 
+// The guard goes last, under the CRS stand-in: later suites in the run get the realm's fetch back.
 afterAll(() => {
   stopCrs?.();
   fake?.server.stop(true);
+  uninstallNodeGuard();
 });
 
 describe('PrestoWorkProver', () => {

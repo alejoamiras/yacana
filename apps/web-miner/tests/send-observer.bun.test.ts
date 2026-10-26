@@ -1,6 +1,11 @@
-import { describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import type { Tx } from '@aztec-labs/stdlib/tx';
+import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/node-guard';
 import { type SentTx, sendObserver } from '../src/wallet.ts';
+
+// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
+beforeAll(installNodeGuard);
+afterAll(uninstallNodeGuard);
 
 const tx = (hash: string, expiresAt: number, anchorBlock: number): Tx =>
   ({

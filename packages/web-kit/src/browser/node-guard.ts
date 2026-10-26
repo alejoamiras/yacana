@@ -21,6 +21,8 @@ export interface NodeRequestOutcome {
 interface GuardState {
   /** The context's fetch under the guard; re-pointed when the guard is re-armed over a test's fake. */
   original: typeof globalThis.fetch;
+  /** The `globalThis.fetch` the guard replaced, never re-pointed: what an uninstall puts back. */
+  replaced: typeof globalThis.fetch;
   guarded: typeof globalThis.fetch;
   endpoint: string | null;
   deadlineMs: number;
@@ -301,6 +303,7 @@ export function installNodeGuard(): void {
   if ((globalThis as Realm)[MARK]) return;
   const s: GuardState = {
     original: globalThis.fetch.bind(globalThis),
+    replaced: globalThis.fetch,
     guarded: globalThis.fetch,
     endpoint: null,
     deadlineMs: 120_000,
@@ -344,6 +347,20 @@ export function setOriginalFetch(fetchImpl: typeof globalThis.fetch): void {
   if (!s) return;
   s.original = fetchImpl;
   globalThis.fetch = s.guarded;
+}
+
+/**
+ * Tests only: puts back the fetch the guard replaced, with every wrapper installed over it since, and
+ * forgets the guard's state, so later suites of a shared `bun test` realm meet the fetch they would
+ * alone and the next `installNodeGuard` starts afresh. The module stays cached: a suite that needs the
+ * guard installs it in its setup.
+ */
+export function uninstallNodeGuard(): void {
+  const realm = globalThis as Realm;
+  const s = realm[MARK];
+  if (!s) return;
+  globalThis.fetch = s.replaced;
+  delete realm[MARK];
 }
 
 if (!(globalThis as Realm)[MARK]) installNodeGuard();

@@ -5,12 +5,17 @@
 process.env.VITE_ROLLUP_VERSION = '5';
 process.env.VITE_VERSION_INDEX = '0';
 
-import { describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { type Crossing, FADE_AFTER_MS, UNKNOWN_ETH } from '@yacana/bridge/journal';
 import { PARAMS } from '@yacana/miner-core/generated/params';
+import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/node-guard';
 import { TAKING_LONG_AFTER_MS } from '../src/bridge/copy.ts';
 import { activity, moneyStanding } from '../src/bridge/rows.ts';
 import type { BridgeView } from '../src/state.ts';
+
+// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
+beforeAll(installNodeGuard);
+afterAll(uninstallNodeGuard);
 
 const ONE = 10n ** BigInt(PARAMS.DECIMALS);
 const PORTAL = `0x${'ab'.repeat(20)}` as const;

@@ -1,8 +1,13 @@
 import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
 import { Fr } from '@aztec-labs/aztec.js/fields';
 import { CHUNK, type Node, type SlotTable, type StorageLayout } from '@yacana/miner-core/reader';
-import { describe, expect, test } from 'vitest';
+import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/node-guard';
+import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { HISTORY, type Reader, readLive } from './live';
+
+// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
+beforeAll(installNodeGuard);
+afterAll(uninstallNodeGuard);
 
 // Slots need no hashing here: any distinct field per epoch will do for a fake node.
 const table: SlotTable = {

@@ -1,7 +1,12 @@
-import { describe, expect, test } from 'vitest';
+import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/node-guard';
+import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { type ChainSink, markUnreachable, type Reads, readAll } from './chain';
 import type { Launch, Live, Reader } from './live';
 import type { LaunchStatus, LiveStatus } from './state';
+
+// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
+beforeAll(installNodeGuard);
+afterAll(uninstallNodeGuard);
 
 const reader = {} as Reader;
 const launch: Launch = { genesis: { target: 1n, seed: 0n, launchAt: 0 }, lottery: { mix: 0n, reveals: 0 } };

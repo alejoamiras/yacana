@@ -2,11 +2,16 @@
 // session asks the node, in what order, and what it refuses to conclude from the answers. Built on
 // the prototype with fake dependencies — the constructor wants IndexedDB, a jotai store and Vite's
 // env, and none of that is what these cases are about.
-import { describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import type { Crossing } from '@yacana/bridge/journal';
+import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/node-guard';
 import { markDeployment } from '@yacana/web-kit/browser/node-health';
 import type { FactReads } from '../src/bridge/facts.ts';
 import { BridgeSession } from '../src/bridge/session.ts';
+
+// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
+beforeAll(installNodeGuard);
+afterAll(uninstallNodeGuard);
 
 const ANCHOR = 40;
 const EXPIRES = 1_000n;

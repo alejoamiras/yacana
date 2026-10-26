@@ -1,13 +1,18 @@
 // The controller's side of a Retry and a Start against a fake Worker: an unchanged config posts
 // nothing, a forced one rebuilds, the page's view of Presto follows the Worker's messages and is
 // cleared by a rebuild, and Stop is counted so a probe that outlived one can tell.
-import { describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/node-guard';
 import { createStore } from 'jotai';
 import type { Deployment, Fee } from '../src/chain.ts';
 import { MinerController } from '../src/controller.ts';
 import { type ConsentHooks, PRESTO_DEFAULT, prestoAtom } from '../src/presto.ts';
 import type { FromWorker, ToWorker } from '../src/worker-protocol.ts';
+
+// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
+beforeAll(installNodeGuard);
+afterAll(uninstallNodeGuard);
 
 class FakeWorker {
   onmessage: ((e: MessageEvent<FromWorker>) => void) | null = null;

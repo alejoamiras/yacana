@@ -1,10 +1,15 @@
 import 'fake-indexeddb/auto';
-import { describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/node-guard';
 import { createStore } from 'jotai';
 import type { Started } from '../src/boot.ts';
 import { type Consent, createConsent } from '../src/presto-consent.ts';
 import { Session } from '../src/session.ts';
 import { bootAtom, type Endpoints, endpointsAtom, epochAtom, mineIntentAtom } from '../src/state.ts';
+
+// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
+beforeAll(installNodeGuard);
+afterAll(uninstallNodeGuard);
 
 // The attempt bookkeeping (generation, cancel, supersession) with the ceremony and the wallet-level
 // work both faked: the wallet's own stop-on-abort lives in startSession and is covered by the E2E.
