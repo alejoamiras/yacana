@@ -6,3 +6,6 @@
 - 2026-10-26: Codex r1 reject (spawnSync deadlocks an in-process proxy); folded: async forgeScript, startAnvil(extraArgs), precise test claim, threat model; final fresh pass next.
 - 2026-10-26: final fresh Codex pass conditional approve; folded (Sepolia dry run in the P1 gate, startAnvil cleanup); resuming it to verify.
 - 2026-10-26: final pass resumed → approve. Plan ready; committing.
+- 2026-10-26: P1 step 1 green: async forgeScript; portal:build + l1-deploy.ts --anvil pass.
+- 2026-10-26: P1 gate RED on root bun test only (web-kit's fetch guard leaks into tools/ suites); every other gate green; Codex: fix the guard suites' teardown, outside this lane; a1 stops before the fix loop and the PR.
+- 2026-10-26: filed #83 (the guard leak); a1 stops at the red root gate, unpushed, no PR.

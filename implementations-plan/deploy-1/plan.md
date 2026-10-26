@@ -140,7 +140,12 @@ rows)". UI impact: none. `OWNER-ASKS.md`: none.
 
 ## Phases
 
-### P1 (a1): the creation at the node's quote
+### P1 (a1): the creation at the node's quote — steps 1–4 done; gate red on the root `bun test` only (blocked)
+
+The root run shares one realm across files. web-kit's fetch guard, which the browser suites install on import
+and never remove, refuses the new suite's anvil URL there. The fix belongs to those suites, outside this lane
+(`lessons/phase-1.md`; #83). Every other command of the gate passed.
+
 1. Make `forgeScript` async. Run `bun run portal:build && bun tools/deploy/scripts/l1-deploy.ts --anvil`: it must
    still pass.
 2. Export the seams, with `startAnvil`'s cleanup on a failed start, and write the test. Run it against the script without the flag. It must fail on the gas
@@ -216,6 +221,7 @@ exits 0. `git diff --stat origin/main` shows `docs/deployments.md` and the plan 
 | r1 | Codex gpt-6.1-sol high | reject | 1 `spawnSync` blocks an in-process proxy → async `forgeScript` (Fact 4); 2 the test proves the quote is followed, not Sepolia's EVM → stated, Fact 7; 3 the RPC's quote is a new reliance → Security, docs clause, I2; 4 no global `--disable-block-gas-limit` → `startAnvil(extraArgs)`; 6 the rig's callers → Fact 11 by trace | 5 claim the proxy's port from the registry: `port: 0` is the repo's pattern for in-process test servers (`inbox-sync.test.ts:4`, `worker-backend.bun.test.ts:17`), and the kernel's port cannot collide; 6's rig run: Fact 11 covers the path, at 15 min less |
 | final | Codex gpt-6.1-sol high, fresh session | conditional approve | 1 the Sepolia criterion rested on history → the dry run on Sepolia itself (Fact 13, in the P1 gate), Fact 7 narrowed to the tested anvil configurations; 2 `startAnvil` leaked its anvil and port on a failed start → cleanup before the rethrow, `beforeAll`/`afterAll` with a 90 s start | none |
 | final-v | same session, resumed | **approve** | folds verified, no regression | — |
+| impl | Codex gpt-6.1-sol high (root `bun test` red) | C, outside the lane | the leak filed as #83; a1 reported blocked, no bypass | A: the suite swaps in `Bun.fetch` (a compensating monkey-patch); B: a child-process driver (a contract for the leak alone) |
 
 Size: about 230 lines against light's 150. The verbatim fix-loop rules, the test's specification, the dry run
 and the evidence for two claims that did not hold carry the excess.
