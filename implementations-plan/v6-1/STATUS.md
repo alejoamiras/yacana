@@ -22,3 +22,4 @@
 - 2026-10-26 a3 P6 gate, local items pass: both pin diffs clean (d267f17, 430ae20); bun test 702 pass / 0 fail; the live example-claim test 3/3 on dRPC; site:build's build.json names the V6 miner; lint, lint:shell, lint:actions, typecheck, components, contracts:test, portal:test 0; site:e2e 3/3. PR checks next.
 - 2026-10-26 a3 P6 review r1: codex 2 lows, opus 5 (one visible: OA2 written, left out); doc and plan fixes folded; r2 next.
 - 2026-10-26 a3 P6 review r2: 1 low (OA2's wording decided nothing it could) fixed; r3 next.
+- 2026-10-26 a3 P6 review r3: nothing material; converged in three rounds. Push, PR checks, ready next.

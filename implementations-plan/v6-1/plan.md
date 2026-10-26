@@ -595,6 +595,8 @@ ends at it (and hangs on the previous code). The node pin and the stats teardown
 as a decision nobody made. **Fixed** here and in OA2: the code is unchanged, and the decision is pending. It
 confirmed OA2's trace.
 
+**P6 review, round 3** (Codex, resumed, on `467ce67..060b275` and the whole P6 delta): *nothing material*. Converged.
+
 ## 9. Post-implementation (no repository standard exists; written out)
 
 While implementing: comments state invariants only, never a plan or phase. Log every attempt in
