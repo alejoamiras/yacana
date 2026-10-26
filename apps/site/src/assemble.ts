@@ -135,14 +135,11 @@ export interface AssemblySteps {
 }
 const STEPS: AssemblySteps = { buildApp, fetchCrs, copyArtifacts, copySlots };
 
-export async function assemble(
-  outDir: string,
-  env: NodeJS.ProcessEnv = process.env,
-  steps: AssemblySteps = STEPS,
-): Promise<BuildRecord> {
-  const out = resolve(outDir);
-  // The config is loaded once here so a production build fails before any app is built.
-  const config = siteConfig('build', env);
+export function assertLanding(
+  config: Pick<SiteConfig, 'mode' | 'role'>,
+  out: string,
+  env: NodeJS.ProcessEnv,
+): void {
   // What Cloudflare serves is a role's directory of a Cloudflare build: none may hold anything but production.
   if (config.mode !== 'production' && (out === PRODUCTION_OUT || out === OLD_OUT || env.CF_PAGES))
     throw new Error(`a ${config.mode} build may not land in ${out}: production builds only`);
@@ -151,6 +148,17 @@ export async function assemble(
     throw new Error(
       `a production ${config.role} build lands in ${productionOutFor(config.role)}, not ${out}: the roles' Workers serve different directories`,
     );
+}
+
+export async function assemble(
+  outDir: string,
+  env: NodeJS.ProcessEnv = process.env,
+  steps: AssemblySteps = STEPS,
+): Promise<BuildRecord> {
+  const out = resolve(outDir);
+  // The config is loaded once here so a production build fails before any app is built.
+  const config = siteConfig('build', env);
+  assertLanding(config, out, env);
   rmSync(out, { recursive: true, force: true });
   mkdirSync(out, { recursive: true });
   for (const app of appsFor(config.role))

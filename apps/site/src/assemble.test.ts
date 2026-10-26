@@ -6,6 +6,7 @@ import type { SiteConfig } from '@yacana/web-kit/config';
 import {
   type AssemblySteps,
   assemble,
+  assertLanding,
   buildRecord,
   OLD_OUT,
   OLD_REDIRECTS,
@@ -47,6 +48,10 @@ describe('assembly inspects what it emitted', () => {
     await expect(assemble(scratch(), { ...production, YACANA_APP_ROLE: 'old' }, steps)).rejects.toThrow(
       /an old-role build needs VITE_OLD_APP_ORIGIN/,
     );
+    const old = { mode: 'production', role: 'old' } as const;
+    for (const out of [PRODUCTION_OUT, scratch()])
+      expect(() => assertLanding(old, out, {})).toThrow(/a production old build lands in/);
+    expect(() => assertLanding(old, OLD_OUT, {})).not.toThrow();
     expect(productionOutFor('apex')).toBe(PRODUCTION_OUT);
     expect(productionOutFor('old')).toBe(OLD_OUT);
     expect(OLD_OUT).not.toBe(PRODUCTION_OUT);

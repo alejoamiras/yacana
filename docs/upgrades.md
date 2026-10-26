@@ -65,7 +65,8 @@ after the flip lands like any other once its epoch is proven (rig case H4). The 
    deployments/testnet-v5.example-claim.json` (any names but the live ones; the operator script takes a record
    by path, and a production build refuses an example claim of another deployment), set
    `VITE_AZTEC_NODE_URL` in `deployments/site.env` to V6's node (the apps' default node comes from there, not
-   from the deploy's environment); unless the old default also serves V6, append it to `RETIRED_DEFAULT_NODES` in
+   from the deploy's environment) and empty its two old-origin values (step 8: they name V5's, and V6 has none
+   yet); unless the old default also serves V6, append it to `RETIRED_DEFAULT_NODES` in
    `packages/web-kit/src/browser/connection.ts`, so a browser that saved it boots on the new one; commit, then
    `YACANA_CONTINUE_FROM=deployments/testnet-v5.json YACANA_PORTAL=<portal> AZTEC_NODE_URL=<V6 node>
    YACANA_DEPLOYER_SECRET=… bun run deploy`: the V6 miner as
@@ -81,12 +82,11 @@ after the flip lands like any other once its epoch is proven (rig case H4). The 
    registration, so register within the week after the deploy. From here the portal forwards held sends into V6.
 8. **The apex, the old origin.** With step 6 and 7 committed on `main`, deploy the V6 site to the apex
    (`bun run site:deploy`, or the push). The old origin is V5's last build on its own origin,
-   `v<N>.yacana.network` with `<N>` the retiring version's number. It is made from the last commit that carried V5
-   in `deployments/testnet.json` (the one before step 6's move), in its own worktree so the V6 checkout is never
-   touched: `git worktree add ../yacana-old <that commit>`. In `../yacana-old`, give V5 its old origin and commit
-   there: `VITE_OLD_APP_ORIGIN=https://v<N>.yacana.network` and
-   `VITE_PREVIEW_HOST_SUFFIX_OLD=-yacana-v<N>.<account>.workers.dev` in `deployments/site.env` (an old-role build
-   refuses to run without the first), and the Worker `apps/site/v<N>/wrangler.jsonc`:
+   `v<N>.yacana.network` with `<N>` the retiring version's number. Both its values and its Worker reach `main`
+   through a pull request before step 6, while V5 is still the apex's version, so that V5's last apex build points
+   its open tabs there: `VITE_OLD_APP_ORIGIN=https://v<N>.yacana.network` and
+   `VITE_PREVIEW_HOST_SUFFIX_OLD=-yacana-v<N>.<account>.workers.dev` in `deployments/site.env`, and
+   `apps/site/v<N>/wrangler.jsonc`:
 
    ```jsonc
    {
@@ -100,10 +100,13 @@ after the flip lands like any other once its epoch is proven (rig case H4). The 
    }
    ```
 
-   Then `bun install && YACANA_APP_ROLE=old bun run site:build` (into its `apps/site/dist-old`) and, from its
-   `apps/site`, `wrangler deploy -c v<N>/wrangler.jsonc`, whose first run creates the custom domain. Keep the
-   worktree: steps 11 and 12 note V5's stop in it and redeploy from it; `git worktree remove ../yacana-old` from the
-   V6 checkout's root once the old origin comes down. An open V5 tab learns from `build.json` that it is behind
+   The build is made from the last commit that carried V5 in `deployments/testnet.json` (the one before step 6's
+   move, which carries both), in its own worktree so the V6 checkout is never touched: `git worktree add
+   ../yacana-old <that commit>`, then in `../yacana-old` `bun install && YACANA_APP_ROLE=old bun run site:build`
+   (into its `apps/site/dist-old`; it refuses to run without the origin) and `bun run site:wrangler -- deploy -c
+   v<N>/wrangler.jsonc`, whose first run creates the custom domain. Keep the worktree: steps 11 and 12 note V5's
+   stop in it and redeploy from it; `git worktree remove ../yacana-old` from the V6 checkout's root once the old
+   origin comes down. An open V5 tab learns from `build.json` that it is behind
    and asks for a reload. The old origin restores accounts (never creates one), sends ahead and exits; mining
    there has ended. Keep it up until V5's deadline has passed, then take it down.
 
@@ -130,9 +133,9 @@ after the flip lands like any other once its epoch is proven (rig case H4). The 
     bun run bridge -- note-stop <V5> [<unix seconds>]` writes `lifecycle.stoppedProvingAt` to V5's record: no key,
     no chain, the time defaults to now, a second note is refused. Commit it. Then redeploy the old origin with the
     note: in step 8's worktree (V5's record is `deployments/testnet.json` there) run the same `note-stop` against
-    that path, commit there too, build and `wrangler deploy -c v<N>/wrangler.jsonc`. Its page turns from "send
-    ahead" to "V5 has stopped proving. Nothing more can leave"; what V5 proved in time stays claimable on V6 or
-    redeemable on Ethereum until V5's last day. The pages never infer a stop from a silent hour: only this note
+    that path, commit there too, build and `bun run site:wrangler -- deploy -c v<N>/wrangler.jsonc`. Its page
+    turns from "send ahead" to "V5 has stopped proving. Nothing more can leave"; what V5 proved in time stays
+    claimable on V6 or redeemable on Ethereum until V5's last day. The pages never infer a stop from a silent hour: only this note
     says "stopped".
 12. **Retire the node.** Commit the witness archive first (step 10: a holder's V6 page completes V5's settled sends
     from `/witnesses/<V5's rollup version>.jsonl`, not from V5's node), then take V5's node down and `bun run bridge -- retire-node

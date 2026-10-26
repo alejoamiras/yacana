@@ -168,7 +168,6 @@ describe('site config', () => {
     });
     expect(c.ethRpcUrl).toBe(siteEnv.VITE_ETH_RPC_URL);
     expect(c.l1ExplorerUrl).toBe('https://sepolia.etherscan.io');
-    // No version has retired to an old origin of its own yet: the pair is empty, and that builds.
     expect(c.oldAppOrigin).toBe('');
     expect(viteDefine(c)['import.meta.env.VITE_OLD_APP_ORIGIN']).toBe('""');
     expect(c.role).toBe('apex');
@@ -196,9 +195,17 @@ describe('site config', () => {
     expect(attempt({ VITE_OLD_APP_ORIGIN: 'https://v6.yacana.network' })().oldAppOrigin).toBe(
       'https://v6.yacana.network',
     );
-    expect(attempt({ VITE_OLD_APP_ORIGIN: 'http://v6.yacana.network' })).toThrow(/old app origin/);
-    expect(attempt({ VITE_OLD_APP_ORIGIN: 'https://localhost' })).toThrow(/old app origin/);
-    expect(attempt({ VITE_OLD_APP_ORIGIN: 'https://yacana.network' })).toThrow(/is the apex itself/);
+    for (const origin of [
+      'http://v6.yacana.network',
+      'https://localhost',
+      'https://v6.localhost',
+      'https://yacana.network',
+      'https://yacana.network.',
+      'https://v6.example.org',
+    ])
+      expect(attempt({ VITE_OLD_APP_ORIGIN: origin }), origin).toThrow(
+        /is not an https subdomain of yacana.network/,
+      );
     expect(attempt({ VITE_ETH_RPC_URL: '' })).toThrow(/VITE_ETH_RPC_URL is required/);
   });
 

@@ -298,8 +298,9 @@ function assertProductionEthereum(c: SiteConfig): void {
 }
 
 /**
- * None until a move gives this version one; set, a real sibling of the apex. The old role is served
- * from that origin and finds itself `versioned` only by it: without it the page would restore nothing.
+ * None until a move gives this version one; set, an https subdomain of the RP ID, since its passkeys are
+ * the apex's. The old role is served from that origin and finds itself `versioned` only by it: without
+ * it the page would restore nothing.
  */
 function assertOldOrigin(c: SiteConfig): void {
   if (!c.oldAppOrigin) {
@@ -308,9 +309,8 @@ function assertOldOrigin(c: SiteConfig): void {
     return;
   }
   const old = new URL(c.oldAppOrigin);
-  if (old.protocol !== 'https:' || IP_OR_LOCAL.test(old.hostname) || !old.hostname.includes('.'))
-    throw new Error(`old app origin ${c.oldAppOrigin} is not a production https origin`);
-  if (old.hostname === c.rpId) throw new Error(`old app origin ${c.oldAppOrigin} is the apex itself`);
+  if (old.protocol !== 'https:' || !old.hostname.endsWith(`.${c.rpId}`))
+    throw new Error(`old app origin ${c.oldAppOrigin} is not an https subdomain of ${c.rpId}`);
 }
 
 /** A stop is a unix time and the retirement a boolean: the old origin decides its page on them. */

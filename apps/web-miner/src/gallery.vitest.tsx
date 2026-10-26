@@ -430,7 +430,6 @@ describe('the old app', () => {
 });
 
 describe('the old-tab bar', () => {
-  /** This tab's build is V6's; the site now serves another. */
   const behind = async () => {
     vi.stubGlobal(
       'fetch',

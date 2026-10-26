@@ -192,11 +192,11 @@ deployed byte at about 1,542 gas, and forge's own broadcast,
 The versioned origin: a retired version's last build on an origin of its own, `v<N>.yacana.network` on the Worker
 `yacana-v<N>` (`apps/site/v<N>/wrangler.jsonc`, versions at `<id>-yacana-v<N>.<account>.workers.dev`), assembled with
 `YACANA_APP_ROLE=old bun run site:build` into `apps/site/dist-old` and deployed by hand at the move
-(`docs/upgrades.md` step 8). It restores accounts and never creates one, sends ahead and exits; mining there has
+(`docs/upgrades.md` step 8; its values and Worker reach `main` before it). It restores accounts and never creates one, sends ahead and exits; mining there has
 ended. It is kept until the version's deadline has passed. Its custom domain is created by its first production
 deploy, after the merge, never from a branch; before that a version of the Worker serving the frozen record proves
 the role and the headers on a preview host. This deployment has none yet: `deployments/site.env` leaves both
-old-origin values empty, and the apps link no old origin, until the next move. V5's (`Archived — 2026-09-13`
+old-origin values empty, and the apps link no old origin, until the next move is prepared. V5's (`Archived — 2026-09-13`
 below) is retired.
 
 The witness archive: `deployments/witnesses/<profile>.jsonl`, written by `bun run bridge -- forward` from a
