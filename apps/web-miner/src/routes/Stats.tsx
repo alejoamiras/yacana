@@ -1,7 +1,7 @@
 // Stats as pages of the miner, loaded the first time they are opened; `hostedRuntime` owns when its reads leave.
 import { StatsPages } from '@yacana/stats-view/pages';
 import { NodeWayOut, type StatsTab } from '@yacana/ui';
-import { type Connection, defaultNodeUrl, restoreDefaultNode } from '@yacana/web-kit/browser/connection';
+import { type Connection, isDefaultNode, restoreDefaultNode } from '@yacana/web-kit/browser/connection';
 import { useAtomValue, useStore } from 'jotai';
 import { useEffect } from 'react';
 import { bridgeRecord } from '../bridge/env';
@@ -40,7 +40,7 @@ export default function Stats({ page, connection }: { page: StatsTab; connection
       wayOut={
         <NodeWayOut
           className="mt-2"
-          onDefault={shown.nodeUrl === defaultNodeUrl() ? undefined : restoreDefaultNode}
+          onDefault={isDefaultNode(shown.nodeUrl) ? undefined : restoreDefaultNode}
           settingsHref={pathFor('settings')}
         />
       }

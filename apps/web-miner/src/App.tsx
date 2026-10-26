@@ -14,7 +14,7 @@ import {
   statusLabel,
   Toaster,
 } from '@yacana/ui';
-import { defaultNodeUrl, restoreDefaultNode } from '@yacana/web-kit/browser/connection';
+import { isDefaultNode, restoreDefaultNode } from '@yacana/web-kit/browser/connection';
 import { shortAddress } from '@yacana/web-kit/browser/format';
 import { previewNotice } from '@yacana/web-kit/browser/host';
 import { bannerState, nodeHealth, subscribeNodeHealth } from '@yacana/web-kit/browser/node-health';
@@ -98,7 +98,7 @@ function BootError({
       {!isOldRole() && (
         <NodeWayOut
           className="mt-2"
-          onDefault={connection.nodeUrl === defaultNodeUrl() ? undefined : restoreDefaultNode}
+          onDefault={isDefaultNode(connection.nodeUrl) ? undefined : restoreDefaultNode}
           settingsHref={route === 'settings' ? undefined : pathFor('settings')}
         />
       )}

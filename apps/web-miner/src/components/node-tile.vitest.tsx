@@ -66,6 +66,18 @@ describe('the node row', () => {
     expect(screen.queryByTestId('node-retry')).toBeNull();
   });
 
+  test('the default in either spelling reads as the default, with no way back to it; another node is custom', () => {
+    vi.stubEnv('VITE_AZTEC_NODE_URL', 'https://node.example');
+    const { rerender } = render(
+      <NodeTile session={session()} nodeUrl="https://node.example/" onSwitched={() => {}} />,
+    );
+    expect(screen.getByTestId('node-row').textContent).toContain('· default');
+    expect(screen.queryByTestId('node-default')).toBeNull();
+    rerender(<NodeTile session={session()} nodeUrl={OTHER} onSwitched={() => {}} />);
+    expect(screen.getByTestId('node-row').textContent).toContain('· custom');
+    expect(screen.getByTestId('node-default')).toBeTruthy();
+  });
+
   test('behind and silent: the chip names the lag or the quiet, the line says what is paused, Retry when silent', () => {
     render(<NodeTile session={session()} nodeUrl={IN_USE} onSwitched={() => {}} />);
     act(() => {
@@ -118,6 +130,8 @@ describe('the node row’s edit', () => {
     expect(screen.getByTestId('node-row').textContent).toContain('· custom');
     await act(() => fireEvent.click(screen.getByTestId('node-default')));
     await waitFor(() => expect(s.switchNode).toHaveBeenLastCalledWith(IN_USE));
+    // The default is saved as no choice, so a later default reaches this visitor too.
+    await waitFor(() => expect(JSON.parse(localStorage.getItem('yacana.connection') ?? 'null')).toEqual({}));
   });
 
   test('the stepper while a save runs: reachable with its latency, this deployment, switching with its sentence', async () => {

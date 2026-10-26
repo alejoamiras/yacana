@@ -22,7 +22,7 @@ import {
 } from '@yacana/ui';
 import {
   type Connection,
-  defaultNodeUrl,
+  isDefaultNode,
   NODE_SETTINGS_HREF,
   restoreDefaultNode,
 } from '@yacana/web-kit/browser/connection';
@@ -111,7 +111,7 @@ export function App({
   const notice = previewNotice(location.hostname);
   const health = useSyncExternalStore(subscribeNodeHealth, nodeHealth, nodeHealth);
   const now = useAtomValue(nowAtom);
-  const onDefault = connection.nodeUrl === defaultNodeUrl() ? undefined : restoreDefaultNode;
+  const onDefault = isDefaultNode(connection.nodeUrl) ? undefined : restoreDefaultNode;
   return (
     <div className="mx-auto flex max-w-[1120px] flex-col">
       <Header
