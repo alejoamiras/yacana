@@ -35,14 +35,32 @@ const defaults: Connection = {
 
 /** The build's default node: what "Use the default" restores (read live, so a test may stub it). */
 export const defaultNodeUrl = (): string => import.meta.env.VITE_AZTEC_NODE_URL;
+
+/**
+ * Every default the site's builds carried before this one; a saved node equal to one is no choice.
+ * Append the old `VITE_AZTEC_NODE_URL` whenever site.env's changes.
+ */
+const RETIRED_DEFAULT_NODES: readonly string[] = ['https://v5.testnet.rpc.aztec-labs.com'];
+
+/** One spelling per node: the tile saves `URL.href` (`https://host/`), site.env names `https://host`. */
+const sameNode = (a: string, b: string): boolean => {
+  try {
+    return new URL(a).href === new URL(b).href;
+  } catch {
+    return false;
+  }
+};
+const isRetiredDefault = (url: string): boolean => RETIRED_DEFAULT_NODES.some((d) => sameNode(url, d));
+/** Whether `url` is the build's default node, however it is spelled. */
+export const isDefaultNode = (url: string): boolean => sameNode(url, defaultNodeUrl());
 export const defaultEthRpcUrl = (): string => import.meta.env.VITE_ETH_RPC_URL;
 /** The build's first epoch: the floor of every window, page and history read. */
 export const firstEpoch = (): number => defaults.firstEpoch;
 
 /** Back to the build's node and a fresh boot: the way out of a saved node that does not answer. */
 export const restoreDefaultNode = (): void => {
-  // Reload only once the default is saved: a browser that refused the write would otherwise reload
-  // straight back into the broken saved node. The banner stays up until the write can land.
+  // Reload only once the write lands (it clears the saved node): a browser that refused it would
+  // otherwise reload straight back into the broken one. The banner stays up until the write can land.
   if (saveConnection({ nodeUrl: defaults.nodeUrl })) location.reload();
 };
 
@@ -81,7 +99,7 @@ const fromStorage = (): Saved => {
   try {
     const stored = JSON.parse(globalThis.localStorage?.getItem(KEY) ?? '{}') as Saved;
     return {
-      ...(stored.nodeUrl ? { nodeUrl: stored.nodeUrl } : {}),
+      ...(stored.nodeUrl && !isRetiredDefault(stored.nodeUrl) ? { nodeUrl: stored.nodeUrl } : {}),
       ...(stored.ethRpcUrl ? { ethRpcUrl: stored.ethRpcUrl } : {}),
     };
   } catch {
@@ -92,12 +110,15 @@ const fromStorage = (): Saved => {
 export const loadConnection = (): Connection => ({ ...defaults, ...fromStorage(), ...fromQuery() });
 
 /**
- * Saves one or both settings, keeping the other. False when the browser refused the write (quota,
+ * Saves one or both settings, keeping the other. A default node, today's or a retired one, is saved as
+ * no choice, so a later default reaches this visitor. False when the browser refused the write (quota,
  * private mode): the caller must not act as if it held.
  */
 export const saveConnection = (c: Saved): boolean => {
   try {
     const next: Saved = { ...fromStorage(), ...c };
+    if (c.nodeUrl !== undefined && (isDefaultNode(c.nodeUrl) || isRetiredDefault(c.nodeUrl)))
+      delete next.nodeUrl;
     globalThis.localStorage?.setItem(KEY, JSON.stringify(next));
     return globalThis.localStorage?.getItem(KEY) !== null;
   } catch {
