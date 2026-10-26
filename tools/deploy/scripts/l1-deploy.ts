@@ -73,8 +73,10 @@ async function deployFakeRegistry(rpcUrl: string, key: Hex): Promise<Hex> {
   return receipt.contractAddress;
 }
 
-function forgeScript(env: Record<string, string>): { portal: Hex; yaca: Hex } {
-  const proc = Bun.spawnSync(
+// Spawned without blocking: a synchronous spawn would starve any JSON-RPC server in this process that
+// forge talks to.
+async function forgeScript(env: Record<string, string>): Promise<{ portal: Hex; yaca: Hex }> {
+  const proc = Bun.spawn(
     [
       toolchainBin('aztec-forge'),
       'script',
@@ -84,10 +86,20 @@ function forgeScript(env: Record<string, string>): { portal: Hex; yaca: Hex } {
       '--broadcast',
       '--json',
     ],
-    { cwd: portalDir, env: { ...process.env, ...env, FOUNDRY_REMAPPINGS: `forge-std/=${forgeStd}/` } },
+    {
+      cwd: portalDir,
+      env: { ...process.env, ...env, FOUNDRY_REMAPPINGS: `forge-std/=${forgeStd}/` },
+      stdout: 'pipe',
+      stderr: 'pipe',
+    },
   );
-  const out = proc.stdout.toString();
-  if (proc.exitCode !== 0) throw new Error(`forge script failed:\n${out}\n${proc.stderr.toString()}`);
+  // Both pipes drain together, or a full one stalls forge.
+  const [out, err, exitCode] = await Promise.all([
+    new Response(proc.stdout).text(),
+    new Response(proc.stderr).text(),
+    proc.exited,
+  ]);
+  if (exitCode !== 0) throw new Error(`forge script failed:\n${out}\n${err}`);
   // forge --json prints one JSON object per line; the script's returns land in the one with `returns`.
   for (const line of out.split('\n')) {
     try {
@@ -108,7 +120,7 @@ export async function deployL1(env: {
   operators: Hex;
 }): Promise<BridgeRecord> {
   const policy = policyFor();
-  const { portal, yaca } = forgeScript({
+  const { portal, yaca } = await forgeScript({
     YACANA_L1_RPC_URL: env.rpcUrl,
     YACANA_L1_PRIVATE_KEY: env.key,
     YACANA_REGISTRY: env.registry,
