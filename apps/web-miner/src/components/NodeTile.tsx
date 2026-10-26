@@ -2,7 +2,12 @@
 // never probes on its own; the setting is saved only once the switch took.
 
 import { Button, Input, StatusChip, type Step, Stepper } from '@yacana/ui';
-import { defaultNodeUrl, isPinnedByQuery, saveConnection } from '@yacana/web-kit/browser/connection';
+import {
+  defaultNodeUrl,
+  isDefaultNode,
+  isPinnedByQuery,
+  saveConnection,
+} from '@yacana/web-kit/browser/connection';
 import { parseNodeUrl } from '@yacana/web-kit/browser/node';
 import {
   nodeHealth,
@@ -68,7 +73,7 @@ function Row({
     tipAgeS(health, now),
     notice === 'offline' || notice === 'behind',
   );
-  const isDefault = nodeUrl === defaultNodeUrl();
+  const isDefault = isDefaultNode(nodeUrl);
   return (
     <div className="flex items-start justify-between gap-4" data-testid="node-row" data-standing={state}>
       <div className="flex min-w-0 flex-col gap-1">

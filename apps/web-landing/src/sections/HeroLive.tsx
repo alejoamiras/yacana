@@ -3,7 +3,7 @@ import { difficulty, networkRate, rateSample } from '@yacana/miner-core/metrics'
 import type { EpochRow } from '@yacana/miner-core/reader';
 import { difficultyLabel, ExternalLink, Kpi, NodeWayOut, StatusPill, Tile } from '@yacana/ui';
 import {
-  defaultNodeUrl,
+  isDefaultNode,
   loadConnection,
   NODE_SETTINGS_HREF,
   restoreDefaultNode,
@@ -63,7 +63,7 @@ function Notices({ status, live }: { status: LiveStatus; live: Live | undefined 
         <span className="flex flex-col gap-2 text-2xs text-bad" data-testid="live-error">
           {status.message}
           <NodeWayOut
-            onDefault={loadConnection().nodeUrl === defaultNodeUrl() ? undefined : restoreDefaultNode}
+            onDefault={isDefaultNode(loadConnection().nodeUrl) ? undefined : restoreDefaultNode}
             settingsHref={NODE_SETTINGS_HREF}
           />
         </span>

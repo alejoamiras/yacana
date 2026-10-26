@@ -65,8 +65,10 @@ after the flip lands like any other once its epoch is proven (rig case H4). The 
    deployments/testnet-v5.example-claim.json` (any names but the live ones; the operator script takes a record
    by path, and a production build refuses an example claim of another deployment), set
    `VITE_AZTEC_NODE_URL` in `deployments/site.env` to V6's node (the apps' default node comes from there, not
-   from the deploy's environment), commit, then `YACANA_CONTINUE_FROM=deployments/testnet-v5.json
-   YACANA_PORTAL=<portal> AZTEC_NODE_URL=<V6 node> YACANA_DEPLOYER_SECRET=… bun run deploy`: the V6 miner as
+   from the deploy's environment); unless the old default also serves V6, append it to `RETIRED_DEFAULT_NODES` in
+   `packages/web-kit/src/browser/connection.ts`, so a browser that saved it boots on the new one; commit, then
+   `YACANA_CONTINUE_FROM=deployments/testnet-v5.json YACANA_PORTAL=<portal> AZTEC_NODE_URL=<V6 node>
+   YACANA_DEPLOYER_SECRET=… bun run deploy`: the V6 miner as
    V5's continuation (it starts at the epoch V5 left off, with V5's last target), bound to the same portal,
    written to `deployments/testnet.json` with the `bridge` block carried from V5's record. The deploy refuses to
    write over its own source, and refuses a source whose portal is not `YACANA_PORTAL`. The record's

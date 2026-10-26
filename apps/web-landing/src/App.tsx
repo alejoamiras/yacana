@@ -1,6 +1,6 @@
 import { Alert, AlertDescription, NodeBanner, TileBoundary } from '@yacana/ui';
 import {
-  defaultNodeUrl,
+  isDefaultNode,
   loadConnection,
   NODE_SETTINGS_HREF,
   restoreDefaultNode,
@@ -77,7 +77,7 @@ export function App({
             <NodeBanner
               state={banner}
               settingsHref={NODE_SETTINGS_HREF}
-              onDefault={loadConnection().nodeUrl === defaultNodeUrl() ? undefined : restoreDefaultNode}
+              onDefault={isDefaultNode(loadConnection().nodeUrl) ? undefined : restoreDefaultNode}
             />
           </div>
           <main>
