@@ -174,7 +174,7 @@ Two follow-ups of the move to V6:
 two red runs are in `lessons/phase-1.md`. Layers: lint/typecheck, unit, component. E2E: none. No spec moves, and
 the unit test covers this storage logic; the PR's CI runs the shards.
 
-### Phase 2 (arc a2): V5's old origin retired
+### Phase 2 (arc a2): V5's old origin retired ✓
 1. Measure `bun run e2e:agent -- bun run site:e2e` on the base, for the wall-clock before.
 2. Apply §4 a2.
 3. Run `git grep -n -I -E 'v5\.yacana\.network|yacana-v5|v5/wrangler' -- ':!implementations-plan'`. It must print
