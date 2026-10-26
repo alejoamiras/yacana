@@ -583,12 +583,17 @@ ends at it (and hangs on the previous code). The node pin and the stats teardown
 - *Opus 5.5 beside it: material findings*, each verified:
   1. As Codex 2. **Fixed**.
   2. Plausible, traced in code: a returning visitor whose browser saved the V5 node sees "Cannot start" once.
-     That is a visible behaviour, so it went to OWNER-ASKS as OA2 and is left out; the PR ships it as is.
+     That is a visible behaviour, so it went to OWNER-ASKS as OA2 and is left out: the code is unchanged, and the
+     owner's decision is pending.
   3. "Deployed as one keyed run" (it was two). **Fixed**.
   4. Stale sentences: the archived example claim was still "the landing's", the archived record "left as it was",
      the 2026-09-13 witness still served, and OWNER-ASKS named the apex's V5 miner as current. **Fixed**.
   5. Nit: the orphan has the token's class and metadata. **Fixed**: the docs say only the address or
      `bound_token()` tells them apart.
+
+**P6 review, round 2** (Codex, resumed, on `04f1d95..467ce67`): one low. OA2 said "the PR ships option 1", which reads
+as a decision nobody made. **Fixed** here and in OA2: the code is unchanged, and the decision is pending. It
+confirmed OA2's trace.
 
 ## 9. Post-implementation (no repository standard exists; written out)
 

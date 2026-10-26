@@ -42,7 +42,8 @@ in `site.env`.
    to this PR or its own PR.
 
 **Recommendation.** Option 2, because P1-01 chose dRPC as the default for every visitor, and a saved V5 node cannot
-serve V6 anyway. It is left out of this PR, which after K takes only P6's files; the PR ships option 1.
+serve V6 anyway. It is left out of this PR, which after K takes only P6's files: the code is unchanged, and the owner's decision
+is pending.
 
 ## Noted, no decision needed
 

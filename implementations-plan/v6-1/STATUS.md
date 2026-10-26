@@ -21,3 +21,4 @@
 - 2026-10-26 a3 P6 steps 1–3 in bb033b1: V5 record and example claim → testnet-2026-09-28.*, the keyed record, example claim and effect fixture, `VITE_AZTEC_NODE_URL` = dRPC, docs/deployments.md (V6 section, orphan token, 2026-09-28 archived). Class ids equal the record's.
 - 2026-10-26 a3 P6 gate, local items pass: both pin diffs clean (d267f17, 430ae20); bun test 702 pass / 0 fail; the live example-claim test 3/3 on dRPC; site:build's build.json names the V6 miner; lint, lint:shell, lint:actions, typecheck, components, contracts:test, portal:test 0; site:e2e 3/3. PR checks next.
 - 2026-10-26 a3 P6 review r1: codex 2 lows, opus 5 (one visible: OA2 written, left out); doc and plan fixes folded; r2 next.
+- 2026-10-26 a3 P6 review r2: 1 low (OA2's wording decided nothing it could) fixed; r3 next.
