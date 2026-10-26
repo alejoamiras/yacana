@@ -33,7 +33,7 @@ interface ImportMetaEnv {
   readonly VITE_ETH_RPC_URL: string;
   /** The Ethereum explorer's origin, or `off`. */
   readonly VITE_L1_EXPLORER_URL: string;
-  /** Where this version's last build lives after a flip; the `versioned` host. */
+  /** Where this version's last build lives after a flip ('' until a move gives it one); the `versioned` host. */
   readonly VITE_OLD_APP_ORIGIN: string;
   readonly VITE_APP_ROLE: 'apex' | 'old';
   /** JSON of the record's announced migration, or '' when none is announced. */

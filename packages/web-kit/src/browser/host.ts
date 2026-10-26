@@ -1,6 +1,6 @@
 // Where the page is served decides what it may do with keys. This gate steers honest bundles: the
 // preview suffix trusts the account's matching workers.dev namespace, not the code's provenance.
-// `versioned` is the origin a version's last build moves to after a flip (`v5.yacana.network`): a
+// `versioned` is the origin a version's last build moves to after a flip (`v<N>.yacana.network`): a
 // fully trusted sibling built by the same pipeline, where an account is restored, never created —
 // its passkeys are the apex's (the RP ID), so the same master opens there after user verification.
 export type HostKind = 'production' | 'preview' | 'local' | 'versioned' | 'unknown';

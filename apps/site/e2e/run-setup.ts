@@ -102,7 +102,9 @@ try {
     portal: TEST_PORTAL,
   });
   const oldBaseURL = `http://v5.localhost:${oldPort}`;
-  await assemble(OUT_DIR, e2eEnv(deployed, 'apex', oldBaseURL));
+  // The apex names no old origin, as production does until a move gives its version one; the old
+  // role is served from its own.
+  await assemble(OUT_DIR, e2eEnv(deployed, 'apex', ''));
   await assemble(OLD_OUT_DIR, e2eEnv(deployed, 'old', oldBaseURL));
   const log = openSync(resolve(pkg, 'e2e/.wrangler.log'), 'w');
   spawned = startServer(log, port, inspector, OUT_DIR);

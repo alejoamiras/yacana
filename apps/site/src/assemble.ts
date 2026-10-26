@@ -1,7 +1,7 @@
 // Three apps into one origin (`/`, `/mine/`, `/stats/`), the shared assets once at the root,
 // `_headers`, `_redirects`, `build.json`. `bun run site:build` → apps/site/dist (the apex
-// Worker) or, under YACANA_APP_ROLE=old, apps/site/dist-old (the versioned origin's Worker,
-// v5/wrangler.jsonc: the miner alone, at `/`); an e2e run passes its own out dir.
+// Worker) or, under YACANA_APP_ROLE=old, apps/site/dist-old (the retiring version's own Worker,
+// `v<N>/wrangler.jsonc` at a move: the miner alone, at `/`); an e2e run passes its own out dir.
 import { execFileSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -19,7 +19,7 @@ import { assertProductionArtifact } from './artifact.ts';
 const here = fileURLToPath(new URL('.', import.meta.url));
 const repo = resolve(here, '../../..');
 export const PRODUCTION_OUT = resolve(here, '../dist');
-/** The old role's assembly: what the versioned origin's Worker (`v5/wrangler.jsonc`) serves. */
+/** The old role's assembly: what the versioned origin's Worker (`v<N>/wrangler.jsonc`) serves. */
 export const OLD_OUT = resolve(here, '../dist-old');
 /** Each role's production directory; a production build lands in its own and nowhere else. */
 export const productionOutFor = (role: AppRole): string => (role === 'old' ? OLD_OUT : PRODUCTION_OUT);

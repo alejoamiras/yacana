@@ -144,6 +144,9 @@ test('the versioned origin: the old role under the same headers, restore only, a
     writeFileSync(record, JSON.stringify({ ...apex, miner: `0x${'1'.repeat(64)}` }));
     await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
     await expect(page.getByTestId('old-tab')).toContainText('This tab is behind.', { timeout: 30_000 });
+    // With no old origin named, the bar offers Reload alone: no old app, no link.
+    await expect(page.getByTestId('old-tab')).not.toContainText('old app');
+    await expect(page.getByTestId('old-tab').getByRole('link')).toHaveCount(0);
   } finally {
     writeFileSync(record, before);
   }

@@ -59,7 +59,7 @@ export interface SiteConfig {
   ethRpcUrl: string;
   /** The Ethereum explorer's origin, or `off`. */
   l1ExplorerUrl: string;
-  /** Where this version's last build lives after a flip; the host the gate calls `versioned`. */
+  /** Where this version's last build lives after a flip ('' until a move gives it one); the `versioned` host. */
   oldAppOrigin: string;
   role: AppRole;
   /** The record's announced migration, or null: the apps show the guided path only with one. */
@@ -130,6 +130,12 @@ const required = (source: Record<string, string | undefined>, key: string, where
   return v;
 };
 
+/** A set URL parses or the build stops here; an empty or absent one is ''. */
+const parsedUrl = (value: string | undefined): string => {
+  if (value) new URL(value);
+  return value ?? '';
+};
+
 /** Only the committed value, only in production, per role: a dev or e2e build has no preview hosts. */
 const previewSuffixOf = (mode: SiteMode, siteEnv: Record<string, string>, role: AppRole): string => {
   if (mode !== 'production') return '';
@@ -177,15 +183,11 @@ export function loadSiteConfig(opts: {
   // Overrides exist so an e2e run can point the build at its throwaway deployment on a local node.
   const env = mode === 'production' ? {} : (opts.env ?? {});
   const pick = (key: string, fallback: string) => env[key] || fallback;
-  // The three URLs site.env must name; each parses or the build stops here.
-  const url = (key: string) => {
-    const value = pick(key, required(siteEnv, key, 'site.env'));
-    new URL(value);
-    return value;
-  };
+  // site.env must name the node and the RPC, and may leave the old origin empty.
+  const url = (key: string) => parsedUrl(pick(key, required(siteEnv, key, 'site.env')));
   const nodeUrl = url('VITE_AZTEC_NODE_URL');
   const ethRpcUrl = url('VITE_ETH_RPC_URL');
-  const oldAppOrigin = url('VITE_OLD_APP_ORIGIN');
+  const oldAppOrigin = parsedUrl(pick('VITE_OLD_APP_ORIGIN', siteEnv.VITE_OLD_APP_ORIGIN));
   const rollupAddress = pick('VITE_ROLLUP_ADDRESS', deployment.rollupAddress ?? '');
   if (!rollupAddress)
     throw new Error('the deployment record lacks rollupAddress (bun run record-rollup-address)');
@@ -282,20 +284,33 @@ export function assertProductionConfig(c: SiteConfig, siteEnv: Record<string, st
   assertProductionEthereum(c);
 }
 
-/** The bridge's side of the same rule: an https RPC and explorer off this machine, a real versioned origin. */
+/** The bridge's side of the same rule: an https RPC and explorer off this machine, a real old origin if any. */
 function assertProductionEthereum(c: SiteConfig): void {
   const rpc = new URL(c.ethRpcUrl);
   if (rpc.protocol !== 'https:') throw new Error(`production Ethereum RPC ${c.ethRpcUrl} is not https`);
   if (IP_OR_LOCAL.test(rpc.hostname)) throw new Error(`production Ethereum RPC ${c.ethRpcUrl} is local`);
   if (c.l1ExplorerUrl !== 'off' && new URL(c.l1ExplorerUrl).protocol !== 'https:')
     throw new Error(`production Ethereum explorer ${c.l1ExplorerUrl} is not https`);
+  assertOldOrigin(c);
+  if (c.migration && !/^\d+$/.test(c.migration.toIndex))
+    throw new Error(`migration.toIndex ${JSON.stringify(c.migration.toIndex)} is not a Registry index`);
+  assertLifecycle(c.lifecycle);
+}
+
+/**
+ * None until a move gives this version one; set, a real sibling of the apex. The old role is served
+ * from that origin and finds itself `versioned` only by it: without it the page would restore nothing.
+ */
+function assertOldOrigin(c: SiteConfig): void {
+  if (!c.oldAppOrigin) {
+    if (c.role === 'old')
+      throw new Error('an old-role build needs VITE_OLD_APP_ORIGIN, the origin it is served from');
+    return;
+  }
   const old = new URL(c.oldAppOrigin);
   if (old.protocol !== 'https:' || IP_OR_LOCAL.test(old.hostname) || !old.hostname.includes('.'))
     throw new Error(`old app origin ${c.oldAppOrigin} is not a production https origin`);
   if (old.hostname === c.rpId) throw new Error(`old app origin ${c.oldAppOrigin} is the apex itself`);
-  if (c.migration && !/^\d+$/.test(c.migration.toIndex))
-    throw new Error(`migration.toIndex ${JSON.stringify(c.migration.toIndex)} is not a Registry index`);
-  assertLifecycle(c.lifecycle);
 }
 
 /** A stop is a unix time and the retirement a boolean: the old origin decides its page on them. */
