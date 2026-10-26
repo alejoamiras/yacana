@@ -15,3 +15,4 @@
 - 2026-10-26: a2 started on `deploy-1-a2` from origin/main ba5aae8 (orchestrator: K5 ran, both contracts "Pass - Verified").
 - 2026-10-26: P2 step 1 green: both `#code` pages show "Source Code Verified (Exact Match)", YacanaPortal / YACA, v0.8.30+commit.73712a01 (22:45 UTC).
 - 2026-10-26: P2 gate green: rows changed, `bun run lint` 0, `rename-guard.test.ts` 5 pass, the diff touches only `docs/deployments.md` and the plan folder.
+- 2026-10-26: a2 fix loop r1: Codex clean, Opus 2 low (plan record wording), folded; converged in 1 round.

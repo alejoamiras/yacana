@@ -193,7 +193,8 @@ guard fail both alone and after another guard suite's teardown.
 exits 0. `git diff --stat origin/main` shows `docs/deployments.md` and the plan folder only.
 
 Deviations (the tree and the orchestrator win): the base is `origin/main` at ba5aae8, two merges past a1's
-d58a2d2; the rows sit at `:179-180`; each row also carries the date and, as the orchestrator asked, the compiler
+d58a2d2; the rows sit at `:179-180` and the archived `#code` rows at `:243-244`; Etherscan's marker now reads
+"Source Code Verified (Exact Match)"; each row also carries the date and, as the orchestrator asked, the compiler
 settings Etherscan shows.
 
 ## Delivery
@@ -245,6 +246,7 @@ settings Etherscan shows.
 | impl | Codex gpt-6.1-sol high (root `bun test` red) | C, outside the lane | the leak filed as #83; a1 reported blocked, no bypass | A: the suite swaps in `Bun.fetch` (a compensating monkey-patch); B: a child-process driver (a contract for the leak alone) |
 | fix r1 | Codex gpt-6.1-sol high + Opus 5.5 (same family) | 1 + 5 low | Codex 1 / Opus 4: `uninstallNodeGuard`'s doc read as if wrappers survived → rewritten; Opus 1: health wiring stays on the dropped state → one clause in that doc; Opus 2: two stale comments, a dead `setNodeGate(null)` → fixed, removed; Opus 3: `presto-session` teardown threw before the uninstall on a failed setup → `fake?.`; Opus 4: one comment repeated in 24 suites → deleted; Opus 5: "code deposit 7×" → "the portal's creation 7×" | none |
 | fix r2 | Codex, same session resumed | **clean** | the six folds verified, no new material finding; converged in 2 rounds | — |
+| a2 r1 | Codex gpt-6.1-sol high + Opus 5.5 (same family) | Codex **clean**; Opus 2 low | Opus 1: the gate's marker and the archived rows' lines differ from P2's text → recorded under Deviations; Opus 2: the row's date rested on K5's report alone → the lane's own reads (unverified 02:42 UTC, verified 22:45 UTC) pin it; converged in 1 round | — |
 
 Size: about 230 lines against light's 150. The verbatim fix-loop rules, the test's specification, the dry run
 and the evidence for two claims that did not hold carry the excess.
