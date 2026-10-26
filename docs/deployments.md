@@ -22,27 +22,35 @@ Contracts are immutable: a parameter change is a new deployment (`yacana.params.
 `deployments/<profile>.json`, written by the deploy script (and refused as an overwrite unless
 `YACANA_DEPLOY_FORCE=1`).
 
-## Public Aztec testnet — `testnet` profile (2026-09-28, Yacana with the reducedness check)
+## Public Aztec testnet — `testnet` profile (2026-10-26, Aztec 6.0.0)
 
-The miner of the 2026-09-13 deployment below with `claim`'s reducedness check: a proof is accepted only if every
-coordinate of its 36 points is in its one reduced encoding (`docs/threat-model.md`, "Re-encoded proof points").
-The same work-circuit VK, domain tags, genesis seed, parameters and token metadata; a new portal and YACA, since
-the old portal's slot for this rollup version belongs to the old miner (`registerVersion` is write-once). Deployed
-from the fix's branch as one keyed run (my-stack: keys from 1Password on the owner's Mac, never a `.env`).
+A fresh deployment on the 6.0.0 rollup: the miner of the 2026-09-28 deployment below, compiled under Aztec 6.0.0
+(Noir 1.0.0-rc.3), with the same work-circuit VK, domain tags, genesis seed, parameters and token metadata, and a
+new portal and YACA. Balances and epochs of the 5.2.0 deployments are not carried. Deployed as one keyed run (my-stack: keys from 1Password
+on the owner's Mac, never a `.env`): the portal and YACA from commit `d267f17`, the miner, token, registration and
+forwarder from `430ae20`.
 
 | | |
 |---|---|
-| Node | `https://v5.testnet.rpc.aztec-labs.com` (L1 chain 11155111) |
-| Miner (`YacanaMiner`) | [`0x0364f04e318480bb6d6354772b12ee8e59fce2123dc43e16bc5650fd5505014c`](https://testnet.aztecscan.xyz/contracts/instances/0x0364f04e318480bb6d6354772b12ee8e59fce2123dc43e16bc5650fd5505014c) |
-| Token (aztec-standards `Token` v5.2.0, minter = miner, `bound_token()`) | [`0x1fb296ab77cc42f7807e95fbdc2260d59cc9f5d48bff1ef65299b9a279466a15`](https://testnet.aztecscan.xyz/contracts/instances/0x1fb296ab77cc42f7807e95fbdc2260d59cc9f5d48bff1ef65299b9a279466a15) |
-| Deployer (initializerless Schnorr account, no privilege after `bind_token`) | `0x01ac35f9b30617d5e45cbc7e36211b299d0ac0a6d0b24ee4469d91466f10bb7e` |
-| Miner salt / token salt | `0x06d63f15…bf61b` / `0x06a1a5b9…d524f` (full values in `deployments/testnet.json`) |
-| Miner class id / token class id | [`0x0ee9c81b…5b07f`](https://testnet.aztecscan.xyz/contracts/classes/0x0ee9c81b4018f249a69235d41eaddda33316e5142644398df3d6f56080c5b07f/versions/1) / `0x10fd5603…fecbf` |
-| Rollup version (in the deploy domain) | 1821665230 (Registry index 5 on the portal) |
-| Portal it trusts | `0x13c06CF71C75fDaE21a46d66478e738209A0370c` (Sepolia, below) |
+| Node | `https://aztec-testnet.drpc.org` (dRPC's public node; L1 chain 11155111, node 6.0.0 at deploy time). Its free plan refuses a JSON-RPC batch of more than 3 requests, so every client here sends at most `NODE_MAX_BATCH` (`packages/miner-core/src/node-client.ts`) |
+| Miner (`YacanaMiner`) | [`0x190ef585faf52209c7dbcb18de302c9c6303a6d8c7af3be94d1ca0684dec10a1`](https://testnet.aztecscan.xyz/contracts/instances/0x190ef585faf52209c7dbcb18de302c9c6303a6d8c7af3be94d1ca0684dec10a1) |
+| Token (aztec-standards `Token` v6.0.0, minter = miner, `bound_token()`) | [`0x246a5be6fede04ebcf69cd8764f8e1cc3b5783e673f1abd3116055e256cb4198`](https://testnet.aztecscan.xyz/contracts/instances/0x246a5be6fede04ebcf69cd8764f8e1cc3b5783e673f1abd3116055e256cb4198) |
+| Deployer (initializerless Schnorr account, no privilege after `bind_token`) | `0x25e0b2e78f415b304a9c58974160554e5bebbf15491cc2b071fd092588aed47e` |
+| Miner salt / token salt | `0x1dbb9be8…2ab78` / `0x2af04b41…f169f` (full values in `deployments/testnet.json`) |
+| Miner class id / token class id | [`0x05f5edc2…2269d`](https://testnet.aztecscan.xyz/contracts/classes/0x05f5edc215509252395ebf2d1cdded27f0815fc7c7d1486783ddadf072b2269d/versions/1) / `0x2ff09399…8ea9f` |
+| Rollup version (in the deploy domain) | 679261766 (rollup `0x1f435a7f2da358caf887a470faeee7d5d5f4efba`; Registry index 8 on the portal) |
+| Portal it trusts | `0x12D46b6878a4Dc0506CD15f94CA9E56Ae06BC4D2` (Sepolia, below) |
 | Fees | sponsored FPC (`SPONSORED_FPC_SALT`) |
-| Deployed / launched | 2026-09-28T15:27:37.303Z / epoch 0 opened at once (`launchAt` 1790609292, immediate: no notice or reveal window in this profile) |
-| Example claim (the landing's) | [`0x0954a6a9…4838`](https://testnet.aztecscan.xyz/tx-effects/0x0954a6a9d00a81e3b36f7f8682f80bb2a29b064f40876fe1375c551b892c4838), by a throwaway account with the headless miner |
+| Deployed / launched | 2026-10-26T00:54:32.832Z / epoch 0 opened at once (`launchAt` 1792976124, immediate: no notice or reveal window in this profile) |
+| Example claim (the landing's) | [`0x077c6a4d…4b70`](https://testnet.aztecscan.xyz/tx-effects/0x077c6a4d7d79bfad8133009da734820e95f5e6d4dc598591c0212a2bc8304b70) (epoch 0, block 5569), the second claim of the soak's account |
+
+After the deploy, a 30-minute headless soak against the node above (`bun run soak -- --hours 0.5`) closed 5 epochs
+with 20 claims by one account and 569 proofs, none stale.
+
+**Not the token: `0x276eda514bd9cf70d9b3d09df8492a27fb1ba1baa69c9b05ed09c082dc69c4d3`.** The run's first attempt
+deployed this `Token` (tx `0x07a9b3444c8eaba627b318ae360952bf4b7c7ae3b8e64a61e6e1e245cddb11e9`) and then failed
+before the miner, when the node refused a batch of 4 requests. Its minter, `0x28b6eae070acb2e816bf816bd0a8fc7cf21c6a342dde2272517f67e26ad49860`,
+was never deployed, so nothing can ever mint it: it is inert, and no page or record names it.
 
 Parameters (the `testnet` profile, also embedded in the contract as compile-time globals):
 
@@ -160,18 +168,24 @@ deployed with `YACANA_PORTAL` naming the portal it trusts, immutably, so the por
 `bun run bridge -- register` and `bun run bridge -- set-forwarder` (`docs/upgrades.md`, step 0). The site builds both blocks into the apps (`VITE_BRIDGE`, `VITE_MIGRATION`; production
 refuses a plaintext or local RPC); `bun run bridge -- status` reads the portal's view of every registered version.
 
-Sepolia (2026-09-28; the policy of `packages/bridge/src/policy.ts` for the `testnet` profile: `PER_HOUR` 576 tYACA,
-`ALLOWANCE` 384 tYACA, 180 d exit floor, 30 d / 60 d pause, launch window −7 d / +90 d, 400 000 gas a leaf):
+Sepolia (2026-10-25; the policy of `packages/bridge/src/policy.ts` for the `testnet` profile, read back from the
+portal: `PER_HOUR` 576 tYACA, `ALLOWANCE` 384 tYACA, 180 d exit floor, 30 d / 60 d pause, launch window −7 d / +90 d,
+400 000 gas a leaf):
 
 | | |
 |---|---|
-| Portal (`YacanaPortal`, verified; deployed in [`0x42d38318…bc61`](https://sepolia.etherscan.io/tx/0x42d38318a3135077227c6184a4387886ab83659506dc8778e20192dd2074bc61)) | [`0x13c06CF71C75fDaE21a46d66478e738209A0370c`](https://sepolia.etherscan.io/address/0x13c06CF71C75fDaE21a46d66478e738209A0370c#code) |
-| YACA (`tYACA`, ERC-20, minter = the portal, created by it, verified) | [`0x4DA537e78409830dCa92850fE635eFD15A60109c`](https://sepolia.etherscan.io/address/0x4DA537e78409830dCa92850fE635eFD15A60109c#code) |
+| Portal (`YacanaPortal`; created in [`0x2ac8c122…b4fb2c`](https://sepolia.etherscan.io/tx/0x2ac8c12229ddf0cd5931a9242beee78099a7d42eebf7b2f6ed2126b377b4fb2c), block 11993997; Etherscan verification pending) | [`0x12D46b6878a4Dc0506CD15f94CA9E56Ae06BC4D2`](https://sepolia.etherscan.io/address/0x12D46b6878a4Dc0506CD15f94CA9E56Ae06BC4D2) |
+| YACA (`tYACA`, ERC-20, minter = the portal, created by it; Etherscan verification pending) | [`0xC7cc767BaaE1E979bED8a3C118587bfAea67ac2A`](https://sepolia.etherscan.io/address/0xC7cc767BaaE1E979bED8a3C118587bfAea67ac2A) |
 | Aztec Registry (the testnet's) | `0xa0bfb1b494fb49041e5c6e8c2c1be09cd171c6ba` |
 | Operators (an EOA; the Safe comes with the mainnet plan; its key is `YACANA_L1_PRIVATE_KEY` of the `Yacana-Testnet` item) | [`0xc9b7162F57B74257261cB61a0FAc870Eda87Cbb7`](https://sepolia.etherscan.io/address/0xc9b7162F57B74257261cB61a0FAc870Eda87Cbb7) |
-| Listed forwarder (the relayer of 2026-09-14) | [`0x6792D5eb…8bac`](https://sepolia.etherscan.io/address/0x6792D5eb75e1F025438349d454AC91378d9F8bac), listed by [`0x2af3cf09…54c4`](https://sepolia.etherscan.io/tx/0x2af3cf09a9bf110c2b23c59dcc1b2399cfcccea0435ad06c64669cb2514154c4) |
-| Registration of version 1821665230 (index 5) | [`0xb97bd785…681f`](https://sepolia.etherscan.io/tx/0xb97bd785e6e2afce454d04cba64c15530875e27d323f108e3b6216a2e12f681f) |
-| Deploy block / RPC in the record | 11801404 / `https://ethereum-sepolia-rpc.publicnode.com` |
+| Listed forwarder (the relayer of 2026-09-14) | [`0x6792D5eb…8bac`](https://sepolia.etherscan.io/address/0x6792D5eb75e1F025438349d454AC91378d9F8bac), listed by [`0xbc6623c0…85da`](https://sepolia.etherscan.io/tx/0xbc6623c0ba6358f8b8b6e02a4a74cdf7083dc05259c90ede09187e02723385da) |
+| Registration of version 679261766 (index 8) | [`0xe596aa1f…93be`](https://sepolia.etherscan.io/tx/0xe596aa1f5fd833021c7d6105aa944813672d1706ac453714c882fb12475193be) |
+| Deploy block / RPC in the record | 11993997 / `https://ethereum-sepolia-rpc.publicnode.com` |
+
+The creation was sent with the node's gas estimate × 1.3 (36,515,518 gas; it used 27,866,530). Sepolia prices a
+deployed byte at about 1,542 gas, and forge's own broadcast,
+[`0x533825f2…def305`](https://sepolia.etherscan.io/tx/0x533825f20d7c0e8813e586d14741dbc13f21c8db188e22a5678726af87def305)
+(block 11993956), ran out of gas at its simulated limit of 5,174,925 and created nothing.
 
 The versioned origin: a retired version's last build, assembled with `YACANA_APP_ROLE=old bun run site:build` into
 `apps/site/dist-old` and deployed to the `yacana-v5` Worker (`apps/site/v5/wrangler.jsonc`, custom domain
@@ -198,6 +212,44 @@ of that folder, or the site would serve the old portal's witnesses as the new on
 
 Not deployed. The `mainnet` profile (N = 24, 1 h epochs, target 2^122, `YACA`) exists in `yacana.params.json`;
 launch is a later plan (`docs/roadmap.md`).
+
+## Archived — Yacana public testnet on Aztec 5.2.0, with the reducedness check (2026-09-28)
+
+The miner of the 2026-09-13 deployment below with `claim`'s reducedness check: a proof is accepted only if every
+coordinate of its 36 points is in its one reduced encoding (`docs/threat-model.md`, "Re-encoded proof points").
+The same work-circuit VK, domain tags, genesis seed, parameters and token metadata; a new portal and YACA, since
+the old portal's slot for this rollup version belongs to the old miner (`registerVersion` is write-once). Deployed
+from the fix's branch as one keyed run (my-stack: keys from 1Password on the owner's Mac, never a `.env`).
+
+| | |
+|---|---|
+| Node | `https://v5.testnet.rpc.aztec-labs.com` (L1 chain 11155111) |
+| Miner (`YacanaMiner`) | [`0x0364f04e318480bb6d6354772b12ee8e59fce2123dc43e16bc5650fd5505014c`](https://testnet.aztecscan.xyz/contracts/instances/0x0364f04e318480bb6d6354772b12ee8e59fce2123dc43e16bc5650fd5505014c) |
+| Token (aztec-standards `Token` v5.2.0, minter = miner, `bound_token()`) | [`0x1fb296ab77cc42f7807e95fbdc2260d59cc9f5d48bff1ef65299b9a279466a15`](https://testnet.aztecscan.xyz/contracts/instances/0x1fb296ab77cc42f7807e95fbdc2260d59cc9f5d48bff1ef65299b9a279466a15) |
+| Deployer (initializerless Schnorr account, no privilege after `bind_token`) | `0x01ac35f9b30617d5e45cbc7e36211b299d0ac0a6d0b24ee4469d91466f10bb7e` |
+| Miner salt / token salt | `0x06d63f15…bf61b` / `0x06a1a5b9…d524f` (full values in `deployments/testnet-2026-09-28.json`) |
+| Miner class id / token class id | [`0x0ee9c81b…5b07f`](https://testnet.aztecscan.xyz/contracts/classes/0x0ee9c81b4018f249a69235d41eaddda33316e5142644398df3d6f56080c5b07f/versions/1) / `0x10fd5603…fecbf` |
+| Rollup version (in the deploy domain) | 1821665230 (Registry index 5 on the portal) |
+| Portal it trusts | `0x13c06CF71C75fDaE21a46d66478e738209A0370c` (Sepolia, below) |
+| Fees | sponsored FPC (`SPONSORED_FPC_SALT`) |
+| Deployed / launched | 2026-09-28T15:27:37.303Z / epoch 0 opened at once (`launchAt` 1790609292, immediate: no notice or reveal window in this profile) |
+| Example claim (the landing's) | [`0x0954a6a9…4838`](https://testnet.aztecscan.xyz/tx-effects/0x0954a6a9d00a81e3b36f7f8682f80bb2a29b064f40876fe1375c551b892c4838), by a throwaway account with the headless miner |
+
+Its record is `deployments/testnet-2026-09-28.json` (example claim `deployments/testnet-2026-09-28.example-claim.json`);
+it stays on the 5.2.0 rollup, and `v5.yacana.network` is left as it was.
+
+Sepolia (the policy of `packages/bridge/src/policy.ts` for the `testnet` profile: `PER_HOUR` 576 tYACA,
+`ALLOWANCE` 384 tYACA, 180 d exit floor, 30 d / 60 d pause, launch window −7 d / +90 d, 400 000 gas a leaf):
+
+| | |
+|---|---|
+| Portal (`YacanaPortal`, verified; deployed in [`0x42d38318…bc61`](https://sepolia.etherscan.io/tx/0x42d38318a3135077227c6184a4387886ab83659506dc8778e20192dd2074bc61)) | [`0x13c06CF71C75fDaE21a46d66478e738209A0370c`](https://sepolia.etherscan.io/address/0x13c06CF71C75fDaE21a46d66478e738209A0370c#code) |
+| YACA (`tYACA`, ERC-20, minter = the portal, created by it, verified) | [`0x4DA537e78409830dCa92850fE635eFD15A60109c`](https://sepolia.etherscan.io/address/0x4DA537e78409830dCa92850fE635eFD15A60109c#code) |
+| Aztec Registry (the testnet's) | `0xa0bfb1b494fb49041e5c6e8c2c1be09cd171c6ba` |
+| Operators (an EOA; the Safe comes with the mainnet plan; its key is `YACANA_L1_PRIVATE_KEY` of the `Yacana-Testnet` item) | [`0xc9b7162F57B74257261cB61a0FAc870Eda87Cbb7`](https://sepolia.etherscan.io/address/0xc9b7162F57B74257261cB61a0FAc870Eda87Cbb7) |
+| Listed forwarder (the relayer of 2026-09-14) | [`0x6792D5eb…8bac`](https://sepolia.etherscan.io/address/0x6792D5eb75e1F025438349d454AC91378d9F8bac), listed by [`0x2af3cf09…54c4`](https://sepolia.etherscan.io/tx/0x2af3cf09a9bf110c2b23c59dcc1b2399cfcccea0435ad06c64669cb2514154c4) |
+| Registration of version 1821665230 (index 5) | [`0xb97bd785…681f`](https://sepolia.etherscan.io/tx/0xb97bd785e6e2afce454d04cba64c15530875e27d323f108e3b6216a2e12f681f) |
+| Deploy block / RPC in the record | 11801404 / `https://ethereum-sepolia-rpc.publicnode.com` |
 
 ## Archived — Yacana public testnet with the bridge, before the reducedness check (2026-09-13)
 
