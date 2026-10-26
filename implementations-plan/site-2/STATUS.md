@@ -9,3 +9,4 @@
 2026-10-26 a2 approved as amended (OA2: versioned origins stay; a2 = V5 retirement; #87 the V7-move preparation); branch site-2-a2 from origin/main e3013e1
 2026-10-26 a2 phase 2 step 1: site:e2e baseline 3 passed, 2.8 min suite (207 s with the network)
 2026-10-26 a2 phase 2 gate green: lint, typecheck, bun test (704/0), test:components, test:replay (9/9), site:build + old-role guard, grep; site:e2e 3 passed 1.6 min (128 s) on its one rerun after a wrangler crash
+2026-10-26 a2 codex r1 (01a179c5) 1 finding + opus 4: 4 fixed, 1 rejected; r2 clean (converged in 2 rounds); final head gate green incl. site:e2e 3/3 at retry 0 (121 s)

@@ -253,6 +253,12 @@ beside it): 4 findings.
 | O3 | No test held the old role's landing pairing once `site.env` names no origin (low, demonstrated) | `assertLanding` exported and tested for role `old`; red with the check narrowed to the apex |
 | O4 | Two archived lines stay present tense (low) | rejected: round 1 #3 keeps archived lines untouched, and they turn false only when the owner deletes the Worker |
 
+Round 2 (resumed `01a179c5`, on `c6b82e7..44141af`): **clean** — "No new material findings"; it probed the subdomain
+check (case, trailing dot, ports, IDN) and matched `assertLanding` against the inline code on 72 cases. Converged in
+2 rounds. Final head gate: lint 0, typecheck 0, `bun test` 704 pass / 0 fail, `test:components` 0, `test:replay`
+9 passed, `site:build` 0, the old-role build 1 with the guard's message, `site:e2e` 3 passed (1.4 min suite, 121 s
+with the network; before: 2.8 min, 207 s).
+
 ## 8. Post-implementation
 
 - Write comments to the bar as you code. Log attempts in `lessons/phase-N.md`. Run `agent-worktree status site-2

@@ -19,3 +19,9 @@
   artifact checks); `YACANA_APP_ROLE=old bun run site:build` 1 with "an old-role build needs VITE_OLD_APP_ORIGIN, the
   origin it is served from". The grep prints only the archived sections of `docs/deployments.md`,
   `docs/roadmap.md:28` and the retirement note in `docs/upgrades.md`.
+- Fix loop round 1: Codex `01a179c5` (1 finding: three narrating test comments), Opus beside it (4 findings). The
+  one that mattered was in my own runbook rewrite: step 8 had the old origin edited and committed in a detached
+  worktree. The retired mechanism had it on `main` before the move, which both reviews the trusted origin's commit
+  and gives the retiring apex build its tabs' link. The new subdomain check and `assertLanding`'s old-role case were
+  each red with their rule reverted. Round 2: clean.
+- Final head gate: as above, plus `site:e2e` 3 passed at retry 0 (1.4 min suite, 121 s with the network).
