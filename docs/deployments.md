@@ -26,9 +26,9 @@ Contracts are immutable: a parameter change is a new deployment (`yacana.params.
 
 A fresh deployment on the 6.0.0 rollup: the miner of the 2026-09-28 deployment below, compiled under Aztec 6.0.0
 (Noir 1.0.0-rc.3), with the same work-circuit VK, domain tags, genesis seed, parameters and token metadata, and a
-new portal and YACA. Balances and epochs of the 5.2.0 deployments are not carried. Deployed as one keyed run (my-stack: keys from 1Password
-on the owner's Mac, never a `.env`): the portal and YACA from commit `d267f17`, the miner, token, registration and
-forwarder from `430ae20`.
+new portal and YACA. Balances and epochs of the 5.2.0 deployments are not carried. Deployed in two keyed runs (my-stack: keys from 1Password
+on the owner's Mac, never a `.env`): the portal and YACA from commit `d267f17`, then the miner, token, registration,
+forwarder and soak from `430ae20`.
 
 | | |
 |---|---|
@@ -50,7 +50,8 @@ with 20 claims by one account and 569 proofs, none stale.
 **Not the token: `0x276eda514bd9cf70d9b3d09df8492a27fb1ba1baa69c9b05ed09c082dc69c4d3`.** The run's first attempt
 deployed this `Token` (tx `0x07a9b3444c8eaba627b318ae360952bf4b7c7ae3b8e64a61e6e1e245cddb11e9`) and then failed
 before the miner, when the node refused a batch of 4 requests. Its minter, `0x28b6eae070acb2e816bf816bd0a8fc7cf21c6a342dde2272517f67e26ad49860`,
-was never deployed, so nothing can ever mint it: it is inert, and no page or record names it.
+was never deployed, so nothing can ever mint it: it is inert, and no page or record names it. It has the token's
+class and metadata, so only its address, or the miner's `bound_token()`, tells the two apart.
 
 Parameters (the `testnet` profile, also embedded in the contract as compile-time globals):
 
@@ -200,8 +201,9 @@ policy headers as the apex preview, `build.json` with the role and the old miner
 restore-only with the preview notice naming the host.
 First production deploy 2026-09-14, after stack #41 merged: `YACANA_APP_ROLE=old bun run site:build` of `2f56f86`
 and `wrangler deploy -c v5/wrangler.jsonc` (version `00295ec9-ec53-4664-a9ef-5a3625fbc3c6`) created the custom
-domain; `https://v5.yacana.network/build.json` reports role `old` with the live testnet record. The apex was
-deployed by Workers Builds from the same commit.
+domain; `https://v5.yacana.network/build.json` reports role `old` with the 2026-09-13 record, then the live one,
+and still does. The apex was deployed by Workers Builds from the same commit. That origin offers no path to the
+2026-10-26 deployment, which carries nothing from 5.2.0.
 
 The witness archive: `deployments/witnesses/<profile>.jsonl`, written by `bun run bridge -- forward` from a
 version's settled exits (every version of the profile in the one file), committed, and served by the site as one
@@ -233,10 +235,11 @@ from the fix's branch as one keyed run (my-stack: keys from 1Password on the own
 | Portal it trusts | `0x13c06CF71C75fDaE21a46d66478e738209A0370c` (Sepolia, below) |
 | Fees | sponsored FPC (`SPONSORED_FPC_SALT`) |
 | Deployed / launched | 2026-09-28T15:27:37.303Z / epoch 0 opened at once (`launchAt` 1790609292, immediate: no notice or reveal window in this profile) |
-| Example claim (the landing's) | [`0x0954a6a9…4838`](https://testnet.aztecscan.xyz/tx-effects/0x0954a6a9d00a81e3b36f7f8682f80bb2a29b064f40876fe1375c551b892c4838), by a throwaway account with the headless miner |
+| Example claim (the landing's until 2026-10-26) | [`0x0954a6a9…4838`](https://testnet.aztecscan.xyz/tx-effects/0x0954a6a9d00a81e3b36f7f8682f80bb2a29b064f40876fe1375c551b892c4838), by a throwaway account with the headless miner |
 
 Its record is `deployments/testnet-2026-09-28.json` (example claim `deployments/testnet-2026-09-28.example-claim.json`);
-it stays on the 5.2.0 rollup, and `v5.yacana.network` is left as it was.
+it stays on the 5.2.0 rollup. No page serves it: the apex carries the 2026-10-26 deployment, and `v5.yacana.network`
+the 2026-09-13 one.
 
 Sepolia (the policy of `packages/bridge/src/policy.ts` for the `testnet` profile: `PER_HOUR` 576 tYACA,
 `ALLOWANCE` 384 tYACA, 180 d exit floor, 30 d / 60 d pause, launch window −7 d / +90 d, 400 000 gas a leaf):
@@ -297,7 +300,7 @@ is the example claim the landing shows):
 |---|---|---|
 | K1: 1 tYACA exited to the operators' address | `exit_to_l1` [`0x2645bcbd…f745`](https://testnet.aztecscan.xyz/tx-effects/0x2645bcbda0c12526b448ee3f81154c675a0b08493c2b0bbbe12c532d091bf745) (epoch 2398 of the rollup) | forwarded and minted by [`0xfb5f7fc8…2888`](https://sepolia.etherscan.io/tx/0xfb5f7fc80f1b1d4f0821fb07cbb89b916f6c9db47df356e5bb66ab4decd02888) once the epoch was proven (`bun run bridge -- forward`, twelve minutes after the exit) |
 | K3: 1 tYACA deposited into the live version, claimed to the holder | `claim_from_l1` [`0x0144c7f3…4cb6`](https://testnet.aztecscan.xyz/tx-effects/0x0144c7f3dbcd476ccd42c186b5943ce959592e2362954b2e88f97b3041ac4cb6) (Inbox index 75569152) | `deposit` [`0x4557ebb3…bb35`](https://sepolia.etherscan.io/tx/0x4557ebb341c77a5ba04696e499e2230dcd7843d83a1ab36d5d1c3e496cc4bb35) from the operators' YACA (the rehearsal's script also sent an `approve` the portal never needs; the page sends none) |
-| K2: 1 tYACA sent ahead, held | `send_ahead` [`0x1da46805…5f8c`](https://testnet.aztecscan.xyz/tx-effects/0x1da46805334bd18e597ea272110c28a8f1d3352dfd218f156d1ce4e8592d5f8c) (redeem address `0x60bb1823…6637`) | held by the portal: no later version is registered, so `forward` keeps it ("no target record"); its witness is archived in `deployments/witnesses/testnet.jsonl` and served at `/witnesses/1821665230.jsonl`. Its landing on a next version is **pending validation**: the public testnet has not flipped |
+| K2: 1 tYACA sent ahead, held | `send_ahead` [`0x1da46805…5f8c`](https://testnet.aztecscan.xyz/tx-effects/0x1da46805334bd18e597ea272110c28a8f1d3352dfd218f156d1ce4e8592d5f8c) (redeem address `0x60bb1823…6637`) | held by the portal: no later version is registered, so `forward` keeps it ("no target record"); its witness was archived in `deployments/witnesses/testnet.jsonl` and served at `/witnesses/1821665230.jsonl`, until the 2026-09-28 relaunch moved the file out of that folder. Its landing on a next version is **pending validation**: the public testnet has not flipped |
 
 After them `bun run bridge -- status` reads `exited 1 · inbound 1` for version 1821665230, the stats bridge page
 on the branch preview reads the same from the portal, and the miner's wallet page on that preview shows the

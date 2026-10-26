@@ -10,7 +10,7 @@ eli5_mode: skipped (orchestrator-owned)
 quality_bar: production
 hardening: not scheduled
 budget: "recon 3 agents (Sonnet) + one scratch spike; codex gpt-6.1-sol at high; Opus 5.5 Plan audit; code-review off"
-status: approved by the orchestrator; P1–P6 ✓, K1–K4 run, K5 pending
+status: approved by the orchestrator; P1–P5 ✓, K1–K4 run, K5 pending; P6 steps 1–3 ✓, its gate waits on the PR checks
 created: 2026-10-25
 ---
 
@@ -329,7 +329,7 @@ cause is a stop. `bun run lint:actions` exits 0. Layers: CI.
 
 ### K: the keyed deployment (the orchestrator; §7): K1–K4 ✓, K5 pending
 
-### P6: the records and the site move (after K) ✓
+### P6: the records and the site move (after K) ☐ (steps 1–3 ✓, the local gate items pass; the PR checks and step 4 next)
 1. `git mv` the V5 record and its example claim to `testnet-2026-09-28.*`. Commit K's `testnet.json` and
    `testnet.example-claim.json`. Set `VITE_AZTEC_NODE_URL` in `site.env`.
 2. Write the `docs/deployments.md` section. Move the 2026-09-28 section under "Archived".
@@ -573,6 +573,22 @@ new estimate against a mocked RPC (same inputs, same gas) and saw only the new p
 findings*, one. Medium: `untilInboxSynced`'s deadline did not bound its RPCs, so a stalled node held the warp past it
 (demonstrated in memory). **Fixed**: the deadline races the whole wait; a test against a server that never answers
 ends at it (and hangs on the previous code). The node pin and the stats teardown drew no findings.
+
+**P6 review, round 1** (on `430ae20..04f1d95`). Every V6 value in the docs matched the record, the example claim and
+§7; both pin diffs and the class ids held.
+- *Codex (gpt-6.1-sol, high): material findings*, two lows:
+  1. `docs/deployments.md` said `v5.yacana.network` serves "the live testnet record", which now reads as V6. It serves
+     the 2026-09-13 record (its `build.json`, read 2026-10-26). **Fixed**.
+  2. P6 was marked ✓ before its PR checks and step 4. **Fixed**: steps 1–3 ✓, the gate waits on the PR checks.
+- *Opus 5.5 beside it: material findings*, each verified:
+  1. As Codex 2. **Fixed**.
+  2. Plausible, traced in code: a returning visitor whose browser saved the V5 node sees "Cannot start" once.
+     That is a visible behaviour, so it went to OWNER-ASKS as OA2 and is left out; the PR ships it as is.
+  3. "Deployed as one keyed run" (it was two). **Fixed**.
+  4. Stale sentences: the archived example claim was still "the landing's", the archived record "left as it was",
+     the 2026-09-13 witness still served, and OWNER-ASKS named the apex's V5 miner as current. **Fixed**.
+  5. Nit: the orphan has the token's class and metadata. **Fixed**: the docs say only the address or
+     `bound_token()` tells them apart.
 
 ## 9. Post-implementation (no repository standard exists; written out)
 
