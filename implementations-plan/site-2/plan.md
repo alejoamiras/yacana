@@ -242,6 +242,17 @@ Round 2 (resumed `01a178e5`, on `10340ed..2281c82`): **clean** — "no new mater
 disposition stands. Converged in 2 rounds. Final head gate: lint 0, typecheck 0, `bun test` 704 pass / 0 fail,
 `test:components` 0, `test:replay` 9 passed.
 
+**a2 fix loop, round 1** — Codex (`gpt-6.1-sol`, high, session `01a179c5`): 1 finding. Opus (`general-purpose`,
+beside it): 4 findings.
+
+| # | Finding (sev, label) | Disposition |
+|---|---|---|
+| C1 | Three test comments narrate (low) | two deleted; the E2E one cut to the cross-file fact (`run-setup.ts` builds the apex with no old origin) |
+| O1 | Step 8 had the old origin edited and committed in a detached worktree: a trusted origin serving an unreviewed commit, and the retiring apex build linking its tabs nowhere (medium, plausible) | the pair and `v<N>/wrangler.jsonc` reach `main` before step 6, as V5's did from 2026-09-21; step 6 empties them; the pinned `bun run site:wrangler`. No owner ask: V5's move ran so |
+| O2 | The guard accepted `https://v6.localhost`, `https://yacana.network.` and any non-subdomain (low, needs an operator's typo) | one check: https and a subdomain of the RP ID; four refused cases; red with it reverted |
+| O3 | No test held the old role's landing pairing once `site.env` names no origin (low, demonstrated) | `assertLanding` exported and tested for role `old`; red with the check narrowed to the apex |
+| O4 | Two archived lines stay present tense (low) | rejected: round 1 #3 keeps archived lines untouched, and they turn false only when the owner deletes the Worker |
+
 ## 8. Post-implementation
 
 - Write comments to the bar as you code. Log attempts in `lessons/phase-N.md`. Run `agent-worktree status site-2
