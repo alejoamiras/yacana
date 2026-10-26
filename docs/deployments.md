@@ -161,7 +161,8 @@ The record carries two more blocks once the bridge exists (`packages/bridge/src/
 `portal`, `yaca`, `registry`, `operators`, `l1RpcUrl`, `deployBlock`), written by
 `bun tools/deploy/scripts/l1-deploy.ts deployments/<profile>.json` with `YACANA_L1_RPC_URL`,
 `YACANA_L1_PRIVATE_KEY`, `YACANA_REGISTRY` (Aztec's Registry on that chain) and `YACANA_OPERATORS` in the shell
-(the policy comes from `yacana.params.json` through `packages/bridge/src/policy.ts`; the script amends an existing
+(the policy comes from `yacana.params.json` through `packages/bridge/src/policy.ts`; forge sends each transaction
+at that RPC's own gas estimate × 1.3, with `--skip-simulation`, so name an RPC you trust; the script amends an existing
 record and refuses one whose miner trusts another portal; with no record yet it writes the block beside it as
 `deployments/<profile>.bridge.json`, which `bun run deploy` folds into the record it writes), and `migration`
 (`toIndex`, `announcedAt`, `expectedFlipAt`), written by hand when Aztec announces the next version. A miner is

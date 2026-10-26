@@ -1,5 +1,6 @@
-import { describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import type { PrestoStatus } from '@alejoamiras/presto-core';
+import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/node-guard';
 import {
   acceleratorUrls,
   downloadPhases,
@@ -10,6 +11,9 @@ import {
   prestoEligible,
   prestoEndpointFor,
 } from '../src/presto.ts';
+
+beforeAll(installNodeGuard);
+afterAll(uninstallNodeGuard);
 
 const available = (schemes?: string[]): PrestoStatus =>
   ({ available: true, needsDownload: false, schemes, protocol: 'https' }) as PrestoStatus;

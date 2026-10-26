@@ -1,8 +1,12 @@
 // The claim on its win line: the step while it runs, the outcome after, one clock from the win,
 // Stop's mark; and the sentences the ledger draws from them.
-import { describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/node-guard';
 import { settlementSuffix, settlementTitle, winNote } from '../src/lib/claim-copy.ts';
 import { type Event, initial, type MinerState, reduce } from '../src/lib/reducer.ts';
+
+beforeAll(installNodeGuard);
+afterAll(uninstallNodeGuard);
 
 const epoch = { epoch: 3n, seed: 7n, target: 1n << 122n, openedAt: 0n, claims: 1 };
 

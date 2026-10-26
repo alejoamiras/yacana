@@ -24,9 +24,12 @@ const forgeStd = resolve(
 );
 
 /** Anvil's first funded account: throwaway, and only ever used on a chain nobody else runs. */
-const ANVIL_KEY: Hex = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
+export const ANVIL_KEY: Hex = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
 
-async function startAnvil(): Promise<{ rpcUrl: string; stop: () => Promise<void> }> {
+export async function startAnvil(
+  extraArgs: string[] = [],
+): Promise<{ rpcUrl: string; stop: () => Promise<void> }> {
+  const bin = toolchainBin('aztec-anvil');
   const runId = `yacana-l1-${process.pid}-${Date.now()}`;
   const port = await claim({
     runId,
@@ -39,19 +42,22 @@ async function startAnvil(): Promise<{ rpcUrl: string; stop: () => Promise<void>
   const rpcUrl = `http://127.0.0.1:${port}`;
   const anvil = spawnDetached(
     'anvil',
-    toolchainBin('aztec-anvil'),
-    ['--host', '127.0.0.1', '--port', String(port), '--silent'],
+    bin,
+    ['--host', '127.0.0.1', '--port', String(port), '--silent', ...extraArgs],
     {},
     false,
   );
-  await jsonRpcReady(rpcUrl, 'eth_chainId', 60_000, anvil);
-  return {
-    rpcUrl,
-    stop: async () => {
-      killOwned(anvil);
-      await release(runId).catch(() => {});
-    },
+  const stop = async () => {
+    killOwned(anvil);
+    await release(runId).catch(() => {});
   };
+  try {
+    await jsonRpcReady(rpcUrl, 'eth_chainId', 60_000, anvil);
+  } catch (e) {
+    await stop();
+    throw e;
+  }
+  return { rpcUrl, stop };
 }
 
 /** A stand-in Registry (the Foundry harness's) on a chain that has no Aztec deployment. */
@@ -73,8 +79,10 @@ async function deployFakeRegistry(rpcUrl: string, key: Hex): Promise<Hex> {
   return receipt.contractAddress;
 }
 
-function forgeScript(env: Record<string, string>): { portal: Hex; yaca: Hex } {
-  const proc = Bun.spawnSync(
+// Spawned without blocking: a synchronous spawn would starve any JSON-RPC server in this process that
+// forge talks to.
+async function forgeScript(env: Record<string, string>): Promise<{ portal: Hex; yaca: Hex }> {
+  const proc = Bun.spawn(
     [
       toolchainBin('aztec-forge'),
       'script',
@@ -83,11 +91,24 @@ function forgeScript(env: Record<string, string>): { portal: Hex; yaca: Hex } {
       env.YACANA_L1_RPC_URL as string,
       '--broadcast',
       '--json',
+      // Each transaction's gas is then the node's eth_estimateGas × 130 %. forge's own EVM lags a chain
+      // that reprices: its simulation priced the portal's creation on Sepolia about 7× too low.
+      '--skip-simulation',
     ],
-    { cwd: portalDir, env: { ...process.env, ...env, FOUNDRY_REMAPPINGS: `forge-std/=${forgeStd}/` } },
+    {
+      cwd: portalDir,
+      env: { ...process.env, ...env, FOUNDRY_REMAPPINGS: `forge-std/=${forgeStd}/` },
+      stdout: 'pipe',
+      stderr: 'pipe',
+    },
   );
-  const out = proc.stdout.toString();
-  if (proc.exitCode !== 0) throw new Error(`forge script failed:\n${out}\n${proc.stderr.toString()}`);
+  // Both pipes drain together, or a full one stalls forge.
+  const [out, err, exitCode] = await Promise.all([
+    new Response(proc.stdout).text(),
+    new Response(proc.stderr).text(),
+    proc.exited,
+  ]);
+  if (exitCode !== 0) throw new Error(`forge script failed:\n${out}\n${err}`);
   // forge --json prints one JSON object per line; the script's returns land in the one with `returns`.
   for (const line of out.split('\n')) {
     try {
@@ -108,7 +129,7 @@ export async function deployL1(env: {
   operators: Hex;
 }): Promise<BridgeRecord> {
   const policy = policyFor();
-  const { portal, yaca } = forgeScript({
+  const { portal, yaca } = await forgeScript({
     YACANA_L1_RPC_URL: env.rpcUrl,
     YACANA_L1_PRIVATE_KEY: env.key,
     YACANA_REGISTRY: env.registry,

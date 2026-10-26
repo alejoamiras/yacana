@@ -46,7 +46,6 @@ beforeAll(async () => {
     configurable: true,
     writable: true,
   });
-  globalThis.fetch = network as typeof fetch;
   guard = await import('./node-guard.ts');
   guard.installNodeGuard();
   guard.setOriginalFetch(network as typeof fetch);
@@ -61,8 +60,12 @@ beforeEach(() => {
   guard.setNodeEndpoint(NODE, 1_000);
 });
 
-// The store and its gate outlive this file in a shared run: leave them healthy for the next suite.
-afterAll(() => health.resetNodeHealth());
+// The store outlives this file in a shared run: it is left healthy, and the guard goes with the realm's
+// fetch put back.
+afterAll(() => {
+  health.resetNodeHealth();
+  guard.uninstallNodeGuard();
+});
 
 describe('parseRetryAfter', () => {
   test('a quiet failure never opens a cooldown; once one is on, a quiet answer counts like any other', () => {

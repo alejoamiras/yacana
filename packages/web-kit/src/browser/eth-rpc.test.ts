@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import type { NodeRequestOutcome } from './node-guard.ts';
 
 const PORTAL = `0x${'be'.repeat(20)}` as const;
@@ -39,12 +39,12 @@ beforeAll(async () => {
     configurable: true,
     writable: true,
   });
-  globalThis.fetch = rpc(11155111n) as typeof fetch;
   guard = await import('./node-guard.ts');
   guard.installNodeGuard();
   guard.setOriginalFetch(rpc(11155111n) as typeof fetch);
   mod = await import('./eth-rpc.ts');
 });
+afterAll(() => guard.uninstallNodeGuard());
 
 describe('the Ethereum RPC setting', () => {
   test('a URL follows the node rule', () => {

@@ -2,14 +2,18 @@
 // count is the reader's contract (48 × 3 + 3); the HTTP count is what the node's rate limit sees,
 // and it is measured here rather than assumed (the client batches concurrent methods).
 
-import { describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
 import { Fr } from '@aztec-labs/aztec.js/fields';
 import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
 import { NODE_MAX_BATCH } from '@yacana/miner-core/node-client';
 import { CHUNK, DEFAULT_LIMITS, type SlotTable } from '@yacana/miner-core/reader';
+import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/node-guard';
 import type { Reader } from '../src/chain';
 import { readWindowRows } from '../src/read-window';
+
+beforeAll(installNodeGuard);
+afterAll(uninstallNodeGuard);
 
 interface Call {
   jsonrpc: string;

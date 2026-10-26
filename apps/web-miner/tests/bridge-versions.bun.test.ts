@@ -4,11 +4,15 @@
 // fake dependencies, as bridge-reads does.
 process.env.VITE_ROLLUP_VERSION = '5';
 
-import { describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import type { Crossing } from '@yacana/bridge/journal';
 import type { VersionStanding } from '@yacana/bridge/portal-reader';
+import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/node-guard';
 import { BridgeSession } from '../src/bridge/session.ts';
 import type { BridgeView } from '../src/state.ts';
+
+beforeAll(installNodeGuard);
+afterAll(uninstallNodeGuard);
 
 const standing: VersionStanding = {
   registered: true,

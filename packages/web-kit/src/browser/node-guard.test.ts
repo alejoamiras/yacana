@@ -1,7 +1,7 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 
-// The guard captures `globalThis.fetch` when it is imported: the fake network and the page's
-// location exist first, then the guard, then (as in the miner) the CRS interceptor on top of it.
+// The page's location exists first, then the guard over this fake network, then (as in the miner) the
+// CRS interceptor on top of it.
 const calls: { href: string; init?: RequestInit }[] = [];
 const network = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
   const href = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
@@ -55,16 +55,14 @@ beforeAll(async () => {
     configurable: true,
     writable: true,
   });
-  globalThis.fetch = network as typeof fetch;
   guard = await import('./node-guard.ts');
-  // Another suite in the same run may have imported the guard over the real fetch, or left a gate on it
-  // (the health store's): point it at this fake and clear the gate. `installNodeGuard` is idempotent
-  // and never re-captures `original`, so the fake is set through `setOriginalFetch`.
+  // Only the first suite to load the module gets the guard from its import, over the real fetch: so the
+  // guard is installed here and the fake goes in through `setOriginalFetch`.
   guard.installNodeGuard();
   guard.setOriginalFetch(network as typeof fetch);
-  guard.setNodeGate(null);
   guard.setNodeEndpoint(NODE, 1_000);
 });
+afterAll(() => guard.uninstallNodeGuard());
 
 describe('node guard', () => {
   test('normalises an endpoint on origin + path + query, the path exactly as the SDK posts it', () => {

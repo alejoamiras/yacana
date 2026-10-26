@@ -3,7 +3,7 @@
 // resumes on it, a delivery still blocked after a rebuild gets the pause; and a claim that did not land
 // is checked against a node that answers as the pinned SDK does (receipts as its classes, a block's
 // effects only with `includeTransactions`, reads per tip) before anything is sent again.
-import { beforeAll, beforeEach, describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
 import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
 import { Fr } from '@aztec-labs/aztec.js/fields';
 import {
@@ -16,6 +16,7 @@ import {
   TxStatus,
 } from '@aztec-labs/stdlib/tx';
 import { ticketNullifier } from '@yacana/miner-core/proof';
+import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/node-guard';
 import { createStore } from 'jotai';
 import type { Deployment, Fee } from '../src/chain.ts';
 import { MinerController, type Rebound } from '../src/controller.ts';
@@ -23,6 +24,9 @@ import { winNote } from '../src/lib/claim-copy.ts';
 import { balanceAtom, claimReadsAtom, claimsAtom, minerAtom } from '../src/state.ts';
 import type { SentTx, TurnOwn } from '../src/wallet.ts';
 import type { FromWorker, ToWorker } from '../src/worker-protocol.ts';
+
+beforeAll(installNodeGuard);
+afterAll(uninstallNodeGuard);
 
 /** Consent as the controller tests need it: in force, with nothing to remember. */
 const OPEN = { allowed: () => true, promote() {}, forget() {} };

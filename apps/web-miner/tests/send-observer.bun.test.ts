@@ -1,6 +1,10 @@
-import { describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import type { Tx } from '@aztec-labs/stdlib/tx';
+import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/node-guard';
 import { type SentTx, sendObserver } from '../src/wallet.ts';
+
+beforeAll(installNodeGuard);
+afterAll(uninstallNodeGuard);
 
 const tx = (hash: string, expiresAt: number, anchorBlock: number): Tx =>
   ({

@@ -1,7 +1,8 @@
 // The browser's permission as the page reads it, and the one reading of Presto's standing that both
 // surfaces show.
-import { describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import type { PrestoStatus } from '@alejoamiras/presto-core';
+import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/node-guard';
 import {
   initialPresto,
   type Lna,
@@ -12,6 +13,9 @@ import {
   prestoStanding,
 } from '../src/presto.ts';
 import type { ConsentRecord } from '../src/presto-consent.ts';
+
+beforeAll(installNodeGuard);
+afterAll(uninstallNodeGuard);
 
 type Query = Pick<Permissions, 'query'>;
 

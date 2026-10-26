@@ -1,9 +1,13 @@
 import 'fake-indexeddb/auto';
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
+import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/node-guard';
 import { createStore } from 'jotai';
 import { DB_NAME, type MasterRecord, putRecord } from '../src/keys/store.ts';
 import { Session } from '../src/session.ts';
 import { bootAtom } from '../src/state.ts';
+
+beforeAll(installNodeGuard);
+afterAll(uninstallNodeGuard);
 
 // The fake IndexedDB is one per process: the slot another file left behind would refuse a create here.
 const reset = () =>

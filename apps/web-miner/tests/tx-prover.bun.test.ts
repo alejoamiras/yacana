@@ -1,8 +1,12 @@
 // The page's prover around the SDK's: a proof's start and end bracket the UI's attribution, a thrown
 // proof included.
-import { describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { PrestoProver } from '@alejoamiras/presto';
+import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/node-guard';
 import { TxProver } from '../src/tx-prover.ts';
+
+beforeAll(installNodeGuard);
+afterAll(uninstallNodeGuard);
 
 const ENDPOINT = { host: '127.0.0.1', port: 1, httpsPort: 1, httpsOnly: false } as const;
 const proto = PrestoProver.prototype as unknown as { createChonkProof: () => Promise<unknown> };

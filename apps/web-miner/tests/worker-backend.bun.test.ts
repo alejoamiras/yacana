@@ -5,7 +5,7 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { resolve } from 'node:path';
 import type { Barretenberg } from '@aztec-foundation/bb.js';
 import type { WorkArtifact } from '@yacana/miner-core/work';
-import { installNodeGuard, setAcceleratorEndpoints } from '@yacana/web-kit/browser/node-guard';
+import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/node-guard';
 import type { PrestoEndpoint } from '../src/presto.ts';
 import { createProverLoop } from '../src/prover-loop.ts';
 import { createWorkerBackend } from '../src/worker-backend.ts';
@@ -24,8 +24,8 @@ const endpoint: PrestoEndpoint = {
 const health = `http://127.0.0.1:${presto.port}/health`;
 installNodeGuard();
 afterAll(() => {
-  setAcceleratorEndpoints(null, 0);
   presto.stop(true);
+  uninstallNodeGuard();
 });
 
 /** Nothing here proves: the WASM backend is never asked to. */

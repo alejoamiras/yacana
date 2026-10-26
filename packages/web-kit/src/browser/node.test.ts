@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
 import { Fr } from '@aztec-labs/aztec.js/fields';
 import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
@@ -16,8 +16,10 @@ beforeAll(async () => {
     writable: true,
   });
   guard = await import('./node-guard.ts');
+  guard.installNodeGuard();
   mod = await import('./node.ts');
 });
+afterAll(() => guard.uninstallNodeGuard());
 
 describe('parseNodeUrl', () => {
   test('https anywhere; http only on localhost outside production; no credentials, no fragment', () => {

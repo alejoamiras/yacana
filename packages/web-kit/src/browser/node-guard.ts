@@ -21,6 +21,8 @@ export interface NodeRequestOutcome {
 interface GuardState {
   /** The context's fetch under the guard; re-pointed when the guard is re-armed over a test's fake. */
   original: typeof globalThis.fetch;
+  /** The `globalThis.fetch` the guard replaced, never re-pointed: what an uninstall puts back. */
+  replaced: typeof globalThis.fetch;
   guarded: typeof globalThis.fetch;
   endpoint: string | null;
   deadlineMs: number;
@@ -292,7 +294,7 @@ async function tracked(
 }
 
 /**
- * Installs the guard over the context's current `fetch`, once, at import. A repeated call is a
+ * Installs the guard over the context's current `fetch`, at import. A call while it is installed is a
  * no-op: it neither re-captures `original` (the current fetch may be a wrapper that forwards back
  * here — the CRS interceptor — and would recurse) nor touches `globalThis.fetch` (that would drop
  * such a wrapper). Tests arm the guard over a fake through `setOriginalFetch`.
@@ -301,6 +303,7 @@ export function installNodeGuard(): void {
   if ((globalThis as Realm)[MARK]) return;
   const s: GuardState = {
     original: globalThis.fetch.bind(globalThis),
+    replaced: globalThis.fetch,
     guarded: globalThis.fetch,
     endpoint: null,
     deadlineMs: 120_000,
@@ -344,6 +347,19 @@ export function setOriginalFetch(fetchImpl: typeof globalThis.fetch): void {
   if (!s) return;
   s.original = fetchImpl;
   globalThis.fetch = s.guarded;
+}
+
+/**
+ * Tests only: restores the fetch the guard replaced, dropping any wrapper installed over the guard since,
+ * and forgets its state, with what `startNodeHealth` and `startEthRpcHealth` wired into it once. The module
+ * stays cached, so a suite that needs the guard installs it in setup.
+ */
+export function uninstallNodeGuard(): void {
+  const realm = globalThis as Realm;
+  const s = realm[MARK];
+  if (!s) return;
+  globalThis.fetch = s.replaced;
+  delete realm[MARK];
 }
 
 if (!(globalThis as Realm)[MARK]) installNodeGuard();

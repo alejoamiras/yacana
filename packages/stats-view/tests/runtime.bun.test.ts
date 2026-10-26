@@ -1,8 +1,9 @@
 // The instance's lifecycle over fake sources: what it may start while stopped, yielding or disposed,
 // and what it publishes. The guard's slots and its quiet scope are read off the realm, where the guard keeps them.
-import { afterEach, describe, expect, test } from 'bun:test';
+import { afterAll, afterEach, beforeAll, describe, expect, test } from 'bun:test';
 import type { EpochRow, Node } from '@yacana/miner-core/reader';
 import type { Connection } from '@yacana/web-kit/browser/connection';
+import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/node-guard';
 import { resetNodeHealth, setTransportForTests } from '@yacana/web-kit/browser/node-health';
 import { Glob } from 'bun';
 import { createStore } from 'jotai';
@@ -11,6 +12,9 @@ import type { BridgeSnapshot } from '../src/bridge-beat';
 import type { Reader } from '../src/chain';
 import { createStatsRuntime, POLL_MS, type StatsRuntime, type StatsSources } from '../src/runtime';
 import { bridgeAtom, type Fixed, fixedAtom, historyAtom, statusAtom } from '../src/state';
+
+beforeAll(installNodeGuard);
+afterAll(uninstallNodeGuard);
 
 interface GuardView {
   quiet: number;

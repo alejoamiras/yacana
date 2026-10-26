@@ -3,7 +3,7 @@
 // tabs, and a permission the suite settles when it likes. Nothing reaches the fake without consent.
 import 'fake-indexeddb/auto';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import { installNodeGuard } from '@yacana/web-kit/browser/node-guard';
+import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/node-guard';
 import { createStore } from 'jotai';
 import { type Lna, lnaAtom, type PrestoEndpoint, prestoAtom } from '../src/presto.ts';
 import { type ConsentDeps, type ConsentLock, createConsent } from '../src/presto-consent.ts';
@@ -145,10 +145,13 @@ function permission(state: Lna | 'held') {
 
 let fake: ReturnType<typeof heldPresto>;
 beforeAll(() => {
-  fake = heldPresto();
   installNodeGuard();
+  fake = heldPresto();
 });
-afterAll(() => fake.server.stop(true));
+afterAll(() => {
+  fake?.server.stop(true);
+  uninstallNodeGuard();
+});
 
 function harness(o: { consent?: ConsentDeps; lna?: Lna | 'held' } = {}) {
   const store = createStore();

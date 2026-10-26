@@ -1,7 +1,8 @@
 // Who proves the wallet's transaction, as the page reads the prover's phases; when the next one will
 // go to Presto; and the words each answer gets on the claim line.
-import { describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import type { PrestoPhase } from '@alejoamiras/presto-core';
+import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/node-guard';
 import { winNote } from '../src/lib/claim-copy.ts';
 import {
   initialPresto,
@@ -11,6 +12,9 @@ import {
   prestoProvesTx,
   txProvingAfter,
 } from '../src/presto.ts';
+
+beforeAll(installNodeGuard);
+afterAll(uninstallNodeGuard);
 
 /** The prover after each phase, walked in order. */
 const walk = (phases: PrestoPhase[]): (ProverKind | null)[] => {
