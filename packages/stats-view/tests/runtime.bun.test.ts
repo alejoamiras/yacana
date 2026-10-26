@@ -361,7 +361,9 @@ describe('the stats runtime', () => {
       expect([...saved.keys()]).toEqual([]);
     } finally {
       Reflect.deleteProperty(globalThis, 'localStorage');
-      process.env = env;
+      // In place: `import.meta.env` is this object, and a reassignment would detach it for every later suite.
+      for (const k of Object.keys(process.env)) if (!(k in env)) delete process.env[k];
+      Object.assign(process.env, env);
     }
   });
 
