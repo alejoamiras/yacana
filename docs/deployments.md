@@ -176,8 +176,8 @@ portal: `PER_HOUR` 576 tYACA, `ALLOWANCE` 384 tYACA, 180 d exit floor, 30 d / 60
 
 | | |
 |---|---|
-| Portal (`YacanaPortal`; created in [`0x2ac8c122…b4fb2c`](https://sepolia.etherscan.io/tx/0x2ac8c12229ddf0cd5931a9242beee78099a7d42eebf7b2f6ed2126b377b4fb2c), block 11993997; Etherscan verification pending) | [`0x12D46b6878a4Dc0506CD15f94CA9E56Ae06BC4D2`](https://sepolia.etherscan.io/address/0x12D46b6878a4Dc0506CD15f94CA9E56Ae06BC4D2) |
-| YACA (`tYACA`, ERC-20, minter = the portal, created by it; Etherscan verification pending) | [`0xC7cc767BaaE1E979bED8a3C118587bfAea67ac2A`](https://sepolia.etherscan.io/address/0xC7cc767BaaE1E979bED8a3C118587bfAea67ac2A) |
+| Portal (`YacanaPortal`; created in [`0x2ac8c122…b4fb2c`](https://sepolia.etherscan.io/tx/0x2ac8c12229ddf0cd5931a9242beee78099a7d42eebf7b2f6ed2126b377b4fb2c), block 11993997; verified 2026-10-26: solc 0.8.30, 200 runs, prague) | [`0x12D46b6878a4Dc0506CD15f94CA9E56Ae06BC4D2`](https://sepolia.etherscan.io/address/0x12D46b6878a4Dc0506CD15f94CA9E56Ae06BC4D2#code) |
+| YACA (`tYACA`, ERC-20, minter = the portal, created by it; verified 2026-10-26, the same settings) | [`0xC7cc767BaaE1E979bED8a3C118587bfAea67ac2A`](https://sepolia.etherscan.io/address/0xC7cc767BaaE1E979bED8a3C118587bfAea67ac2A#code) |
 | Aztec Registry (the testnet's) | `0xa0bfb1b494fb49041e5c6e8c2c1be09cd171c6ba` |
 | Operators (an EOA; the Safe comes with the mainnet plan; its key is `YACANA_L1_PRIVATE_KEY` of the `Yacana-Testnet` item) | [`0xc9b7162F57B74257261cB61a0FAc870Eda87Cbb7`](https://sepolia.etherscan.io/address/0xc9b7162F57B74257261cB61a0FAc870Eda87Cbb7) |
 | Listed forwarder (the relayer of 2026-09-14) | [`0x6792D5eb…8bac`](https://sepolia.etherscan.io/address/0x6792D5eb75e1F025438349d454AC91378d9F8bac), listed by [`0xbc6623c0…85da`](https://sepolia.etherscan.io/tx/0xbc6623c0ba6358f8b8b6e02a4a74cdf7083dc05259c90ede09187e02723385da) |

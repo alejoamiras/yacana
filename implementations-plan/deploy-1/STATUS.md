@@ -12,3 +12,6 @@
 - 2026-10-26: orchestrator amendment: #83 joins a1 as P0. P0 gate green (probe clean, root bun test 703 pass / 0 fail at retry 0, mutation control red as required).
 - 2026-10-26: fix loop r1: Codex 1 low + Opus 5 low, all folded; gates green at retry 0; resuming Codex to verify.
 - 2026-10-26: fix loop r2 (Codex resumed) clean: converged in 2 rounds. P0 and P1 ✓.
+- 2026-10-26: a2 started on `deploy-1-a2` from origin/main ba5aae8 (orchestrator: K5 ran, both contracts "Pass - Verified").
+- 2026-10-26: P2 step 1 green: both `#code` pages show "Source Code Verified (Exact Match)", YacanaPortal / YACA, v0.8.30+commit.73712a01 (22:45 UTC).
+- 2026-10-26: P2 gate green: rows changed, `bun run lint` 0, `rename-guard.test.ts` 5 pass, the diff touches only `docs/deployments.md` and the plan folder.

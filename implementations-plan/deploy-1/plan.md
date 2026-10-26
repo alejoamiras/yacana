@@ -192,6 +192,10 @@ guard fail both alone and after another guard suite's teardown.
 **Validation gate**: quote step 1's markers and the time of the read in `lessons/phase-2.md`. `bun run lint`
 exits 0. `git diff --stat origin/main` shows `docs/deployments.md` and the plan folder only.
 
+Deviations (the tree and the orchestrator win): the base is `origin/main` at ba5aae8, two merges past a1's
+d58a2d2; the rows sit at `:179-180`; each row also carries the date and, as the orchestrator asked, the compiler
+settings Etherscan shows.
+
 ## Delivery
 
 - **a1** = P1 on `worktree-deploy-1`, carrying this plan. PR against `main`: `fix(deploy): send the l1 creation
