@@ -9,9 +9,21 @@ explainer: off
 eli5_mode: skipped (orchestrator-owned)
 budget: "recon 1 Sonnet agent + 1 web fetch; codex at high (gpt-6.1-sol); code-review off"
 hardening: not scheduled
-status: planned 2026-10-26 (final Codex pass: approve); awaiting the orchestrator
+status: completed 2026-10-26
 created: 2026-10-26
 ---
+
+## Outcome
+
+- **Date**: 2026-10-26. **Status**: completed.
+- **Shipped**: a1, PR #84 (squash-merged as `d58a2d2`). It covered #80: the L1 creation goes out at the node's `eth_estimateGas` × 1.3 (`--skip-simulation`), `forgeScript` is async, a test runs a Sepolia-priced proxy in front of anvil, and the portal lane runs it. It also covered #83: every bun suite that loads web-kit's fetch guard installs it in setup and uninstalls it last. a2, PR #89 (#81): the V6 portal and YACA are marked verified in `docs/deployments.md`, after the orchestrator's keyed K5 (`l1-verify.ts deployments/testnet.json` from ba5aae8, both "Pass - Verified"). The lane then read both pages back without a key.
+- **Rejected**: these alternatives were considered and not taken (see Architecture and Audit):
+  - a gas multiplier from an environment variable;
+  - a creation sent with viem;
+  - `--isolate`, a fetch swap inside the deploy suite, or a child-process driver as the answer to the leak.
+- **Known limits**: #82, the V6 deployment's own limit (`LEAF_GAS`), filed with PR #79. Nothing in this lane touches it.
+- **Open items**: none.
+- **Seeds**: the `/goal` and `/loop` at the bottom are retired. They are a record, not instructions.
 
 # deploy-1: the L1 creation at the node's gas, and the V6 contracts verified
 
@@ -183,7 +195,7 @@ guard fail both alone and after another guard suite's teardown.
   in the PR body.
 - Layers: lint, typecheck, unit, integration (forge and anvil), and a read-only call to Sepolia.
 
-### P2 (a2): the two rows verified (only once Etherscan shows both)
+### P2 (a2): the two rows verified (only once Etherscan shows both) — ✓ 2026-10-26
 1. Read both `#code` pages with a web fetch. Each must show "Contract Source Code Verified", its name
    (`YacanaPortal`, `YACA`) and compiler v0.8.30. If either does not, stop and report.
 2. In `docs/deployments.md:178-179`, change "Etherscan verification pending" to "verified". Add `#code` to both
