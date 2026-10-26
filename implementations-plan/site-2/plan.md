@@ -222,6 +222,17 @@ needs reopening, and no additional owner ask is needed."
 `process.env`, which detaches `import.meta.env` from every later suite. That suite now restores in place
 (`lessons/phase-1.md`). The plan's module-cache warning holds as well.
 
+**a1 fix loop, round 1** — Codex (`gpt-6.1-sol`, high, session `01a178e5`): 2 findings. Opus (`general-purpose`,
+beside it): 3 findings.
+
+| # | Finding (sev, label) | Disposition |
+|---|---|---|
+| C1 | A non-string stored `nodeUrl` stops a page from starting (medium, demonstrated, pre-existing at `d58a2d2`) | known limit #85, closed: no build writes one; a same-origin writer owns the page |
+| C2 | The test's "control" comment narrates (low) | deleted |
+| O1 | Step 6 of the runbook lacks the append (medium, demonstrated) | added to `docs/upgrades.md` step 6 |
+| O2 | A retired default that still serves could never be chosen again (low, needs conditions that do not exist yet) | the append is conditional: "unless the old default also serves" the new deployment (runbook and code comment) |
+| O3 | Two comments garbled or historical (low) | rewritten |
+
 ## 8. Post-implementation
 
 - Write comments to the bar as you code. Log attempts in `lessons/phase-N.md`. Run `agent-worktree status site-2

@@ -4,3 +4,4 @@
 2026-10-26 plan committed on worktree-site-2; awaiting the orchestrator's approval
 2026-10-26 approved by the orchestrator for a1; OA1 = A (owner), built in a1; OA2 open, a2 waits
 2026-10-26 phase 1 gate green: lint, typecheck, bun test (704/0), test:components, test:replay (9/9)
+2026-10-26 a1 codex r1 (01a178e5) 2 findings + opus 3 findings: 4 fixed, 1 known limit #85

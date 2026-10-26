@@ -37,8 +37,9 @@ const defaults: Connection = {
 export const defaultNodeUrl = (): string => import.meta.env.VITE_AZTEC_NODE_URL;
 
 /**
- * Every default the site's builds carried before this one; a saved node equal to one is no choice.
- * Append the old `VITE_AZTEC_NODE_URL` whenever site.env's changes.
+ * Defaults the site's builds carried before this one; a saved node equal to one is no choice. Append
+ * site.env's old default when it changes, unless that node also serves the new deployment: listed, it
+ * could no longer be chosen.
  */
 const RETIRED_DEFAULT_NODES: readonly string[] = ['https://v5.testnet.rpc.aztec-labs.com'];
 

@@ -11,3 +11,5 @@
 - Gate (2026-10-26): `bun run lint` 0, `bun run typecheck` 0, `bun test` 0 (704 pass, 44 skip, 0 fail),
   `bun run test:components` 0 (ui 90, web-landing 15, stats-view 83, web-stats 2, web-miner 158),
   `bun run --cwd apps/web-miner test:replay` 0 (9 passed, 1.3 min).
+- Fix loop round 1: Codex `01a178e5` (2 findings), Opus beside it (3 findings). The runbook append was missing
+  (plan §4 named it). A pre-existing non-string-storage crash went to known limit #85.

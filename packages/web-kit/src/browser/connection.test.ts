@@ -45,7 +45,7 @@ test('a default node, retired or chosen with "Use the default", is no choice; a 
     expect(mod.saveConnection({ nodeUrl })).toBe(true);
     expect(saved()).toEqual({ ethRpcUrl: RPC });
   }
-  // A copy of today's default saved before this rule stays, on load and through a save of the RPC alone.
+  // A stored copy of today's default stays, on load and through a save of the RPC alone.
   seed({ nodeUrl: `${DEFAULT}/` });
   expect(mod.loadConnection().nodeUrl).toBe(`${DEFAULT}/`);
   expect(mod.saveConnection({ ethRpcUrl: RPC })).toBe(true);
@@ -56,7 +56,6 @@ test('a default node, retired or chosen with "Use the default", is no choice; a 
     false,
     false,
   ]);
-  // The control: a custom node is saved and loads.
   expect(mod.saveConnection({ nodeUrl: CUSTOM })).toBe(true);
   expect(mod.loadConnection().nodeUrl).toBe(CUSTOM);
 });
