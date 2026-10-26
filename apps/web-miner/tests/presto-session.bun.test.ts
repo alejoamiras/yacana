@@ -148,9 +148,8 @@ beforeAll(() => {
   installNodeGuard();
   fake = heldPresto();
 });
-// The guard goes last: later suites in the run get the realm's fetch back.
 afterAll(() => {
-  fake.server.stop(true);
+  fake?.server.stop(true);
   uninstallNodeGuard();
 });
 

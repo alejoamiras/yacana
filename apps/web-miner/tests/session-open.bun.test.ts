@@ -7,7 +7,6 @@ import { type Consent, createConsent } from '../src/presto-consent.ts';
 import { Session } from '../src/session.ts';
 import { bootAtom, type Endpoints, endpointsAtom, epochAtom, mineIntentAtom } from '../src/state.ts';
 
-// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
 beforeAll(installNodeGuard);
 afterAll(uninstallNodeGuard);
 

@@ -5,7 +5,6 @@ import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/no
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { HISTORY, type Reader, readLive } from './live';
 
-// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
 beforeAll(installNodeGuard);
 afterAll(uninstallNodeGuard);
 

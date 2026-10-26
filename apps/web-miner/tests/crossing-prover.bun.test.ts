@@ -8,7 +8,6 @@ import { BridgeSession } from '../src/bridge/session.ts';
 import type { ProverKind } from '../src/presto.ts';
 import { claimingAtom, crossingProversAtom } from '../src/state.ts';
 
-// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
 beforeAll(installNodeGuard);
 afterAll(uninstallNodeGuard);
 

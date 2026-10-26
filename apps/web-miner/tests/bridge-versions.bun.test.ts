@@ -11,7 +11,6 @@ import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/no
 import { BridgeSession } from '../src/bridge/session.ts';
 import type { BridgeView } from '../src/state.ts';
 
-// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
 beforeAll(installNodeGuard);
 afterAll(uninstallNodeGuard);
 

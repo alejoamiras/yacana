@@ -168,7 +168,7 @@ beforeAll(async () => {
   stopCrs = serveCrs();
 }, 120_000);
 
-// The guard goes last, under the CRS stand-in: later suites in the run get the realm's fetch back.
+// The CRS stand-in goes first: put back after the uninstall, it would restore the guard over the realm's fetch.
 afterAll(() => {
   stopCrs?.();
   fake?.server.stop(true);

@@ -92,7 +92,7 @@ async function forgeScript(env: Record<string, string>): Promise<{ portal: Hex; 
       '--broadcast',
       '--json',
       // Each transaction's gas is then the node's eth_estimateGas × 130 %. forge's own EVM lags a chain
-      // that reprices opcodes: its simulation priced Sepolia's code deposit about 7× too low.
+      // that reprices: its simulation priced the portal's creation on Sepolia about 7× too low.
       '--skip-simulation',
     ],
     {

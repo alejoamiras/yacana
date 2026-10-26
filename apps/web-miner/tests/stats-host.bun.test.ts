@@ -21,7 +21,6 @@ import { createStore } from 'jotai';
 import { claimBusy, createStatsHost, createTurns, hostedBusy, hostedRuntime } from '../src/routes/stats-host';
 import { claimReadsAtom, type Endpoints, endpointsAtom, minerAtom } from '../src/state';
 
-// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
 beforeAll(installNodeGuard);
 afterAll(uninstallNodeGuard);
 
@@ -205,7 +204,7 @@ const CONNECTION: Connection = {
 };
 
 describe('hosted reads composed', () => {
-  // The guard's pass-through and node slot belong to the realm: every suite in this process shares them.
+  // The guard's pass-through and node slot are shared by every test in this file.
   type Realm = Record<symbol, { original: typeof fetch } | undefined>;
   let saved: { original: typeof fetch; node: string | null } | undefined;
   beforeEach(() => {

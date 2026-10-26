@@ -11,7 +11,6 @@ import { MinerController, type Rebound } from '../src/controller.ts';
 import { balanceAtom, epochAtom, minerAtom } from '../src/state.ts';
 import type { FromWorker, ToWorker } from '../src/worker-protocol.ts';
 
-// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
 beforeAll(installNodeGuard);
 afterAll(uninstallNodeGuard);
 

@@ -13,7 +13,6 @@ import type { Reader } from '../src/chain';
 import { createStatsRuntime, POLL_MS, type StatsRuntime, type StatsSources } from '../src/runtime';
 import { bridgeAtom, type Fixed, fixedAtom, historyAtom, statusAtom } from '../src/state';
 
-// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
 beforeAll(installNodeGuard);
 afterAll(uninstallNodeGuard);
 

@@ -12,7 +12,6 @@ import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/no
 import type { Reader } from '../src/chain';
 import { readWindowRows } from '../src/read-window';
 
-// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
 beforeAll(installNodeGuard);
 afterAll(uninstallNodeGuard);
 

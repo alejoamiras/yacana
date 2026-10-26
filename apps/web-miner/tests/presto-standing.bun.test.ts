@@ -14,7 +14,6 @@ import {
 } from '../src/presto.ts';
 import type { ConsentRecord } from '../src/presto-consent.ts';
 
-// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
 beforeAll(installNodeGuard);
 afterAll(uninstallNodeGuard);
 

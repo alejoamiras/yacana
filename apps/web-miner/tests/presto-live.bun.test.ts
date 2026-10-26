@@ -17,7 +17,6 @@ import {
 } from '../src/presto.ts';
 import { PrestoWorkProver, type ProverTransition } from '../src/presto-prover.ts';
 
-// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
 beforeAll(installNodeGuard);
 afterAll(uninstallNodeGuard);
 

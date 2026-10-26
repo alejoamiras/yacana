@@ -6,7 +6,6 @@ import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/no
 import { nodeHealth, resetNodeHealth } from '@yacana/web-kit/browser/node-health';
 import { startL1Sampler } from '../src/l1-sampler.ts';
 
-// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
 beforeAll(installNodeGuard);
 afterAll(uninstallNodeGuard);
 

@@ -19,7 +19,6 @@ beforeAll(async () => {
   guard.installNodeGuard();
   mod = await import('./node.ts');
 });
-// Later suites in the run get the realm's fetch back.
 afterAll(() => guard.uninstallNodeGuard());
 
 describe('parseNodeUrl', () => {

@@ -9,7 +9,6 @@ import { markDeployment } from '@yacana/web-kit/browser/node-health';
 import type { FactReads } from '../src/bridge/facts.ts';
 import { BridgeSession } from '../src/bridge/session.ts';
 
-// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
 beforeAll(installNodeGuard);
 afterAll(uninstallNodeGuard);
 

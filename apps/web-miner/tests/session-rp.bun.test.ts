@@ -6,7 +6,6 @@ import { DB_NAME, type MasterRecord, putRecord } from '../src/keys/store.ts';
 import { Session } from '../src/session.ts';
 import { bootAtom } from '../src/state.ts';
 
-// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
 beforeAll(installNodeGuard);
 afterAll(uninstallNodeGuard);
 

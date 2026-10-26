@@ -5,7 +5,6 @@ import { installNodeGuard, uninstallNodeGuard } from '@yacana/web-kit/browser/no
 import { settlementSuffix, settlementTitle, winNote } from '../src/lib/claim-copy.ts';
 import { type Event, initial, type MinerState, reduce } from '../src/lib/reducer.ts';
 
-// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
 beforeAll(installNodeGuard);
 afterAll(uninstallNodeGuard);
 

@@ -10,3 +10,4 @@
 - 2026-10-26: P1 gate RED on root bun test only (web-kit's fetch guard leaks into tools/ suites); every other gate green; Codex: fix the guard suites' teardown, outside this lane; a1 stops before the fix loop and the PR.
 - 2026-10-26: filed #83 (the guard leak); a1 stops at the red root gate, unpushed, no PR.
 - 2026-10-26: orchestrator amendment: #83 joins a1 as P0. P0 gate green (probe clean, root bun test 703 pass / 0 fail at retry 0, mutation control red as required).
+- 2026-10-26: fix loop r1: Codex 1 low + Opus 5 low, all folded; gates green at retry 0; resuming Codex to verify.

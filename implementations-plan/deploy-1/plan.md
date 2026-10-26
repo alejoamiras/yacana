@@ -239,6 +239,7 @@ exits 0. `git diff --stat origin/main` shows `docs/deployments.md` and the plan 
 | final | Codex gpt-6.1-sol high, fresh session | conditional approve | 1 the Sepolia criterion rested on history → the dry run on Sepolia itself (Fact 13, in the P1 gate), Fact 7 narrowed to the tested anvil configurations; 2 `startAnvil` leaked its anvil and port on a failed start → cleanup before the rethrow, `beforeAll`/`afterAll` with a 90 s start | none |
 | final-v | same session, resumed | **approve** | folds verified, no regression | — |
 | impl | Codex gpt-6.1-sol high (root `bun test` red) | C, outside the lane | the leak filed as #83; a1 reported blocked, no bypass | A: the suite swaps in `Bun.fetch` (a compensating monkey-patch); B: a child-process driver (a contract for the leak alone) |
+| fix r1 | Codex gpt-6.1-sol high + Opus 5.5 (same family) | 1 + 5 low | Codex 1 / Opus 4: `uninstallNodeGuard`'s doc read as if wrappers survived → rewritten; Opus 1: health wiring stays on the dropped state → one clause in that doc; Opus 2: two stale comments, a dead `setNodeGate(null)` → fixed, removed; Opus 3: `presto-session` teardown threw before the uninstall on a failed setup → `fake?.`; Opus 4: one comment repeated in 24 suites → deleted; Opus 5: "code deposit 7×" → "the portal's creation 7×" | none |
 
 Size: about 230 lines against light's 150. The verbatim fix-loop rules, the test's specification, the dry run
 and the evidence for two claims that did not hold carry the excess.

@@ -56,15 +56,12 @@ beforeAll(async () => {
     writable: true,
   });
   guard = await import('./node-guard.ts');
-  // The module may be cached from another suite, so the guard is installed here; `installNodeGuard`
-  // never re-captures `original`, so the fake is set through `setOriginalFetch`, and a gate another
-  // suite left on the node (the health store's) is cleared.
+  // Only the first suite to load the module gets the guard from its import, over the real fetch: so the
+  // guard is installed here and the fake goes in through `setOriginalFetch`.
   guard.installNodeGuard();
   guard.setOriginalFetch(network as typeof fetch);
-  guard.setNodeGate(null);
   guard.setNodeEndpoint(NODE, 1_000);
 });
-// Later suites in the run get the realm's fetch back, the CRS interceptor over the guard with it.
 afterAll(() => guard.uninstallNodeGuard());
 
 describe('node guard', () => {

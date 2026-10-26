@@ -13,7 +13,6 @@ import { TAKING_LONG_AFTER_MS } from '../src/bridge/copy.ts';
 import { activity, moneyStanding } from '../src/bridge/rows.ts';
 import type { BridgeView } from '../src/state.ts';
 
-// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
 beforeAll(installNodeGuard);
 afterAll(uninstallNodeGuard);
 

@@ -44,7 +44,6 @@ beforeAll(async () => {
   guard.setOriginalFetch(rpc(11155111n) as typeof fetch);
   mod = await import('./eth-rpc.ts');
 });
-// Later suites in the run get the realm's fetch back.
 afterAll(() => guard.uninstallNodeGuard());
 
 describe('the Ethereum RPC setting', () => {

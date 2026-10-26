@@ -10,7 +10,6 @@ import { MinerController } from '../src/controller.ts';
 import { type ConsentHooks, PRESTO_DEFAULT, prestoAtom } from '../src/presto.ts';
 import type { FromWorker, ToWorker } from '../src/worker-protocol.ts';
 
-// web-kit's fetch guard, held for this suite alone: later suites in the run get the realm's fetch back.
 beforeAll(installNodeGuard);
 afterAll(uninstallNodeGuard);
 

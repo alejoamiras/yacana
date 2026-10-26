@@ -294,7 +294,7 @@ async function tracked(
 }
 
 /**
- * Installs the guard over the context's current `fetch`, once, at import. A repeated call is a
+ * Installs the guard over the context's current `fetch`, at import. A call while it is installed is a
  * no-op: it neither re-captures `original` (the current fetch may be a wrapper that forwards back
  * here — the CRS interceptor — and would recurse) nor touches `globalThis.fetch` (that would drop
  * such a wrapper). Tests arm the guard over a fake through `setOriginalFetch`.
@@ -350,10 +350,9 @@ export function setOriginalFetch(fetchImpl: typeof globalThis.fetch): void {
 }
 
 /**
- * Tests only: puts back the fetch the guard replaced, with every wrapper installed over it since, and
- * forgets the guard's state, so later suites of a shared `bun test` realm meet the fetch they would
- * alone and the next `installNodeGuard` starts afresh. The module stays cached: a suite that needs the
- * guard installs it in its setup.
+ * Tests only: restores the fetch the guard replaced, dropping any wrapper installed over the guard since,
+ * and forgets its state, with what `startNodeHealth` and `startEthRpcHealth` wired into it once. The module
+ * stays cached, so a suite that needs the guard installs it in setup.
  */
 export function uninstallNodeGuard(): void {
   const realm = globalThis as Realm;
