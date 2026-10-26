@@ -10,7 +10,7 @@ eli5_mode: skipped (orchestrator-owned)
 quality_bar: production
 hardening: not scheduled
 budget: "recon 3 agents (Sonnet) + one scratch spike; codex gpt-6.1-sol at high; Opus 5.5 Plan audit; code-review off"
-status: drafted 2026-10-25; panel in §8 (codex r2 and opus conditional approve); awaiting the orchestrator
+status: approved by the orchestrator; P1–P6 ✓, K1–K4 run, K5 pending
 created: 2026-10-25
 ---
 
@@ -315,7 +315,7 @@ git diff --exit-code protocol/portal/abi` is clean (or the diff is explained). `
 - Record each suite's wall-clock against its 5.2.0 run.
 - Layers: e2e, e2e on an isolated network.
 
-### P5: docs, then CI ☐
+### P5: docs, then CI ✓
 1. Update the toolchain mentions (change map).
 2. Run the Codex fix loop (§9) to convergence. Merge `origin/main` (ci-1's status jobs kept whole). Push the
    branch and open the PR as **draft**.
@@ -327,9 +327,9 @@ proving. If the rig job fails only in `browser` or `origin`, read why: a limit `
 runner's stage time, the run's TLS names) is logged, with P4's local passes as those cases' evidence; any other
 cause is a stop. `bun run lint:actions` exits 0. Layers: CI.
 
-### K: the keyed deployment (the orchestrator; §7) ☐
+### K: the keyed deployment (the orchestrator; §7): K1–K4 ✓, K5 pending
 
-### P6: the records and the site move (after K) ☐
+### P6: the records and the site move (after K) ✓
 1. `git mv` the V5 record and its example claim to `testnet-2026-09-28.*`. Commit K's `testnet.json` and
    `testnet.example-claim.json`. Set `VITE_AZTEC_NODE_URL` in `site.env`.
 2. Write the `docs/deployments.md` section. Move the 2026-09-28 section under "Archived".
@@ -394,9 +394,18 @@ transaction hashes, logs with no secret) go to `~/.cache/orchy/alejoamiras-yacan
   - That token is an inert orphan. Its minter is the predicted miner `0x28b6eae0…ad49860`, which was never deployed,
     and that address came from a random salt that is now lost. The rerun deploys a new pair. P6 names the orphan in
     `docs/deployments.md` so nobody mistakes it for the token.
-- **K2 onward runs from the head of the arc that caps every node client at `NODE_MAX_BATCH`.** That arc changes no
-  file under `protocol/`, `yacana.params.json`, `packages/bridge/src/policy.ts` or `bun.lock`. P6's pin gates name
-  both SHAs: K1's d267f17 and K2's.
+- **K2 onward ran from 430ae20**, the head of the arc that caps every node client at `NODE_MAX_BATCH`. That arc
+  changes no file under `protocol/`, `yacana.params.json`, `packages/bridge/src/policy.ts` or `bun.lock`.
+  - K2: miner `0x190ef585…dec10a1` and token `0x246a5be6…6cb4198`, launched at once (`launchAt` 1792976124). The
+    node's classes equal the record's.
+  - K3: version 679261766 registered at Registry index 8 (`0xe596aa1f…93be`), the forwarder listed
+    (`0xbc6623c0…85da`). `status` read deadline open, cap = headroom = 384 tYACA, deposits open, not paused.
+  - K4: a 0.5 h soak on dRPC: 20 claims by one account, 5 epochs closed, 569 proofs, 0 stale. The example claim is
+    that account's second, `0x077c6a4d…4b70` (epoch 0, block 5569). The explorer answers 200 for it.
+  - K5 runs from a clean checkout of this PR's head once the records are committed. Until then, the docs say
+    verification is pending.
+  - P6 re-read all of it from Sepolia and the node on 2026-10-26: the receipts, the portal's policy immutables and
+    `versionInfo`, the forwarder, both class ids, the orphan minter absent, and the example claim at block 5569.
 
 The account's first claim carries the delivery handshake's note hash, so the example claim must be its second
 (lessons.md). After the merge, `https://yacana.network/build.json` must name the V6 miner.
@@ -542,6 +551,10 @@ throttle, and a shorter one taken. The loop stops at three rounds, so no fourth 
   Its second run found a rig race 6.0.0 created: a warp right after an Inbox write proposes without the message and
   mines nothing. The rig and the bridge shard's control now warp once the node holds the Inbox's last message.
   The stats spec's mocked node waits out its in-flight answers.
+
+- P6: biome reformats the example claim's `claims` array onto one line, as the V5 file has it. Whitespace only:
+  the JSON is equal to the keyed output, and `testnet.json` and the effect fixture are byte-identical to it.
+  `testnet.bridge.json`, K1's side file, is not committed.
 
 **Implementation review, round 1** (on `5b85e40..158fab3`). Codex (gpt-6.1-sol, high): *nothing material*, no
 findings. Opus 5.5 beside it: *nothing material*, three findings, each verified and fixed:
