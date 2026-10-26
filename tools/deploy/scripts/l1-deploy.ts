@@ -24,9 +24,12 @@ const forgeStd = resolve(
 );
 
 /** Anvil's first funded account: throwaway, and only ever used on a chain nobody else runs. */
-const ANVIL_KEY: Hex = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
+export const ANVIL_KEY: Hex = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
 
-async function startAnvil(): Promise<{ rpcUrl: string; stop: () => Promise<void> }> {
+export async function startAnvil(
+  extraArgs: string[] = [],
+): Promise<{ rpcUrl: string; stop: () => Promise<void> }> {
+  const bin = toolchainBin('aztec-anvil');
   const runId = `yacana-l1-${process.pid}-${Date.now()}`;
   const port = await claim({
     runId,
@@ -39,19 +42,22 @@ async function startAnvil(): Promise<{ rpcUrl: string; stop: () => Promise<void>
   const rpcUrl = `http://127.0.0.1:${port}`;
   const anvil = spawnDetached(
     'anvil',
-    toolchainBin('aztec-anvil'),
-    ['--host', '127.0.0.1', '--port', String(port), '--silent'],
+    bin,
+    ['--host', '127.0.0.1', '--port', String(port), '--silent', ...extraArgs],
     {},
     false,
   );
-  await jsonRpcReady(rpcUrl, 'eth_chainId', 60_000, anvil);
-  return {
-    rpcUrl,
-    stop: async () => {
-      killOwned(anvil);
-      await release(runId).catch(() => {});
-    },
+  const stop = async () => {
+    killOwned(anvil);
+    await release(runId).catch(() => {});
   };
+  try {
+    await jsonRpcReady(rpcUrl, 'eth_chainId', 60_000, anvil);
+  } catch (e) {
+    await stop();
+    throw e;
+  }
+  return { rpcUrl, stop };
 }
 
 /** A stand-in Registry (the Foundry harness's) on a chain that has no Aztec deployment. */
@@ -85,6 +91,9 @@ async function forgeScript(env: Record<string, string>): Promise<{ portal: Hex; 
       env.YACANA_L1_RPC_URL as string,
       '--broadcast',
       '--json',
+      // Each transaction's gas is then the node's eth_estimateGas × 130 %. forge's own EVM lags a chain
+      // that reprices opcodes: its simulation priced Sepolia's code deposit about 7× too low.
+      '--skip-simulation',
     ],
     {
       cwd: portalDir,
