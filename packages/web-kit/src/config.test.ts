@@ -168,7 +168,8 @@ describe('site config', () => {
     });
     expect(c.ethRpcUrl).toBe(siteEnv.VITE_ETH_RPC_URL);
     expect(c.l1ExplorerUrl).toBe('https://sepolia.etherscan.io');
-    expect(c.oldAppOrigin).toBe('https://v5.yacana.network');
+    expect(c.oldAppOrigin).toBe('');
+    expect(viteDefine(c)['import.meta.env.VITE_OLD_APP_ORIGIN']).toBe('""');
     expect(c.role).toBe('apex');
     expect(viteDefine(c)['import.meta.env.VITE_APP_ROLE']).toBe('"apex"');
     expect(viteDefine(c)['import.meta.env.VITE_ETH_RPC_URL']).toBe(JSON.stringify(siteEnv.VITE_ETH_RPC_URL));
@@ -191,16 +192,36 @@ describe('site config', () => {
     expect(attempt({ VITE_L1_EXPLORER_URL: 'http://etherscan.example' })).toThrow(
       /Ethereum explorer .* not https/,
     );
-    expect(attempt({ VITE_OLD_APP_ORIGIN: 'http://v5.yacana.network' })).toThrow(/old app origin/);
-    expect(attempt({ VITE_OLD_APP_ORIGIN: 'https://localhost' })).toThrow(/old app origin/);
-    expect(attempt({ VITE_OLD_APP_ORIGIN: 'https://yacana.network' })).toThrow(/is the apex itself/);
+    expect(attempt({ VITE_OLD_APP_ORIGIN: 'https://v6.yacana.network' })().oldAppOrigin).toBe(
+      'https://v6.yacana.network',
+    );
+    for (const origin of [
+      'http://v6.yacana.network',
+      'https://localhost',
+      'https://v6.localhost',
+      'https://yacana.network',
+      'https://yacana.network.',
+      'https://v6.example.org',
+    ])
+      expect(attempt({ VITE_OLD_APP_ORIGIN: origin }), origin).toThrow(
+        /is not an https subdomain of yacana.network/,
+      );
     expect(attempt({ VITE_ETH_RPC_URL: '' })).toThrow(/VITE_ETH_RPC_URL is required/);
   });
 
-  test('the old role takes its own preview suffix; a role is one of two words', () => {
-    const old = loadSiteConfig({ ...base, mode: 'production', role: 'old' });
+  test('the old role takes its own origin and preview suffix, and refuses to build without the origin; a role is one of two words', () => {
+    const oldEnv = {
+      ...siteEnv,
+      VITE_OLD_APP_ORIGIN: 'https://v6.yacana.network',
+      VITE_PREVIEW_HOST_SUFFIX_OLD: '-yacana-v6.alejo-amiras.workers.dev',
+    };
+    const old = loadSiteConfig({ ...base, mode: 'production', role: 'old', siteEnv: oldEnv });
     expect(old.role).toBe('old');
-    expect(old.previewHostSuffix).toBe('-yacana-v5.alejo-amiras.workers.dev');
+    expect(old.previewHostSuffix).toBe('-yacana-v6.alejo-amiras.workers.dev');
+    // Served from an origin it does not know, the old page would restore nothing.
+    expect(() => loadSiteConfig({ ...base, mode: 'production', role: 'old' })).toThrow(
+      /an old-role build needs VITE_OLD_APP_ORIGIN/,
+    );
     expect(viteDefine(old)['import.meta.env.VITE_APP_ROLE']).toBe('"old"');
     expect(loadSiteConfig({ ...base, mode: 'production' }).previewHostSuffix).toBe(
       '-yacana.alejo-amiras.workers.dev',
@@ -210,7 +231,7 @@ describe('site config', () => {
         ...base,
         mode: 'production',
         role: 'old',
-        siteEnv: { ...siteEnv, VITE_PREVIEW_HOST_SUFFIX_OLD: '-yacana-v5.other.pages.dev' },
+        siteEnv: { ...oldEnv, VITE_PREVIEW_HOST_SUFFIX_OLD: '-yacana-v6.other.pages.dev' },
       }),
     ).toThrow(/preview host suffix/);
     expect(appRoleFrom(undefined)).toBe('apex');

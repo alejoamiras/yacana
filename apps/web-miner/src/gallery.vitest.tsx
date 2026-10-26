@@ -430,18 +430,32 @@ describe('the old app', () => {
 });
 
 describe('the old-tab bar', () => {
-  test('a tab behind a redeploy says so, with the old app one link away', async () => {
-    vi.stubEnv('VITE_OLD_APP_ORIGIN', 'https://v5.yacana.network');
+  const behind = async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => new Response(JSON.stringify({ miner: '0xdef', rollupVersion: '6' }))),
+      vi.fn(async () => new Response(JSON.stringify({ miner: '0xdef', rollupVersion: '7' }))),
     );
-    const { container } = render(<OldTabNotice miner="0xabc" rollupVersion="5" />);
+    const view = render(<OldTabNotice miner="0xabc" rollupVersion="6" />);
     act(() => {
       document.dispatchEvent(new Event('visibilitychange'));
     });
     await waitFor(() => expect(screen.getByTestId('old-tab').textContent).toContain('This tab is behind.'));
+    return view;
+  };
+
+  test('a tab behind a redeploy says so, with the old app one link away', async () => {
+    vi.stubEnv('VITE_OLD_APP_ORIGIN', 'https://v6.yacana.network');
+    const { container } = await behind();
     expect(screen.getByTestId('old-tab').textContent).toContain('sent ahead from the old app');
+    expect(screen.getByRole('link').getAttribute('href')).toBe('https://v6.yacana.network');
     keep('old-tab', container.innerHTML);
+  });
+
+  test('with no old origin, it says so and offers Reload alone: no old app, no link', async () => {
+    vi.stubEnv('VITE_OLD_APP_ORIGIN', '');
+    await behind();
+    expect(screen.getByTestId('old-tab').textContent).not.toContain('old app');
+    expect(screen.queryByRole('link')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Reload' })).toBeTruthy();
   });
 });

@@ -151,19 +151,19 @@ describe('host rules', () => {
     vi.stubEnv('VITE_RP_ID', 'yacana.network');
     vi.stubEnv('VITE_PREVIEW_HOST_SUFFIX', SUFFIX);
     vi.stubEnv('VITE_SITE_MODE', 'production');
-    vi.stubEnv('VITE_OLD_APP_ORIGIN', 'https://v5.yacana.network');
-    expect(hostKind('v5.yacana.network')).toBe('versioned');
-    expect(relyingParty('v5.yacana.network')).toBe('yacana.network');
-    expect(keysAllowed('v5.yacana.network')).toBe(false);
-    expect(keysAllowed('v5.yacana.network', 'create')).toBe(false);
-    expect(keysAllowed('v5.yacana.network', 'restore')).toBe(true);
-    expect(previewNotice('v5.yacana.network')).toBeNull();
+    vi.stubEnv('VITE_OLD_APP_ORIGIN', 'https://v6.yacana.network');
+    expect(hostKind('v6.yacana.network')).toBe('versioned');
+    expect(relyingParty('v6.yacana.network')).toBe('yacana.network');
+    expect(keysAllowed('v6.yacana.network')).toBe(false);
+    expect(keysAllowed('v6.yacana.network', 'create')).toBe(false);
+    expect(keysAllowed('v6.yacana.network', 'restore')).toBe(true);
+    expect(previewNotice('v6.yacana.network')).toBeNull();
     // The apex and a preview restore as they create; an unknown host does neither.
     expect(keysAllowed('yacana.network', 'restore')).toBe(true);
     expect(keysAllowed(alias, 'restore')).toBe(true);
     expect(keysAllowed('evil.example', 'restore')).toBe(false);
     vi.stubEnv('VITE_OLD_APP_ORIGIN', '');
-    expect(hostKind('v5.yacana.network')).toBe('unknown');
+    expect(hostKind('v6.yacana.network')).toBe('unknown');
   });
 
   test('no suffix, no previews; localhost may make keys outside production', () => {

@@ -32,4 +32,5 @@
   - B: delay a move's deploy to `previous` while the version there still proves. The new version's tabs then link
     an origin that serves the older one.
 - **Recommendation**: A. Testnet versions stop proving hours or days after their flip, months before the next one.
-- **What ships now**: A in the runbook (a2). No code depends on the choice.
+- **Answer** (owner, 2026-10-26): "the versioned old origins stay, one per retiring version; no shared "previous"
+  origin." The shared origin is withdrawn; a2 retires V5's origin instead.
