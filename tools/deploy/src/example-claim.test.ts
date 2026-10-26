@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'bun:test';
-import { createAztecNodeClient } from '@aztec/aztec.js/node';
-import { computePublicDataTreeLeafSlot, deriveStorageSlotInMap } from '@aztec/stdlib/hash';
-import { TxHash } from '@aztec/stdlib/tx';
+import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
+import { computePublicDataTreeLeafSlot, deriveStorageSlotInMap } from '@aztec-labs/stdlib/hash';
+import { TxHash } from '@aztec-labs/stdlib/tx';
+import { NODE_MAX_BATCH } from '@yacana/miner-core/node-client';
 import { TABLE_EPOCHS } from '@yacana/miner-core/reader';
 import { loadLayouts } from '@yacana/miner-core/slots';
 import {
@@ -76,7 +77,7 @@ describe('the example claim from a transaction effect', () => {
 const testnet = process.env.YACANA_TESTNET_NODE_URL ?? '';
 describe.skipIf(!testnet)('the recorded claim on the testnet', () => {
   test('re-reading the transaction from the node yields the committed record', async () => {
-    const node = createAztecNodeClient(testnet);
+    const node = createAztecNodeClient(testnet, { maxBatchSize: NODE_MAX_BATCH });
     const effect = await node.getTxEffect(TxHash.fromString(recorded.txHash));
     expect(effect).toBeTruthy();
     const view = effectView(effect);

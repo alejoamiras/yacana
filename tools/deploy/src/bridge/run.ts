@@ -4,7 +4,8 @@
 // functions. Anvil's account 1 pays and operates.
 import { rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { createAztecNodeClient } from '@aztec/aztec.js/node';
+import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
+import { NODE_MAX_BATCH } from '@yacana/miner-core/node-client';
 import type { Hex } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { deployL1 } from '../../scripts/l1-deploy.ts';
@@ -19,7 +20,7 @@ const repo = resolve(import.meta.dir, '../../../..');
 
 /** The portal and YACA against the node's real Registry, before the miner is deployed with the portal's address. */
 export async function deployBridgeForRun(nodeUrl: string, l1RpcUrl: string): Promise<BridgeRecord> {
-  const info = await createAztecNodeClient(nodeUrl).getNodeInfo();
+  const info = await createAztecNodeClient(nodeUrl, { maxBatchSize: NODE_MAX_BATCH }).getNodeInfo();
   return deployL1({
     rpcUrl: l1RpcUrl,
     key: RUN_OPERATORS_KEY,

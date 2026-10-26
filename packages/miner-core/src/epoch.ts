@@ -1,7 +1,7 @@
 // Chain reads the miner needs: the open epoch, its parameters and its claim count. A lying RPC
 // can only waste work here, never steal — claims are verified on-chain.
-import type { AztecAddress } from '@aztec/aztec.js/addresses';
-import type { Contract } from '@aztec/aztec.js/contracts';
+import type { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import type { Contract } from '@aztec-labs/aztec.js/contracts';
 import { assertTimestamp } from './reader.ts';
 
 export interface EpochParams {

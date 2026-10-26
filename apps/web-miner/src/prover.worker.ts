@@ -2,7 +2,7 @@
 import './shims/node-globals';
 import '@yacana/web-kit/browser/node-guard';
 import '@yacana/web-kit/pinned-crs';
-import { BackendType, Barretenberg } from '@aztec/bb.js';
+import { BackendType, Barretenberg } from '@aztec-foundation/bb.js';
 import type { WorkArtifact } from '@yacana/miner-core/work';
 import { purgeCrsCache } from '@yacana/web-kit/pinned-crs';
 import { createProverLoop } from './prover-loop';

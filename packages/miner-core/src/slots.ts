@@ -1,8 +1,8 @@
 // The slot table's derivation: Poseidon2 through bb.js, so only the generator and the Bun-side
 // readers import this; a page fetches the generated chunks instead.
 import { resolve } from 'node:path';
-import { Fr } from '@aztec/aztec.js/fields';
-import { deriveStorageSlotInMap } from '@aztec/stdlib/hash';
+import { Fr } from '@aztec-labs/aztec.js/fields';
+import { deriveStorageSlotInMap } from '@aztec-labs/stdlib/hash';
 import {
   CHUNK,
   fixedSlot,

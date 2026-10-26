@@ -74,17 +74,21 @@ export function siteConfig(command: 'build' | 'serve', env: NodeJS.ProcessEnv = 
  * resolved entry is `dest/node-cjs/package.json` (`{"type":"commonjs"}`): walk up to the one that names it.
  */
 export function bbVersion(): string {
-  for (let dir = dirname(createRequire(import.meta.url).resolve('@aztec/bb.js')); ; dir = dirname(dir)) {
-    if (dirname(dir) === dir) throw new Error('@aztec/bb.js resolved outside its package');
+  for (
+    let dir = dirname(createRequire(import.meta.url).resolve('@aztec-foundation/bb.js'));
+    ;
+    dir = dirname(dir)
+  ) {
+    if (dirname(dir) === dir) throw new Error('@aztec-foundation/bb.js resolved outside its package');
     const manifest = resolve(dir, 'package.json');
     if (!existsSync(manifest)) continue;
     const { name, version } = JSON.parse(readFileSync(manifest, 'utf8')) as {
       name?: string;
       version?: string;
     };
-    if (name !== '@aztec/bb.js') continue;
+    if (name !== '@aztec-foundation/bb.js') continue;
     if (!/^\d+\.\d+\.\d+/.test(version ?? ''))
-      throw new Error(`@aztec/bb.js's manifest has no version: ${manifest}`);
+      throw new Error(`@aztec-foundation/bb.js's manifest has no version: ${manifest}`);
     return version as string;
   }
 }
@@ -175,21 +179,26 @@ export function siteVite(app: SiteAppOptions): (ctx: { command: 'build' | 'serve
             ],
             // A second nested copy of either WASM binding leaves initAbi() and abiEncode() in
             // different module scopes, so the WASM instance never resolves.
-            dedupe: ['@aztec/noir-noirc_abi', '@aztec/noir-acvm_js'],
+            dedupe: ['@aztec-foundation/noir-noirc_abi', '@aztec-foundation/noir-acvm_js'],
           },
           optimizeDeps: {
             include: [
               'pino',
               'pino/browser',
-              '@aztec/bb.js > comlink',
-              '@aztec/bb.js > idb-keyval',
-              '@aztec/bb.js > msgpackr',
-              '@aztec/bb.js > pako',
-              '@aztec/noir-noir_js > pako',
+              '@aztec-foundation/bb.js > comlink',
+              '@aztec-foundation/bb.js > idb-keyval',
+              '@aztec-foundation/bb.js > msgpackr',
+              '@aztec-foundation/bb.js > pako',
+              '@aztec-foundation/noir-noir_js > pako',
             ],
             // WASM loaders resolve their binaries relative to import.meta.url, which pre-bundling
             // would rewrite to a chunk that has none of them.
-            exclude: ['@aztec/bb.js', '@aztec/noir-acvm_js', '@aztec/noir-noirc_abi', '@aztec/noir-noir_js'],
+            exclude: [
+              '@aztec-foundation/bb.js',
+              '@aztec-foundation/noir-acvm_js',
+              '@aztec-foundation/noir-noirc_abi',
+              '@aztec-foundation/noir-noir_js',
+            ],
           },
           worker: { format: 'es', plugins: () => [moduleReport(`${reportName}.worker`)] },
         }
@@ -197,12 +206,13 @@ export function siteVite(app: SiteAppOptions): (ctx: { command: 'build' | 'serve
           resolve: {
             // aztec.js reaches the proving packages through lazy imports; a page that never proves
             // resolves them to a stub, so its bundle cannot carry them and a reach fails loudly.
-            alias: [/^@aztec\/bb\.js(\/|$)/, /^@aztec\/noir-(acvm_js|noirc_abi|noir_js)(\/|$)/].map(
-              (find) => ({
-                find,
-                replacement: resolve(here, 'browser/no-prover.ts'),
-              }),
-            ),
+            alias: [
+              /^@aztec-foundation\/bb\.js(\/|$)/,
+              /^@aztec-foundation\/noir-(acvm_js|noirc_abi|noir_js)(\/|$)/,
+            ].map((find) => ({
+              find,
+              replacement: resolve(here, 'browser/no-prover.ts'),
+            })),
           },
         };
     return {

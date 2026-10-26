@@ -1,7 +1,7 @@
-import type { AztecAddress } from '@aztec/aztec.js/addresses';
-import type { Contract, ContractFunctionInteraction } from '@aztec/aztec.js/contracts';
-import type { Fr } from '@aztec/foundation/curves/bn254';
-import { Gas } from '@aztec/stdlib/gas';
+import type { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import type { Contract, ContractFunctionInteraction } from '@aztec-labs/aztec.js/contracts';
+import type { Fr } from '@aztec-labs/foundation/curves/bn254';
+import { Gas } from '@aztec-labs/stdlib/gas';
 import { classifyClaimFailure } from './claim-failure.ts';
 
 /**

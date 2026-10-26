@@ -2,8 +2,8 @@
 // test/vectors.nr asserts the same values, so a drift on either side fails its own tests.
 import { describe, expect, test } from 'bun:test';
 import { resolve } from 'node:path';
-import { poseidon2Hash } from '@aztec/foundation/crypto/poseidon';
-import { Fr } from '@aztec/foundation/curves/bn254';
+import { poseidon2Hash } from '@aztec-labs/foundation/crypto/poseidon';
+import { Fr } from '@aztec-labs/foundation/curves/bn254';
 import { PARAMS } from './generated/params.ts';
 import { computeDigest, DOM_NULL, deployDomain, low128, proofToFields, secretCommitment } from './proof.ts';
 import { nextSeed, nextTarget } from './retarget.ts';

@@ -3,22 +3,23 @@
 // JSON line per event; exits 0.
 //   AZTEC_NODE_URL=… YACANA_MINER=0x… YACANA_TOKEN=0x… [YACANA_BURST_CLAIMS=2] bun apps/web-miner/e2e/burst.ts
 import { cpus } from 'node:os';
-import { AztecAddress } from '@aztec/aztec.js/addresses';
-import { Contract, getContractInstanceFromInstantiationParams } from '@aztec/aztec.js/contracts';
-import { SponsoredFeePaymentMethod } from '@aztec/aztec.js/fee';
-import { Fr } from '@aztec/aztec.js/fields';
-import { createAztecNodeClient } from '@aztec/aztec.js/node';
-import { BackendType, Barretenberg } from '@aztec/bb.js';
-import { SPONSORED_FPC_SALT } from '@aztec/constants';
-import { SponsoredFPCContract } from '@aztec/noir-contracts.js/SponsoredFPC';
-import { deriveMasterMessageSigningSecretKey } from '@aztec/stdlib/keys';
-import { EmbeddedWallet } from '@aztec/wallets/embedded';
 import { TokenContract } from '@aztec-foundation/aztec-standards/artifacts/src/artifacts/Token.js';
+import { BackendType, Barretenberg } from '@aztec-foundation/bb.js';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { Contract, getContractInstanceFromInstantiationParams } from '@aztec-labs/aztec.js/contracts';
+import { SponsoredFeePaymentMethod } from '@aztec-labs/aztec.js/fee';
+import { Fr } from '@aztec-labs/aztec.js/fields';
+import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
+import { SPONSORED_FPC_SALT } from '@aztec-labs/constants';
+import { SponsoredFPCContract } from '@aztec-labs/noir-contracts.js/SponsoredFPC';
+import { deriveMasterMessageSigningSecretKey } from '@aztec-labs/stdlib/keys';
+import { EmbeddedWallet } from '@aztec-labs/wallets/embedded';
 import { loadMinerArtifact, loadWorkArtifact } from '@yacana/miner-core/artifacts';
 import { buildClaim, claimGasLimits } from '@yacana/miner-core/claim';
 import { readOpenEpoch } from '@yacana/miner-core/epoch';
 import { PARAMS } from '@yacana/miner-core/generated/params';
 import { mineEpoch } from '@yacana/miner-core/miner';
+import { NODE_MAX_BATCH } from '@yacana/miner-core/node-client';
 import { deployDomain } from '@yacana/miner-core/proof';
 import { newEpochSecret } from '@yacana/miner-core/secret';
 import { BbJsWorkProver } from '@yacana/miner-core/work';
@@ -31,8 +32,12 @@ if (!nodeUrl || !minerAddress || !tokenAddress)
 const say = (o: Record<string, unknown>) =>
   console.log(JSON.stringify({ t: new Date().toISOString(), ...o }));
 
-const node = createAztecNodeClient(nodeUrl);
-const wallet = await EmbeddedWallet.create(nodeUrl, { ephemeral: true, pxe: { proverEnabled: true } });
+const node = createAztecNodeClient(nodeUrl, { maxBatchSize: NODE_MAX_BATCH });
+const wallet = await EmbeddedWallet.create(nodeUrl, {
+  ephemeral: true,
+  pxe: { proverEnabled: true },
+  nodeClientOptions: { maxBatchSize: NODE_MAX_BATCH },
+});
 const fpc = await getContractInstanceFromInstantiationParams(SponsoredFPCContract.artifact, {
   salt: new Fr(SPONSORED_FPC_SALT),
 });

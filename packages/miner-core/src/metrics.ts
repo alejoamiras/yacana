@@ -1,5 +1,5 @@
 // The numbers the interface shows, defined once. Pure; every surface imports these.
-import type { Fr } from '@aztec/foundation/curves/bn254';
+import type { Fr } from '@aztec-labs/foundation/curves/bn254';
 import { low128 } from './proof.ts';
 import type { EpochRow } from './reader.ts';
 import { cappedElapsed, type EpochRules, nextTarget } from './retarget.ts';

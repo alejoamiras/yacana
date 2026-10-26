@@ -1,7 +1,7 @@
 // The hero tile's reads: the open epoch, the twelve epochs before it, the supply and the block;
 // genesis and the lottery in launch mode. One deadline per request and no transport retries, like
 // the stats page; a failure keeps the last numbers.
-import { AztecAddress } from '@aztec/aztec.js/addresses';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
 import {
   assertDeployment,
   DEFAULT_LIMITS,

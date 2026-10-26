@@ -4,8 +4,8 @@
 // runbook says to run.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
-import { Fr } from '@aztec/foundation/curves/bn254';
-import { EthAddress } from '@aztec/foundation/eth-address';
+import { Fr } from '@aztec-labs/foundation/curves/bn254';
+import { EthAddress } from '@aztec-labs/foundation/eth-address';
 import { yacanaPortalAbi } from '@yacana/bridge/portal';
 import { type Operator, openOperator } from '@yacana/deploy/bridge/operator';
 import {

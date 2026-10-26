@@ -1,11 +1,20 @@
 // A message the portal sent into a version's Inbox — a deposit, a forwarded send-ahead, the retire
 // signal — as the L2 side must name it to consume it: the same leaf the Inbox inserted.
-import { Fr } from '@aztec/foundation/curves/bn254';
-import type { EthAddress } from '@aztec/foundation/eth-address';
-import type { AztecAddress } from '@aztec/stdlib/aztec-address';
-import { computeSecretHash } from '@aztec/stdlib/hash';
-import { L1Actor, L1ToL2Message, L2Actor } from '@aztec/stdlib/messaging';
+import { Fr } from '@aztec-labs/foundation/curves/bn254';
+import type { EthAddress } from '@aztec-labs/foundation/eth-address';
+import type { AztecAddress } from '@aztec-labs/stdlib/aztec-address';
+import { computeSecretHash } from '@aztec-labs/stdlib/hash';
+import { L1Actor, L1ToL2Message, L2Actor } from '@aztec-labs/stdlib/messaging';
 import { claimContent, retireContent } from './content.ts';
+
+/**
+ * Gas a write that sends an Inbox message may need beyond its estimate. The Inbox opens one bucket per
+ * L1 block, and geth estimates at the latest block's own timestamp: when that block already holds a
+ * message, the estimate appends to its bucket while the transaction lands later and opens a new one,
+ * 41,731 gas more on a ring slot not yet written. The portal's frame passes the Inbox 63/64 of what it
+ * holds, so the margin covers 64/63 of that.
+ */
+export const INBOX_BUCKET_GAS = 45_000n;
 
 export interface InboundScope {
   chainId: bigint;

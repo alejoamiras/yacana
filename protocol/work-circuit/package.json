@@ -20,7 +20,7 @@
     "typecheck": "tsc -b --force"
   },
   "dependencies": {
-    "@aztec/bb.js": "5.2.0",
-    "@aztec/noir-noir_js": "5.2.0"
+    "@aztec-foundation/bb.js": "6.0.0",
+    "@aztec-foundation/noir-noir_js": "6.0.0"
   }
 }

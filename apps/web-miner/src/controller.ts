@@ -1,8 +1,8 @@
 // Drives the reducer: chain reads on a timer, the Worker for proving, the wallet for claims, the
 // chain-view reset after a lost race.
-import type { AztecAddress } from '@aztec/aztec.js/addresses';
-import { Fr } from '@aztec/aztec.js/fields';
-import type { TxEffect } from '@aztec/stdlib/tx';
+import type { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { Fr } from '@aztec-labs/aztec.js/fields';
+import type { TxEffect } from '@aztec-labs/stdlib/tx';
 import {
   claimFailureMessage,
   classifyClaimFailure,
@@ -1183,7 +1183,7 @@ export class MinerController {
 
   /**
    * A revert or a blocked delivery: the line says so, then the chain view is rebuilt (or claims wait for
-   * L1 finality). A revert whose message names no cause (a mined revert's receipt carries none on 5.2.0)
+   * L1 finality). A revert whose message names no cause (a mined revert's receipt carries none)
    * is taken as stale when the chain's open epoch has moved past `epoch`: a reading, not proof, so a
    * message that does name a reason is never overridden by it. `recorded` is a recorded win's revert: its
    * line, and its epoch as the caller read it.

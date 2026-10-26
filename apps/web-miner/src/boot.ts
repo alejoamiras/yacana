@@ -1,9 +1,9 @@
 // Boot in three parts: the preflight (isolation, node, deployment, each with its evidence; the
 // proving keys stream from page load beside it), the sign-in (a passkey or the words → a master),
 // then the opening: wallet, account, rules and prover, as cancellable steps.
-import { AztecAddress } from '@aztec/aztec.js/addresses';
-import type { ContractArtifact } from '@aztec/stdlib/abi';
-import type { EmbeddedWallet } from '@aztec/wallets/embedded';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import type { ContractArtifact } from '@aztec-labs/stdlib/abi';
+import type { EmbeddedWallet } from '@aztec-labs/wallets/embedded';
 import { PARAMS } from '@yacana/miner-core/generated/params';
 import { deriveAccountFields } from '@yacana/miner-core/keys/derive';
 import { type ExpectedDeployment, expectedFromStrings } from '@yacana/miner-core/reader';

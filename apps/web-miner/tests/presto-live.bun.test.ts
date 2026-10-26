@@ -5,10 +5,15 @@ import { describe, expect, test } from 'bun:test';
 import { cpus } from 'node:os';
 import { resolve } from 'node:path';
 import { PRESTO_SCHEME_CHONK, PrestoClient } from '@alejoamiras/presto-core';
-import { BackendType, Barretenberg } from '@aztec/bb.js';
-import { Fr } from '@aztec/foundation/curves/bn254';
+import { BackendType, Barretenberg } from '@aztec-foundation/bb.js';
+import { Fr } from '@aztec-labs/foundation/curves/bn254';
 import { BbJsWorkProver, type WorkArtifact, type WorkInputs } from '@yacana/miner-core/work';
-import { acceleratorUrls, type PrestoEndpoint, type ProverKind } from '../src/presto.ts';
+import {
+  acceleratorUrls,
+  PRESTO_AZTEC_VERSION,
+  type PrestoEndpoint,
+  type ProverKind,
+} from '../src/presto.ts';
 import { PrestoWorkProver, type ProverTransition } from '../src/presto-prover.ts';
 
 const url = process.env.PRESTO_URL;
@@ -81,7 +86,7 @@ describe.skipIf(!url)('PrestoWorkProver against a headless Presto', () => {
     const u = new URL(url as string);
     const client = new PrestoClient({
       presto: { host: u.hostname, port: Number(u.port), httpsPort: Number(u.port), httpsOnly: false },
-      aztecVersion: '5.2.0',
+      aztecVersion: PRESTO_AZTEC_VERSION,
     });
     const status = await client.checkStatus({ forceRefresh: true });
     expect(status.available && status.schemes).toContain('chonk');
@@ -90,7 +95,7 @@ describe.skipIf(!url)('PrestoWorkProver against a headless Presto', () => {
     const body = new Uint8Array([1, 2, 3]);
     const raw = await fetch(`${url}/prove`, {
       method: 'POST',
-      headers: { 'content-type': 'application/octet-stream', 'x-aztec-version': '5.2.0' },
+      headers: { 'content-type': 'application/octet-stream', 'x-aztec-version': PRESTO_AZTEC_VERSION },
       body,
     });
     expect(raw.status).toBe(500);

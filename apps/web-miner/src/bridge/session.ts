@@ -2,16 +2,16 @@
 // portal's standing and the flip verdict read through the Ethereum RPC, the arrivals waiting for
 // it, and the operations the sheets call. One instance per open account, started with it and
 // stopped with it; nothing sends or claims on its own — every crossing begins with a tap.
-import { AztecAddress } from '@aztec/aztec.js/addresses';
-import { Fr } from '@aztec/aztec.js/fields';
-import { EthAddress } from '@aztec/foundation/eth-address';
-import { getEpochAtSlot } from '@aztec/stdlib/epoch-helpers';
-import { siloNullifier } from '@aztec/stdlib/hash';
-import type { AztecNode } from '@aztec/stdlib/interfaces/client';
-import { Tag } from '@aztec/stdlib/logs';
-import { computeFeeJuiceMessageNullifier } from '@aztec/stdlib/messaging';
-import { MerkleTreeId } from '@aztec/stdlib/trees';
-import { TxHash } from '@aztec/stdlib/tx';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { Fr } from '@aztec-labs/aztec.js/fields';
+import { EthAddress } from '@aztec-labs/foundation/eth-address';
+import { getEpochAtSlot } from '@aztec-labs/stdlib/epoch-helpers';
+import { siloNullifier } from '@aztec-labs/stdlib/hash';
+import type { AztecNode } from '@aztec-labs/stdlib/interfaces/client';
+import { Tag } from '@aztec-labs/stdlib/logs';
+import { computeFeeJuiceMessageNullifier } from '@aztec-labs/stdlib/messaging';
+import { MerkleTreeId } from '@aztec-labs/stdlib/trees';
+import { TxHash } from '@aztec-labs/stdlib/tx';
 import {
   checkpointProven,
   epochProven,
@@ -428,7 +428,7 @@ export class BridgeSession {
   private async claimNullifier(
     c: Crossing,
     scope: ExitScope,
-  ): Promise<import('@aztec/foundation/curves/bn254').Fr> {
+  ): Promise<import('@aztec-labs/foundation/curves/bn254').Fr> {
     const secrets = await secretsFor(this.ctx, c.index, BigInt(c.version));
     const leaf = claimLeaf(scope, BigInt(c.amount), secrets.secretHash, BigInt(c.inboxIndex as string));
     return siloNullifier(scope.miner, await computeFeeJuiceMessageNullifier(leaf, secrets.secret));

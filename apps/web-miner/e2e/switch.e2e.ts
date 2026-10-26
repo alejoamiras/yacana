@@ -55,8 +55,9 @@ test('a live switch A → B while mining, a claim after it, and the banner on a 
   // A is a saved node, not the build's: the row says so and offers the default.
   await expect(page.getByTestId('node-row')).toContainText('· custom');
   await expect(page.getByTestId('node-default')).toBeVisible();
-  const before = (await stats(r.proxyA)).count;
   await changeNode(page, r.proxyB);
+  // What was in flight at the switch has reached A by now (a batch leaves in several calls); nothing may follow.
+  const atSwitch = (await stats(r.proxyA)).count;
   await expect(page.getByTestId('node-row')).toContainText('· custom');
   const saved = JSON.parse(await page.evaluate(() => localStorage.getItem('yacana.connection') ?? '{}'));
   expect(new URL(saved.nodeUrl).href).toBe(new URL(r.proxyB).href);
@@ -66,8 +67,7 @@ test('a live switch A → B while mining, a claim after it, and the banner on a 
   await expect(page.getByTestId('account')).toBeVisible();
   await expect(page.getByTestId('phase')).toHaveText(/mining/, { timeout: 3 * 60_000 });
   await expect(page.getByTestId('claims')).toHaveText('1', { timeout: 10 * 60_000 });
-  const after = (await stats(r.proxyA)).count;
-  expect(after - before).toBeLessThanOrEqual(2); // what was in flight at the switch, nothing since
+  expect((await stats(r.proxyA)).count).toBe(atSwitch);
   expect((await stats(r.proxyB)).count).toBeGreaterThan(20);
 
   // B stops serving: the banner names it and the row's chip says so; back to A and both go.

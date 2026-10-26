@@ -1,4 +1,4 @@
-import type { Fr } from '@aztec/foundation/curves/bn254';
+import type { Fr } from '@aztec-labs/foundation/curves/bn254';
 import { computeDigest, isWinner, proofToFields, secretCommitment } from './proof.ts';
 import type { WorkProver } from './work.ts';
 

@@ -2,7 +2,7 @@
 // build / preview / port helpers of tools/localnet/src/preview.ts bound to this package.
 import type { ChildProcess } from 'node:child_process';
 import { resolve } from 'node:path';
-import { Fr } from '@aztec/aztec.js/fields';
+import { Fr } from '@aztec-labs/aztec.js/fields';
 import type { Deployment } from '@yacana/deploy/deploy';
 import * as preview from '@yacana/localnet/preview';
 import { PARAMS } from '@yacana/miner-core/generated/params';

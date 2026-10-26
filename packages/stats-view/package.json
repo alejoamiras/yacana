@@ -14,7 +14,7 @@
     "typecheck": "tsc -b --force"
   },
   "dependencies": {
-    "@aztec/aztec.js": "5.2.0",
+    "@aztec-labs/aztec.js": "6.0.0",
     "@observablehq/plot": "0.6.17",
     "@yacana/bridge": "workspace:*",
     "@yacana/miner-core": "workspace:*",

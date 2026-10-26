@@ -1,7 +1,7 @@
 // bun: a node the health store finds behind the rollup pauses mining with its own reason, and its
 // catching up resumes it — the store's verdict is injected; what is checked is the controller's answer.
 import { beforeEach, describe, expect, test } from 'bun:test';
-import { AztecAddress } from '@aztec/aztec.js/addresses';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
 import { resetNodeHealth, setHealthForTests } from '@yacana/web-kit/browser/node-health';
 import { createStore } from 'jotai';
 import type { Deployment, Fee } from '../src/chain.ts';

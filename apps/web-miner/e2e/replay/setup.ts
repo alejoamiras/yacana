@@ -5,7 +5,7 @@ import { type ChildProcess, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { openSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { Fr } from '@aztec/aztec.js/fields';
+import { Fr } from '@aztec-labs/aztec.js/fields';
 import { type Browser, chromium, type Route } from '@playwright/test';
 import { COMMITTED } from '@yacana/contracts/scripts/commit-artifacts';
 import { deployYacana, TEST_PORTAL } from '@yacana/deploy/deploy';
@@ -47,7 +47,7 @@ export function currentBinding(): ReplayBinding {
     ),
     layoutsSha256: sha256(LAYOUTS_PATH),
     aztecVersion: (
-      JSON.parse(readFileSync(resolve(repo, 'node_modules/@aztec/aztec.js/package.json'), 'utf8')) as {
+      JSON.parse(readFileSync(resolve(repo, 'node_modules/@aztec-labs/aztec.js/package.json'), 'utf8')) as {
         version: string;
       }
     ).version,

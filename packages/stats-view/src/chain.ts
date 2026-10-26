@@ -1,5 +1,5 @@
 // The reader the beats read through: the deployment check, the layouts, the node; and the latest block.
-import { AztecAddress } from '@aztec/aztec.js/addresses';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
 import {
   assertDeployment,
   DEFAULT_LIMITS,

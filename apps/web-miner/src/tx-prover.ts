@@ -1,8 +1,8 @@
 // The wallet's transaction prover on Presto. The SDK meters WASM proofs with the PXE's event; this
 // adapter logs the same event for a proof Presto made, with the phases' timings.
 import { type PrestoPhase, type PrestoPhaseData, PrestoProver } from '@alejoamiras/presto';
-import { createLogger } from '@aztec/foundation/log';
-import type { PrivateExecutionStep } from '@aztec/stdlib/kernel';
+import { createLogger } from '@aztec-labs/foundation/log';
+import type { PrivateExecutionStep } from '@aztec-labs/stdlib/kernel';
 import { type PrestoEndpoint, type ProverKind, prestoConfig } from './presto';
 
 const log = createLogger('web-miner:tx-prover');

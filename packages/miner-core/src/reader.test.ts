@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
-import { AztecAddress } from '@aztec/aztec.js/addresses';
-import { Fr } from '@aztec/aztec.js/fields';
-import { deriveStorageSlotInMap } from '@aztec/stdlib/hash';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { Fr } from '@aztec-labs/aztec.js/fields';
+import { deriveStorageSlotInMap } from '@aztec-labs/stdlib/hash';
 import {
   assertTimestamp,
   CHUNK,

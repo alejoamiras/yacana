@@ -2,15 +2,15 @@
 // portal's Foundry suite assert the same values, so a drift on any side fails its own tests.
 import { describe, expect, test } from 'bun:test';
 import { resolve } from 'node:path';
-import { Fr } from '@aztec/foundation/curves/bn254';
-import { EthAddress } from '@aztec/foundation/eth-address';
-import { AztecAddress } from '@aztec/stdlib/aztec-address';
-import { computeSecretHash } from '@aztec/stdlib/hash';
+import { Fr } from '@aztec-labs/foundation/curves/bn254';
+import { EthAddress } from '@aztec-labs/foundation/eth-address';
+import { AztecAddress } from '@aztec-labs/stdlib/aztec-address';
+import { computeSecretHash } from '@aztec-labs/stdlib/hash';
 import { masterFromPrf } from '@yacana/miner-core/keys/derive';
 import { type Hex, hashTypedData, recoverTypedDataAddress } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { claimContent, exitContent, MAX_AMOUNT, retireContent, sendAheadContent } from './content.ts';
-import { inboxLeaf } from './inbox.ts';
+import { INBOX_BUCKET_GAS, inboxLeaf } from './inbox.ts';
 import { deriveCrossingSecrets, exitLogTag } from './secrets.ts';
 import { PORTAL_DOMAIN, SIGNED_TYPES, signForward } from './signatures.ts';
 import { outboxLeaf } from './witness.ts';
@@ -185,4 +185,11 @@ describe('bridge vectors', () => {
     expect(() => claimContent(MAX_AMOUNT + 1n)).toThrow(/u128/);
     expect(claimContent(MAX_AMOUNT)).toBeInstanceOf(Fr);
   });
+});
+
+test("the portal's gas suite holds the clients' Inbox margin: a costlier Inbox fails there, not on a wallet", async () => {
+  const suite = await Bun.file(resolve(import.meta.dir, '../../../protocol/portal/test/Gas.t.sol')).text();
+  expect(/INBOX_BUCKET_GAS = ([\d_]+);/.exec(suite)?.[1]?.replaceAll('_', '')).toBe(
+    INBOX_BUCKET_GAS.toString(),
+  );
 });

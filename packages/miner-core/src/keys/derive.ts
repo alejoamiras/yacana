@@ -1,7 +1,7 @@
 // A key is a 32-byte master; the master is the passkey's PRF output or the twelve words, through
 // HKDF-SHA256 with versioned labels. Every label is pinned by derive.test.ts: changing one moves
 // every user's address. WebCrypto only (Bun and browsers).
-import { Fq, Fr } from '@aztec/foundation/curves/bn254';
+import { Fq, Fr } from '@aztec-labs/foundation/curves/bn254';
 
 export interface AccountFields {
   secret: Fr;

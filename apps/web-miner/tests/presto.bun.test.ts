@@ -95,7 +95,7 @@ describe('the fix-it row', () => {
     );
     expect(downloading).toEqual({
       tone: 'info',
-      text: expect.stringContaining('fetching its prover for Aztec 5.2.0'),
+      text: expect.stringContaining('fetching its prover for Aztec 6.0.0'),
       retry: false,
     });
     // A sticky verdict outranks a phase that is over.

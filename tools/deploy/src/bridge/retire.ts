@@ -3,10 +3,10 @@
 // and the message consumed on the old chain — from then on no claim mints there, while exits and
 // arrivals go on. The L1 step is idempotent: sent already, it yields the same index from the log.
 
-import { waitForL1ToL2MessageReady } from '@aztec/aztec.js/messaging';
-import { EthAddress } from '@aztec/foundation/eth-address';
-import { AztecAddress } from '@aztec/stdlib/aztec-address';
-import { retireLeaf } from '@yacana/bridge/inbox';
+import { waitForL1ToL2MessageReady } from '@aztec-labs/aztec.js/messaging';
+import { EthAddress } from '@aztec-labs/foundation/eth-address';
+import { AztecAddress } from '@aztec-labs/stdlib/aztec-address';
+import { INBOX_BUCKET_GAS, retireLeaf } from '@yacana/bridge/inbox';
 import { scanLogs } from '@yacana/bridge/logs';
 import { yacanaPortalAbi } from '@yacana/bridge/portal';
 import { type Hex, parseEventLogs } from 'viem';
@@ -49,7 +49,9 @@ export async function retireOnL1(op: Operator, version: bigint): Promise<RetireS
   if ((await op.portal.read.flipAt([version])) === 0n)
     throw new Error(`version ${version} has not been flipped away from: nothing to retire`);
   if ((await op.portal.read.versionInfo([version])).retireSent) return sentBefore(op, version);
-  const txHash = await confirmed(op, () => op.portal.write.retire([version], writeOpts(op)));
+  // The retire message may open a bucket its estimate appended to (`INBOX_BUCKET_GAS`).
+  const gas = (await op.portal.estimateGas.retire([version], writeOpts(op))) + INBOX_BUCKET_GAS;
+  const txHash = await confirmed(op, () => op.portal.write.retire([version], { ...writeOpts(op), gas }));
   const receipt = await op.publicClient.getTransactionReceipt({ hash: txHash });
   const [retired] = parseEventLogs({ abi: yacanaPortalAbi, eventName: 'Retired', logs: receipt.logs });
   if (!retired) throw new Error(`retire ${txHash} emitted no Retired event`);

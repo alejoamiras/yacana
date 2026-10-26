@@ -2,15 +2,15 @@
 // witness the source node serves for it, and the archive line that carries both once the source
 // node is gone (a forward from the archive alone is the bridge's last resort, and the site serves
 // the archive at /witnesses/<profile>.jsonl).
-import { MAX_CHECKPOINTS_PER_EPOCH } from '@aztec/constants';
-import { sha256Trunc } from '@aztec/foundation/crypto/sha256';
-import { Fr } from '@aztec/foundation/curves/bn254';
-import { EthAddress } from '@aztec/foundation/eth-address';
-import type { AztecAddress } from '@aztec/stdlib/aztec-address';
-import { computeL2ToL1MessageHash } from '@aztec/stdlib/hash';
-import type { AztecNode } from '@aztec/stdlib/interfaces/client';
-import type { L2ToL1MembershipWitness } from '@aztec/stdlib/messaging';
-import { TxHash } from '@aztec/stdlib/tx';
+import { MAX_CHECKPOINTS_PER_EPOCH } from '@aztec-labs/constants';
+import { sha256Trunc } from '@aztec-labs/foundation/crypto/sha256';
+import { Fr } from '@aztec-labs/foundation/curves/bn254';
+import { EthAddress } from '@aztec-labs/foundation/eth-address';
+import type { AztecAddress } from '@aztec-labs/stdlib/aztec-address';
+import { computeL2ToL1MessageHash } from '@aztec-labs/stdlib/hash';
+import type { AztecNode } from '@aztec-labs/stdlib/interfaces/client';
+import type { L2ToL1MembershipWitness } from '@aztec-labs/stdlib/messaging';
+import { TxHash } from '@aztec-labs/stdlib/tx';
 import type { Hex } from 'viem';
 import { exitContent, MAX_AMOUNT, sendAheadContent } from './content.ts';
 import type { ExitKind, ExitLeaf, ForwardArgs } from './portal.ts';

@@ -5,6 +5,8 @@ test.beforeEach(({ page }) => {
   page.on('pageerror', (e) => console.log(`[page error] ${e.message}`));
   page.on('console', (m) => m.type() === 'error' && console.log(`[console] ${m.text().slice(0, 300)}`));
 });
+// A poll the mocked node is still forwarding when a test ends fails on the closing page.
+test.afterEach(({ page }) => page.unrouteAll({ behavior: 'wait' }));
 
 test('the captured history through a mocked node: deterministic numbers, selection, the CSV', async ({
   page,

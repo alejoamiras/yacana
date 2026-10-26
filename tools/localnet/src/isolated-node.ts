@@ -159,11 +159,18 @@ export async function startIsolatedNode(opts: IsolatedNodeOptions = {}): Promise
     );
     owned.push(anvil);
     await jsonRpcReady(l1RpcUrl, 'eth_chainId', 60_000, anvil);
+    // The network's L1 deploy looks for forge under ~/.aztec/current before anywhere else, and
+    // `current` is whichever version was installed last: name the pinned one.
     const aztec = spawnDetached(
       'aztec',
       toolchainBin('aztec'),
       aztecArgs(ports, runRoot, l1RpcUrl),
-      { ETHEREUM_HOSTS: l1RpcUrl, TMPDIR: childTmp, ...opts.env },
+      {
+        FORGE_BIN: process.env.FORGE_BIN ?? toolchainBin('aztec-forge'),
+        ETHEREUM_HOSTS: l1RpcUrl,
+        TMPDIR: childTmp,
+        ...opts.env,
+      },
       verbose,
       join(logDir, 'aztec.log'),
     );

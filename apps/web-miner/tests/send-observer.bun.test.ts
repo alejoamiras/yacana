@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import type { Tx } from '@aztec/stdlib/tx';
+import type { Tx } from '@aztec-labs/stdlib/tx';
 import { type SentTx, sendObserver } from '../src/wallet.ts';
 
 const tx = (hash: string, expiresAt: number, anchorBlock: number): Tx =>

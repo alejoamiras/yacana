@@ -6,7 +6,7 @@
 import { cpus, hostname } from 'node:os';
 import { resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
-import { BackendType, Barretenberg, UltraHonkBackend } from '@aztec/bb.js';
+import { BackendType, Barretenberg, UltraHonkBackend } from '@aztec-foundation/bb.js';
 import { workCircuitRoot } from './toolchain.ts';
 
 const args = process.argv.slice(2);

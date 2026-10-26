@@ -3,12 +3,12 @@
 // bridge calls as the app makes them — with the authwit the burn needs, with the message leaf a
 // claim consumes.
 import { cpus } from 'node:os';
-import { waitForL1ToL2MessageReady } from '@aztec/aztec.js/messaging';
-import { BackendType, Barretenberg } from '@aztec/bb.js';
-import { randomBytes } from '@aztec/foundation/crypto/random';
-import { Fr } from '@aztec/foundation/curves/bn254';
-import { EthAddress } from '@aztec/foundation/eth-address';
-import type { AztecAddress } from '@aztec/stdlib/aztec-address';
+import { BackendType, Barretenberg } from '@aztec-foundation/bb.js';
+import { waitForL1ToL2MessageReady } from '@aztec-labs/aztec.js/messaging';
+import { randomBytes } from '@aztec-labs/foundation/crypto/random';
+import { Fr } from '@aztec-labs/foundation/curves/bn254';
+import { EthAddress } from '@aztec-labs/foundation/eth-address';
+import type { AztecAddress } from '@aztec-labs/stdlib/aztec-address';
 import { claimLeaf } from '@yacana/bridge/inbox';
 import { type CrossingScope, type CrossingSecrets, deriveCrossingSecrets } from '@yacana/bridge/secrets';
 import { type L2Side, openL2 } from '@yacana/deploy/bridge/l2';

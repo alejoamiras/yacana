@@ -2,12 +2,14 @@
 // time: what matters is that either reading failing leaves the verdict unknown rather than "no
 // ETH", which would refuse a claim the wallet could have paid for.
 import { describe, expect, test } from 'bun:test';
+import { INBOX_BUCKET_GAS } from '@yacana/bridge/inbox';
 import { yacanaPortalAbi } from '@yacana/bridge/portal';
-import { custom, type Hex } from 'viem';
+import { revertNameOf } from '@yacana/bridge/revert';
+import { custom, encodeErrorResult, type Hex } from 'viem';
 import { anvil } from 'viem/chains';
 import { createConfig } from 'wagmi';
 import type { WagmiConfig } from '../src/bridge/eth.ts';
-import { type PortalCall, payerFunds } from '../src/bridge/eth-balance.ts';
+import { inboxWriteGas, type PortalCall, payerFunds } from '../src/bridge/eth-balance.ts';
 
 const ACCOUNT = `0x${'aa'.repeat(20)}` as Hex;
 const CALL: PortalCall<typeof yacanaPortalAbi, 'deposit'> = {
@@ -36,12 +38,34 @@ const config = (answers: Record<string, unknown>) =>
     },
   }) as unknown as WagmiConfig;
 
-/** A base fee of 1 gwei and no priority fee; viem quotes 1.2× the base, so 21,000 gas costs this. */
+/** A base fee of 1 gwei and no priority fee; viem quotes 1.2× the base. */
 const FEES = {
   eth_maxPriorityFeePerGas: '0x0',
   eth_getBlockByNumber: { number: '0x64', baseFeePerGas: '0x3b9aca00' },
 };
-const GAS_COST = 21_000n * 1_200_000_000n;
+/** A deposit writes an Inbox, so its 21,000-gas estimate is priced with a new bucket on top. */
+const GAS_COST = (21_000n + INBOX_BUCKET_GAS) * 1_200_000_000n;
+
+const forward = (kind: number): PortalCall<typeof yacanaPortalAbi, 'forward'> => ({
+  address: CALL.address,
+  abi: yacanaPortalAbi,
+  functionName: 'forward',
+  args: [
+    5n,
+    {
+      kind,
+      amount: 7n,
+      aux: `0x${'11'.repeat(32)}`,
+      recipientOrRedeemKey: ACCOUNT,
+      epoch: 3n,
+      numCheckpointsInEpoch: 1n,
+      leafIndex: 0n,
+      path: [],
+      sig: '0x',
+      expiry: 0n,
+    },
+  ],
+});
 
 describe("the payer's ETH against a call", () => {
   test('both numbers known: enough follows the comparison, and the balance is the wei the RPC gives', async () => {
@@ -80,5 +104,22 @@ describe("the payer's ETH against a call", () => {
       cost: null,
       enough: null,
     });
+  });
+
+  test('a write that sends an Inbox message names its estimate plus a new bucket; any other leaves it to the wallet', async () => {
+    const rpc = config({ eth_estimateGas: '0x5208' });
+    expect(await inboxWriteGas(rpc, ACCOUNT, CALL)).toBe(21_000n + INBOX_BUCKET_GAS);
+    expect(await inboxWriteGas(rpc, ACCOUNT, forward(2))).toBe(21_000n + INBOX_BUCKET_GAS);
+    expect(await inboxWriteGas(rpc, ACCOUNT, forward(1))).toBeUndefined();
+  });
+
+  test("a refused Inbox write names the portal's error, so the dialog keeps the row's own words", async () => {
+    const data = encodeErrorResult({ abi: yacanaPortalAbi, errorName: 'VersionPaused', args: [5n] });
+    const paused = config({
+      eth_estimateGas: Object.assign(new Error('execution reverted'), { code: 3, data }),
+    });
+    expect(revertNameOf(await inboxWriteGas(paused, ACCOUNT, CALL).catch((e: unknown) => e))).toBe(
+      'VersionPaused',
+    );
   });
 });

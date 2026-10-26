@@ -1,14 +1,14 @@
 // Everything that touches a node: the deployment's contracts on a wallet, epoch reads, the claim
 // and roll transactions.
-import { loadContractArtifact } from '@aztec/aztec.js/abi';
-import { AztecAddress } from '@aztec/aztec.js/addresses';
-import { Contract, NO_WAIT } from '@aztec/aztec.js/contracts';
-import { Fr } from '@aztec/aztec.js/fields';
-import { type createAztecNodeClient, waitForTx } from '@aztec/aztec.js/node';
-import type { ContractArtifact } from '@aztec/stdlib/abi';
-import type { Gas } from '@aztec/stdlib/gas';
-import { type TxEffect, TxStatus } from '@aztec/stdlib/tx';
-import type { EmbeddedWallet } from '@aztec/wallets/embedded';
+import { loadContractArtifact } from '@aztec-labs/aztec.js/abi';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { Contract, NO_WAIT } from '@aztec-labs/aztec.js/contracts';
+import { Fr } from '@aztec-labs/aztec.js/fields';
+import { type createAztecNodeClient, waitForTx } from '@aztec-labs/aztec.js/node';
+import type { ContractArtifact } from '@aztec-labs/stdlib/abi';
+import type { Gas } from '@aztec-labs/stdlib/gas';
+import { type TxEffect, TxStatus } from '@aztec-labs/stdlib/tx';
+import type { EmbeddedWallet } from '@aztec-labs/wallets/embedded';
 import { buildClaim } from '@yacana/miner-core/claim';
 import { NO_EFFECTS } from '@yacana/miner-core/claim-failure';
 import { readOpenEpoch, readRules } from '@yacana/miner-core/epoch';

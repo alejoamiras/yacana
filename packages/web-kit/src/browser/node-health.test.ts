@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
-import { makeFetch } from '@aztec/foundation/json-rpc/client';
-import { NoRetryError } from '@aztec/foundation/retry';
+import { makeFetch } from '@aztec-labs/foundation/json-rpc/client';
+import { NoRetryError } from '@aztec-labs/foundation/retry';
 import type { NodeRequestOutcome } from './node-guard.ts';
 
 // The fake network the guard sits over: per-path behaviour, a call log, a delay per request.
@@ -149,6 +149,34 @@ describe('the store', () => {
     expect(health.nodeHealth().transport.kind).toBe('silent');
     health.recordOutcome(outcome({ status: 'network' }));
     expect(health.nodeHealth().transport.kind).toBe('throttled');
+  });
+
+  test('failures sent before the cooldown opened neither lengthen nor shorten it; they may make it a throttle or carry the node’s later deadline', () => {
+    const sent = performance.now();
+    for (let i = 0; i < 3; i++) health.recordOutcome(outcome({ status: 503, startedAt: sent }));
+    expect(health.nodeHealth().transport).toMatchObject({ kind: 'silent', backoffMs: 20_000 });
+    // Sent after the cooldown opened (the recovery), a failure does lengthen it.
+    health.recordOutcome(outcome({ status: 503, startedAt: performance.now() }));
+    expect(health.nodeHealth().transport).toMatchObject({ kind: 'silent', backoffMs: 40_000 });
+    // Silence's deadline holds when a 429 from its burst makes it a throttle.
+    const silentUntil = (health.nodeHealth().transport as { retryAt: number }).retryAt;
+    health.recordOutcome(outcome({ status: 429, retryAfter: '5', startedAt: sent }));
+    expect(health.nodeHealth().transport).toMatchObject({ kind: 'throttled', retryAt: silentUntil });
+    health.resetNodeHealth();
+    const burst = performance.now();
+    health.recordOutcome(outcome({ status: 503, startedAt: burst }));
+    const opened = (health.nodeHealth().transport as { retryAt: number }).retryAt;
+    for (let i = 0; i < 4; i++) health.recordOutcome(outcome({ status: 'network', startedAt: burst }));
+    expect(health.nodeHealth().transport).toMatchObject({
+      kind: 'throttled',
+      backoffMs: 15_000,
+      retryAt: opened,
+    });
+    // The node's own later deadline, from the same burst, still holds.
+    health.recordOutcome(outcome({ status: 429, retryAfter: '90', startedAt: burst }));
+    expect(health.nodeHealth().transport).toMatchObject({ kind: 'throttled', backoffMs: 90_000 });
+    health.recordOutcome(outcome({ status: 429, retryAfter: '5', startedAt: burst }));
+    expect(health.nodeHealth().transport).toMatchObject({ kind: 'throttled', backoffMs: 90_000 });
   });
 
   test('an outcome that started before a reset is dropped (A → B → A, a late answer from the first A)', () => {

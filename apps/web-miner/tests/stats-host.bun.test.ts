@@ -3,8 +3,8 @@
 // Then when a hosted request may leave, and the path composed: the host, the stats runtime, the quiet
 // client through the guard and the reader, against a JSON-RPC stand-in for the node.
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import { AztecAddress } from '@aztec/aztec.js/addresses';
-import { Fr } from '@aztec/aztec.js/fields';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { Fr } from '@aztec-labs/aztec.js/fields';
 import { CHUNK, type ReadLimits, readEpochs, readSlot, type SlotTable } from '@yacana/miner-core/reader';
 import type { StatsRuntime, StatsSources } from '@yacana/stats-view/runtime';
 import { type Fixed, historyAtom, statusAtom } from '@yacana/stats-view/state';
@@ -280,12 +280,15 @@ describe('hosted reads composed', () => {
     const hide = host.show();
     await until('the batch', wire.held);
     setPhase('claiming');
+    // A batch leaves in calls of NODE_MAX_BATCH: the ones out before the claim began stay out, no other follows.
+    const left = wire.sent.length;
     wire.release();
     await Bun.sleep(1_300);
-    expect(wire.sent).toHaveLength(2);
+    expect(wire.sent).toHaveLength(left);
     expect(store.get(statusAtom).phase).toBe('loading');
     setPhase('idle');
     await until('the rows', () => store.get(historyAtom)?.rows.size === 48);
+    expect(wire.sent.length).toBeGreaterThan(left);
     expect(store.get(statusAtom).phase).toBe('ready');
     expect(store.get(historyAtom)?.error).toBeUndefined();
     // No reader's timer counts the wait for a turn: the client's deadline starts when a request leaves.
@@ -300,11 +303,13 @@ describe('hosted reads composed', () => {
     let hide = shownAgain.host.show();
     await until('the batch', wire.held);
     hide();
+    const left = wire.sent.length;
     wire.release();
     await Bun.sleep(1_300);
-    expect(wire.sent).toHaveLength(2);
+    expect(wire.sent).toHaveLength(left);
     hide = shownAgain.host.show();
     await until('the rows', () => shownAgain.store.get(historyAtom)?.rows.size === 48);
+    expect(wire.sent.length).toBeGreaterThan(left);
     expect(shownAgain.store.get(statusAtom).phase).toBe('ready');
     hide();
     shownAgain.store.set(endpointsAtom, null);
@@ -314,12 +319,13 @@ describe('hosted reads composed', () => {
     switched.host.show();
     await until('the batch', again.held);
     switched.setPhase('claiming');
+    const out = again.sent.length;
     again.release();
     await Bun.sleep(100);
     switched.store.set(endpointsAtom, { nodeUrl: NODE, ethRpcUrl: CONNECTION.ethRpcUrl, switching: true });
     switched.setPhase('idle');
     await Bun.sleep(1_300);
-    expect(again.sent).toHaveLength(2);
+    expect(again.sent).toHaveLength(out);
     expect(switched.store.get(statusAtom).phase).toBe('loading');
   });
 });

@@ -7,9 +7,9 @@ import {
   PrestoUnavailableError,
   type VerifierTarget,
 } from '@alejoamiras/presto-noir';
-import type { Barretenberg } from '@aztec/bb.js';
-import { Fr } from '@aztec/foundation/curves/bn254';
-import { Noir } from '@aztec/noir-noir_js';
+import type { Barretenberg } from '@aztec-foundation/bb.js';
+import { Noir } from '@aztec-foundation/noir-noir_js';
+import { Fr } from '@aztec-labs/foundation/curves/bn254';
 import { PROOF_FIELDS } from '@yacana/miner-core/proof';
 import type { WorkArtifact, WorkInputs, WorkProver, WorkResult } from '@yacana/miner-core/work';
 import { W_VK_BYTES } from '@yacana/work-circuit/generated/vk';
@@ -17,7 +17,7 @@ import { type FallbackCause, type PrestoEndpoint, type ProverKind, prestoConfig 
 
 const TARGET: VerifierTarget = 'noir-recursive-no-zk';
 /** The bb release both provers must share, or their proofs would differ for one witness. */
-const BB_VERSION = '5.2.0';
+export const BB_VERSION = '6.0.0';
 /** Busy answers in a row (429/503/408/413 — other tabs share Presto's queue) before WASM is for good. */
 const TRANSIENT_LIMIT = 3;
 

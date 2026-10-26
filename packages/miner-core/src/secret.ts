@@ -1,4 +1,4 @@
-import { Fr } from '@aztec/foundation/curves/bn254';
+import { Fr } from '@aztec-labs/foundation/curves/bn254';
 
 // The secret is a bearer credential for the tickets it commits to, valid for one epoch: the
 // caller generates it when an epoch starts and discards it at close. Drawn straight from the

@@ -1,5 +1,5 @@
-import { AztecAddress } from '@aztec/aztec.js/addresses';
-import { Fr } from '@aztec/aztec.js/fields';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { Fr } from '@aztec-labs/aztec.js/fields';
 import { CHUNK, type Node, type SlotTable, type StorageLayout } from '@yacana/miner-core/reader';
 import { describe, expect, test } from 'vitest';
 import { HISTORY, type Reader, readLive } from './live';

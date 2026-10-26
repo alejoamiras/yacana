@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { classifyClaimFailure, revertCause } from './claim-failure.ts';
 
-// The strings aztec.js 5.2.0, the node and the PXE produce (utils/node.js waitForTx; the tagging sync). The
+// The strings aztec.js 6.0.0, the node and the PXE produce (utils/node.js waitForTx; the tagging sync). The
 // first two as the owner's ledger showed them (hashes shortened there), the third from a replay on the
 // isolated network.
 const FIXTURES: [string, ReturnType<typeof classifyClaimFailure>][] = [
@@ -44,7 +44,7 @@ describe('classifyClaimFailure', () => {
       stale: false,
       reason: 'Assertion failed: retired',
     });
-    // A 5.2.0 receipt carries no reason: the SDK's "unknown" is no reason at all.
+    // A mined receipt carries no reason: the SDK's "unknown" is no reason at all.
     expect(revertCause('Transaction 0x1 reverted: app_logic_reverted. Reason: unknown')).toEqual({
       stale: false,
     });

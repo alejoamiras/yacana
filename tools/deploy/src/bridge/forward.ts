@@ -5,12 +5,12 @@
 // when the miner that version registered is the announced one.
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { loadContractArtifact } from '@aztec/aztec.js/abi';
-import { createAztecNodeClient } from '@aztec/aztec.js/node';
-import { EthAddress } from '@aztec/foundation/eth-address';
-import { OutboxAbi } from '@aztec/l1-artifacts/OutboxAbi';
-import { RollupAbi } from '@aztec/l1-artifacts/RollupAbi';
-import { AztecAddress } from '@aztec/stdlib/aztec-address';
+import { OutboxAbi } from '@aztec-foundation/l1-artifacts/OutboxAbi';
+import { RollupAbi } from '@aztec-foundation/l1-artifacts/RollupAbi';
+import { loadContractArtifact } from '@aztec-labs/aztec.js/abi';
+import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
+import { EthAddress } from '@aztec-labs/foundation/eth-address';
+import { AztecAddress } from '@aztec-labs/stdlib/aztec-address';
 import { exitRecordedEvent, readExits } from '@yacana/bridge/exits';
 import { type ForwardArgs, yacanaPortalAbi } from '@yacana/bridge/portal';
 import { leafIdOf } from '@yacana/bridge/signatures';
@@ -28,6 +28,7 @@ import {
   rootOf,
 } from '@yacana/bridge/witness';
 import { MINER_ARTIFACT_PATH } from '@yacana/miner-core/artifacts';
+import { NODE_MAX_BATCH } from '@yacana/miner-core/node-client';
 import { getContract, type Hex, type Log, parseEventLogs } from 'viem';
 import type { Deployment } from '../deploy.ts';
 import { confirmed, minerBytes32, type Operator, writeOpts } from './operator.ts';
@@ -95,7 +96,9 @@ export async function archiveExits(
   const version = BigInt(opts.source.rollupVersion);
   const mine = known.filter((e) => e.version === version.toString());
   if (opts.fromArchive) return { entries: mine, pending: [] };
-  const node = createAztecNodeClient(opts.sourceNodeUrl ?? opts.source.nodeUrl);
+  const node = createAztecNodeClient(opts.sourceNodeUrl ?? opts.source.nodeUrl, {
+    maxBatchSize: NODE_MAX_BATCH,
+  });
   const scope = scopeOf(opts.source);
   const event = await exitRecordedEvent(loadContractArtifact(await Bun.file(MINER_ARTIFACT_PATH).json()));
   const pending: number[] = [];

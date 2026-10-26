@@ -1,6 +1,6 @@
 // Withdraw validation, pure: addresses through the SDK parser, amounts as decimal strings to
 // bigint (no floats), the reviewed snapshot is what gets sent.
-import { AztecAddress } from '@aztec/aztec.js/addresses';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
 
 export type Mode = 'private' | 'public';
 

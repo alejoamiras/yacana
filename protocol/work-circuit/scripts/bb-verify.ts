@@ -1,4 +1,4 @@
-// `bb verify` as a three-way answer. bb 5.2.0 exits 1 for a proof it refuses and for a file it
+// `bb verify` as a three-way answer. bb exits 1 for a proof it refuses and for a file it
 // cannot open alike, so the exit status cannot tell a refusal from a verifier that never ran: the
 // diagnostic does, against a closed list, and anything off that list is not a verdict.
 import { BB } from './toolchain.ts';

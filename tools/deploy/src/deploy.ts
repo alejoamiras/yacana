@@ -8,20 +8,21 @@
 
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { loadContractArtifact } from '@aztec/aztec.js/abi';
-import { AztecAddress } from '@aztec/aztec.js/addresses';
-import { Contract, getContractInstanceFromInstantiationParams } from '@aztec/aztec.js/contracts';
-import { SponsoredFeePaymentMethod } from '@aztec/aztec.js/fee';
-import { Fr } from '@aztec/aztec.js/fields';
-import { createAztecNodeClient } from '@aztec/aztec.js/node';
-import { SPONSORED_FPC_SALT } from '@aztec/constants';
-import { EthAddress } from '@aztec/foundation/eth-address';
-import { SponsoredFPCContract } from '@aztec/noir-contracts.js/SponsoredFPC';
-import { deriveMasterMessageSigningSecretKey } from '@aztec/stdlib/keys';
-import { EmbeddedWallet } from '@aztec/wallets/embedded';
 import { TokenContract } from '@aztec-foundation/aztec-standards/artifacts/src/artifacts/Token.js';
+import { loadContractArtifact } from '@aztec-labs/aztec.js/abi';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
+import { Contract, getContractInstanceFromInstantiationParams } from '@aztec-labs/aztec.js/contracts';
+import { SponsoredFeePaymentMethod } from '@aztec-labs/aztec.js/fee';
+import { Fr } from '@aztec-labs/aztec.js/fields';
+import { createAztecNodeClient } from '@aztec-labs/aztec.js/node';
+import { SPONSORED_FPC_SALT } from '@aztec-labs/constants';
+import { EthAddress } from '@aztec-labs/foundation/eth-address';
+import { SponsoredFPCContract } from '@aztec-labs/noir-contracts.js/SponsoredFPC';
+import { deriveMasterMessageSigningSecretKey } from '@aztec-labs/stdlib/keys';
+import { EmbeddedWallet } from '@aztec-labs/wallets/embedded';
 import type { BridgeRecord, LifecycleRecord, MigrationRecord } from '@yacana/bridge/record';
 import { PARAMS, PROFILE } from '@yacana/miner-core/generated/params';
+import { NODE_MAX_BATCH } from '@yacana/miner-core/node-client';
 import { carriedBridge } from './bridge-block.ts';
 
 const repo = resolve(import.meta.dir, '../../..');
@@ -130,7 +131,11 @@ export async function deployYacana(
   salt = Fr.random(),
   overrides: DeployOverrides = {},
 ): Promise<Deployment> {
-  const wallet = await EmbeddedWallet.create(nodeUrl, { ephemeral: true, pxe: { proverEnabled: true } });
+  const wallet = await EmbeddedWallet.create(nodeUrl, {
+    ephemeral: true,
+    pxe: { proverEnabled: true },
+    nodeClientOptions: { maxBatchSize: NODE_MAX_BATCH },
+  });
   try {
     const fpc = await getContractInstanceFromInstantiationParams(SponsoredFPCContract.artifact, {
       salt: new Fr(SPONSORED_FPC_SALT),
@@ -189,7 +194,7 @@ export async function deployYacana(
       firstEpoch,
       seed,
     });
-    const info = await createAztecNodeClient(nodeUrl).getNodeInfo();
+    const info = await createAztecNodeClient(nodeUrl, { maxBatchSize: NODE_MAX_BATCH }).getNodeInfo();
     return {
       profile: PROFILE,
       chainId: String(info.l1ChainId),
@@ -266,7 +271,7 @@ export async function continuationOf(
   // The source's open epoch and its seed, straight from its public storage through the read path.
   const { readEpochs, readOpenEpochNumber } = await import('@yacana/miner-core/reader');
   const { deriveSlotTable, loadLayouts } = await import('@yacana/miner-core/slots');
-  const node = createAztecNodeClient(source.nodeUrl);
+  const node = createAztecNodeClient(source.nodeUrl, { maxBatchSize: NODE_MAX_BATCH });
   const miner = AztecAddress.fromStringUnsafe(source.miner);
   const layout = (await loadLayouts()).miner;
   const last = await readOpenEpochNumber(node, miner, layout);

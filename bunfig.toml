@@ -4,8 +4,8 @@ minimumReleaseAge = 604800
 # The Presto packages are this repo's owner's own releases, pinned exact and bumped by hand; the
 # 7-day wait would only delay each bump. Name-wide: every future version of these three names.
 minimumReleaseAgeExcludes = ["@alejoamiras/presto-core", "@alejoamiras/presto-noir", "@alejoamiras/presto-banners"]
-# Hoisted rather than isolated: Vite's dependency pre-bundler resolves the @aztec packages'
-# transitive imports (zod, pino, @aztec/protocol-contracts, …) from the app root, which the
+# Hoisted rather than isolated: Vite's dependency pre-bundler resolves the Aztec packages'
+# transitive imports (zod, pino, @aztec-labs/protocol-contracts, …) from the app root, which the
 # isolated layout does not provide.
 linker = "hoisted"
 
@@ -13,5 +13,5 @@ linker = "hoisted"
 frozen = false
 
 [test]
-# See scripts/test-preload.ts: Bun 1.4.0 lacks expect.addEqualityTesters, which @aztec/foundation calls.
+# See scripts/test-preload.ts: Bun 1.4.0 lacks expect.addEqualityTesters, which @aztec-labs/foundation calls.
 preload = ["./scripts/test-preload.ts"]

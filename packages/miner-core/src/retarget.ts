@@ -1,8 +1,8 @@
 // TS mirror of the contract's epoch close: exact integer retarget clamped to [⌈t/4⌉, 4t] with
 // u128 saturation, never 0, and the next epoch's seed. Pinned to the Noir implementation by
 // the parity vectors in retarget.test.ts; used by the simulator and the miner's "next target" view.
-import { poseidon2Hash } from '@aztec/foundation/crypto/poseidon';
-import { Fr } from '@aztec/foundation/curves/bn254';
+import { poseidon2Hash } from '@aztec-labs/foundation/crypto/poseidon';
+import { Fr } from '@aztec-labs/foundation/curves/bn254';
 import { DOM_SEED } from './proof.ts';
 
 export const U128_MAX = (1n << 128n) - 1n;

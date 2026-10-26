@@ -27,8 +27,8 @@ function heldPresto() {
         status: 'ok',
         api_version: 1,
         schemes: ['chonk', 'ultra_honk'],
-        version: '1.1.1',
-        aztec_version: '5.2.0',
+        version: '1.2.1',
+        aztec_version: '6.0.0',
         bb_available: true,
       });
     },

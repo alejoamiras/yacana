@@ -4,7 +4,7 @@ pragma solidity >=0.8.27;
 
 import {Epoch} from "@aztec/TimeLib.sol";
 
-// The message boxes' errors (aztec-packages v5.2.0, `Errors.sol`), the subset the portal and its
+// The message boxes' errors (aztec-packages v6.0.0, `Errors.sol`), the subset the portal and its
 // tests match on; selectors are those of the originals since the signatures are identical.
 library Errors {
   error Inbox__Unauthorized();
@@ -12,7 +12,9 @@ library Errors {
   error Inbox__VersionMismatch(uint256 expected, uint256 actual);
   error Inbox__ContentTooLarge(bytes32 content);
   error Inbox__SecretHashTooLarge(bytes32 secretHash);
-  error Inbox__MustBuildBeforeConsume();
+  error Inbox__BucketOutOfWindow(uint256 seq, uint256 current);
+  error Inbox__WouldOverwriteUnconsumedBucket(uint64 evictedBucketSeq);
+  error Inbox__NoBucketAtOrBeforeTotal(uint256 upperBound, uint256 oldestLiveTotal);
 
   error Outbox__Unauthorized();
   error Outbox__InvalidChainId();

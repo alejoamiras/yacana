@@ -117,16 +117,22 @@ const clamp = (ms: number) => Math.min(CLAMP_MAX_MS, Math.max(CLAMP_MIN_MS, ms))
 const grow = (previous: number | undefined, min: number, max: number) =>
   previous === undefined ? min : Math.min(max, previous * 2);
 
+function throttle(
+  t: Transport,
+  retryAfterS: number | null,
+  now: number,
+): Extract<Transport, { kind: 'throttled' }> {
+  const backoffMs =
+    retryAfterS !== null
+      ? clamp(retryAfterS * 1000)
+      : grow(t.kind === 'throttled' ? t.backoffMs : undefined, THROTTLE_MIN_MS, THROTTLE_MAX_MS);
+  return { kind: 'throttled', retryAt: now + backoffMs, status: 429, backoffMs };
+}
+
 /** The next transport state for an event; pure, so every rule is testable on its own. */
 export function nextTransport(t: Transport, e: HealthEvent, now: number): Transport {
   if (e.type === 'ok') return { kind: 'ok', latencyMs: e.latencyMs };
-  if (e.type === '429') {
-    const backoffMs =
-      e.retryAfterS !== null
-        ? clamp(e.retryAfterS * 1000)
-        : grow(t.kind === 'throttled' ? t.backoffMs : undefined, THROTTLE_MIN_MS, THROTTLE_MAX_MS);
-    return { kind: 'throttled', retryAt: now + backoffMs, status: 429, backoffMs };
-  }
+  if (e.type === '429') return throttle(t, e.retryAfterS, now);
   const backoffMs = grow(t.kind === 'silent' ? t.backoffMs : undefined, SILENT_MIN_MS, SILENT_MAX_MS);
   return { kind: 'silent', since: t.kind === 'silent' ? t.since : now, retryAt: now + backoffMs, backoffMs };
 }
@@ -134,6 +140,30 @@ export function nextTransport(t: Transport, e: HealthEvent, now: number): Transp
 /** A cooldown is in force while its deadline has not passed, or while the recovery request is out. */
 export const coolingDown = (t: Transport, now = Date.now()): boolean =>
   t.kind !== 'ok' && (now < t.retryAt || probing);
+
+/**
+ * An outcome sent before the request that opened the cooldown is that burst's (a batch leaves as several calls):
+ * it never lengthens the backoff nor brings the deadline forward, but a 429 may turn silence into a throttle or
+ * carry the node's own later deadline. Null: it changes nothing.
+ */
+function fromBurst(t: Exclude<Transport, { kind: 'ok' }>, e: HealthEvent, now: number): Transport | null {
+  if (e.type !== '429') return null;
+  const next = throttle(t, e.retryAfterS, now);
+  if (t.kind === 'silent') return { ...next, retryAt: Math.max(next.retryAt, t.retryAt) };
+  return e.retryAfterS !== null && next.retryAt > t.retryAt ? next : null;
+}
+
+/**
+ * An edge's 429 without CORS headers reaches fetch as a TypeError; a burst of those right after successes is a
+ * throttle, not silence.
+ */
+function unmask(o: NodeRequestOutcome, event: HealthEvent, now: number): HealthEvent {
+  if (o.status === 'network') {
+    opaque = [...opaque.filter((t) => now - t < OPAQUE_WINDOW_MS), now];
+    if (opaque.length >= OPAQUE_BURST) return { type: '429', retryAfterS: null };
+  } else if (event.type === 'ok') opaque = [];
+  return event;
+}
 
 /** One outcome of the current endpoint into the store; exported for tests, the guard feeds it in production. */
 export function recordOutcome(o: NodeRequestOutcome): void {
@@ -143,19 +173,20 @@ export function recordOutcome(o: NodeRequestOutcome): void {
   // it); started after it, its answers count: it may be the recovery.
   if (o.quiet && (health.transport.kind === 'ok' || o.startedAt < cooldownFrom)) return;
   const now = Date.now();
-  let event = classify(o);
+  const classified = classify(o);
   // A success that started before the request that opened the cooldown says nothing about now.
-  if (event.type === 'ok' && health.transport.kind !== 'ok' && o.startedAt < cooldownFrom) return;
-  // An edge's 429 without CORS headers reaches fetch as a TypeError; a burst of those right after
-  // successes is a throttle, not silence.
-  if (o.status === 'network') {
-    opaque = [...opaque.filter((t) => now - t < OPAQUE_WINDOW_MS), now];
-    if (opaque.length >= OPAQUE_BURST) event = { type: '429', retryAfterS: null };
-  } else if (event.type === 'ok') opaque = [];
-  const transport = nextTransport(health.transport, event, now);
+  if (classified.type === 'ok' && health.transport.kind !== 'ok' && o.startedAt < cooldownFrom) return;
+  const event = unmask(o, classified, now);
+  const t = health.transport;
+  if (t.kind !== 'ok' && o.startedAt < cooldownFrom) {
+    const next = fromBurst(t, event, now);
+    if (next) set({ ...health, transport: next });
+    return;
+  }
+  const transport = nextTransport(t, event, now);
   // The cooldown is observed now, not when the failing request was sent: a success already in flight
   // when the throttle began does not prove it has lifted, so it must not clear the cooldown either.
-  if (transport.kind !== 'ok' && health.transport.kind === 'ok') cooldownFrom = performance.now();
+  if (transport.kind !== 'ok' && t.kind === 'ok') cooldownFrom = performance.now();
   set({ ...health, transport });
 }
 

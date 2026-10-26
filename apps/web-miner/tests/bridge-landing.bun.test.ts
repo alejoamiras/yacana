@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { EthAddress } from '@aztec/foundation/eth-address';
+import { EthAddress } from '@aztec-labs/foundation/eth-address';
 import { type Crossing, knownEth, UNKNOWN_ETH } from '@yacana/bridge/journal';
 import { deriveCrossingSecrets } from '@yacana/bridge/secrets';
 import type { Arrivals, Arrived } from '../src/bridge/landing.ts';

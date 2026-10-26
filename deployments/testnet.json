@@ -1,16 +1,16 @@
 {
   "profile": "testnet",
   "chainId": "11155111",
-  "nodeUrl": "https://v5.testnet.rpc.aztec-labs.com",
-  "deployer": "0x01ac35f9b30617d5e45cbc7e36211b299d0ac0a6d0b24ee4469d91466f10bb7e",
-  "miner": "0x0364f04e318480bb6d6354772b12ee8e59fce2123dc43e16bc5650fd5505014c",
-  "token": "0x1fb296ab77cc42f7807e95fbdc2260d59cc9f5d48bff1ef65299b9a279466a15",
-  "minerClassId": "0x0ee9c81b4018f249a69235d41eaddda33316e5142644398df3d6f56080c5b07f",
-  "tokenClassId": "0x10fd5603d57b91daa46f9b8f98ff0cbd4516315ce10e423c05dcfe9638bfecbf",
-  "rollupVersion": "1821665230",
-  "rollupAddress": "0xd73a91bdcf6891c7642f3e460036e1ef2cc23178",
-  "minerSalt": "0x06d63f153c00856cf092e2cf9d478f0169dcfdfed46867691bd3447ce1bbf61b",
-  "tokenSalt": "0x06a1a5b9fe5369cbdc8522617f7ebe30cc000fcec7e2a3d8b47d09fe39dd524f",
+  "nodeUrl": "https://aztec-testnet.drpc.org",
+  "deployer": "0x25e0b2e78f415b304a9c58974160554e5bebbf15491cc2b071fd092588aed47e",
+  "miner": "0x190ef585faf52209c7dbcb18de302c9c6303a6d8c7af3be94d1ca0684dec10a1",
+  "token": "0x246a5be6fede04ebcf69cd8764f8e1cc3b5783e673f1abd3116055e256cb4198",
+  "minerClassId": "0x05f5edc215509252395ebf2d1cdded27f0815fc7c7d1486783ddadf072b2269d",
+  "tokenClassId": "0x2ff0939914ff64bd3f7979926dbe8cf3332bc2fee55928bf3cc9ca802568ea9f",
+  "rollupVersion": "679261766",
+  "rollupAddress": "0x1f435a7f2da358caf887a470faeee7d5d5f4efba",
+  "minerSalt": "0x1dbb9be808a99abbc0ccca1625fde8f6bef78af335af14426e7a52efd682ab78",
+  "tokenSalt": "0x2af04b41fac35f72b4fce6a419f849bfb03fc01f3fbc8e526de29437e63f169f",
   "params": {
     "N": 4,
     "EXPECTED_EPOCH_SECONDS": "300",
@@ -27,18 +27,18 @@
     "TOKEN_NAME": "Yacana Testnet",
     "TOKEN_SYMBOL": "tYACA"
   },
-  "launchAt": "1790609292",
-  "launchedAt": "1790609292",
-  "deployedAt": "2026-09-28T15:27:37.303Z",
-  "portal": "0x13c06cf71c75fdae21a46d66478e738209a0370c",
+  "launchAt": "1792976124",
+  "launchedAt": "1792976124",
+  "deployedAt": "2026-10-26T00:54:32.832Z",
+  "portal": "0x12d46b6878a4dc0506cd15f94ca9e56ae06bc4d2",
   "bridge": {
     "chainId": "11155111",
-    "portal": "0x13c06CF71C75fDaE21a46d66478e738209A0370c",
-    "yaca": "0x4DA537e78409830dCa92850fE635eFD15A60109c",
+    "portal": "0x12D46b6878a4Dc0506CD15f94CA9E56Ae06BC4D2",
+    "yaca": "0xC7cc767BaaE1E979bED8a3C118587bfAea67ac2A",
     "registry": "0xa0bfb1b494fb49041e5c6e8c2c1be09cd171c6ba",
     "operators": "0xc9b7162F57B74257261cB61a0FAc870Eda87Cbb7",
     "l1RpcUrl": "https://ethereum-sepolia-rpc.publicnode.com",
-    "deployBlock": "11801404",
-    "registryIndex": "5"
+    "deployBlock": "11993997",
+    "registryIndex": "8"
   }
 }

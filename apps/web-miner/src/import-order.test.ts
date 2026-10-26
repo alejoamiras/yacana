@@ -23,7 +23,7 @@ describe('import order of the prover contexts', () => {
       const order = importOrder(file);
       const guard = indexOf(order, /node-guard/);
       const crs = indexOf(order, /pinned-crs/);
-      const sdk = indexOf(order, /^@aztec\//);
+      const sdk = indexOf(order, /^@aztec-(labs|foundation)\//);
       const shim = indexOf(order, /shims\/node-globals/);
       expect(guard, `${file} imports the guard`).toBeGreaterThanOrEqual(0);
       expect(crs, `${file} imports pinned-crs`).toBeGreaterThanOrEqual(0);

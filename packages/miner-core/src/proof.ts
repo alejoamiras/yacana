@@ -1,7 +1,7 @@
-import { poseidon2Hash } from '@aztec/foundation/crypto/poseidon';
-import { Fr } from '@aztec/foundation/curves/bn254';
-import type { AztecAddress } from '@aztec/stdlib/aztec-address';
-import { siloNullifier } from '@aztec/stdlib/hash';
+import { poseidon2Hash } from '@aztec-labs/foundation/crypto/poseidon';
+import { Fr } from '@aztec-labs/foundation/curves/bn254';
+import type { AztecAddress } from '@aztec-labs/stdlib/aztec-address';
+import { siloNullifier } from '@aztec-labs/stdlib/hash';
 import { DOMAINS } from './generated/params.ts';
 
 /** A non-ZK UltraHonk proof for the Noir recursive verifier: 410 fields, 32-byte big-endian each. */

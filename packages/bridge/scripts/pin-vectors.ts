@@ -4,10 +4,10 @@
 // portal's Foundry suite and vectors.test.ts assert the same values. Re-run only when an
 // encoding, a label or a domain changes on purpose — that orphans every crossing ever made.
 import { resolve } from 'node:path';
-import { Fr } from '@aztec/foundation/curves/bn254';
-import { EthAddress } from '@aztec/foundation/eth-address';
-import { AztecAddress } from '@aztec/stdlib/aztec-address';
-import { computeSecretHash } from '@aztec/stdlib/hash';
+import { Fr } from '@aztec-labs/foundation/curves/bn254';
+import { EthAddress } from '@aztec-labs/foundation/eth-address';
+import { AztecAddress } from '@aztec-labs/stdlib/aztec-address';
+import { computeSecretHash } from '@aztec-labs/stdlib/hash';
 import { masterFromPrf } from '@yacana/miner-core/keys/derive';
 import { hashTypedData } from 'viem';
 import { claimContent, exitContent, retireContent, sendAheadContent } from '../src/content.ts';

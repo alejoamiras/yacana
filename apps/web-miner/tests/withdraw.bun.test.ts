@@ -1,6 +1,6 @@
 // bun: the address validity check runs Grumpkin through bb.js, which jsdom cannot host.
 import { describe, expect, test } from 'bun:test';
-import { AztecAddress } from '@aztec/aztec.js/addresses';
+import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
 import { ethRefusal } from '../src/bridge/forms.ts';
 import { amountRefusal, recipientRefusal, review } from '../src/features/withdraw-form.ts';
 

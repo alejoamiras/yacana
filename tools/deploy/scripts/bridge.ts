@@ -12,7 +12,7 @@
 //                    | retire <version>            (L1, once; then L2 with YACANA_DEPLOYER_SECRET and the record's node)
 //                    | forward <source-record> [target-record] [--from-archive] [--batch <n>]
 //                    | note-stop <version> [<unix seconds>] | retire-node <version>   (record writes: no key, no chain)
-import { Fr } from '@aztec/aztec.js/fields';
+import { Fr } from '@aztec-labs/aztec.js/fields';
 import { errorName } from '@yacana/bridge/revert';
 import { PROFILE } from '@yacana/miner-core/generated/params';
 import { getAddress } from 'viem';

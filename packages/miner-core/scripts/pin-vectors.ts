@@ -3,8 +3,8 @@
 // turns them into Noir tests; vectors.test.ts checks miner-core against the same file. Re-run only
 // when a domain separator or a hash layout changes on purpose (that is a new deployment).
 import { resolve } from 'node:path';
-import { poseidon2Hash } from '@aztec/foundation/crypto/poseidon';
-import { Fr } from '@aztec/foundation/curves/bn254';
+import { poseidon2Hash } from '@aztec-labs/foundation/crypto/poseidon';
+import { Fr } from '@aztec-labs/foundation/curves/bn254';
 import { PARAMS } from '../src/generated/params.ts';
 import {
   computeDigest,

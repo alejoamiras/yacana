@@ -1,8 +1,8 @@
 // What the chain says of a recorded win: its sends' fates, where its nullifier landed, whether its
 // ticket can still mint. A read that cannot answer says `unknown`; nothing here decides what to do.
-import { Fr } from '@aztec/aztec.js/fields';
-import { MerkleTreeId } from '@aztec/stdlib/trees';
-import { type TxEffect, TxHash } from '@aztec/stdlib/tx';
+import { Fr } from '@aztec-labs/aztec.js/fields';
+import { MerkleTreeId } from '@aztec-labs/stdlib/trees';
+import { type TxEffect, TxHash } from '@aztec-labs/stdlib/tx';
 import { fixedSlot } from '@yacana/miner-core/reader';
 import type { Deployment } from './chain';
 

@@ -1,8 +1,8 @@
 // The redeem key's word: an EIP-712 signature the portal checks before it moves a held send-ahead —
 // `Forward` names the version it may land on, `Redeem` the Ethereum recipient — bound to the exact
 // leaf (version, epoch, leaf id, content) and an expiry, so a signature fits one crossing once.
-import { Fr } from '@aztec/foundation/curves/bn254';
-import { EthAddress } from '@aztec/foundation/eth-address';
+import { Fr } from '@aztec-labs/foundation/curves/bn254';
+import { EthAddress } from '@aztec-labs/foundation/eth-address';
 import type { Hex, TypedDataDomain } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { sendAheadContent } from './content.ts';

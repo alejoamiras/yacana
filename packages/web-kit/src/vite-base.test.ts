@@ -8,6 +8,6 @@ test('bbVersion is the installed package’s own version, not its inner commonjs
     JSON.parse(readFileSync(resolve(import.meta.dir, '../package.json'), 'utf8')) as {
       devDependencies: Record<string, string>;
     }
-  ).devDependencies['@aztec/bb.js'];
+  ).devDependencies['@aztec-foundation/bb.js'];
   expect(bbVersion()).toBe(declared);
 });

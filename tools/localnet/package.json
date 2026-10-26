@@ -6,6 +6,7 @@
   "type": "module",
   "exports": {
     "./control": "./src/control.ts",
+    "./inbox-sync": "./src/inbox-sync.ts",
     "./isolated-node": "./src/isolated-node.ts",
     "./port-window": "./src/port-window.ts",
     "./presto": "./src/presto.ts",
@@ -19,18 +20,18 @@
     "typecheck": "tsc -b --force"
   },
   "dependencies": {
-    "@aztec/accounts": "5.2.0",
-    "@aztec/aztec.js": "5.2.0",
-    "@aztec/constants": "5.2.0",
-    "@aztec/ethereum": "5.2.0",
-    "@aztec/foundation": "5.2.0",
-    "@aztec/l1-artifacts": "5.2.0",
-    "@aztec/noir-contracts.js": "5.2.0",
-    "@aztec/noir-protocol-circuits-types": "5.2.0",
-    "@aztec/protocol-contracts": "5.2.0",
-    "@aztec/stdlib": "5.2.0",
-    "@aztec/world-state": "5.2.0",
-    "viem": "npm:@aztec/viem@2.38.2"
+    "@aztec-foundation/l1-artifacts": "6.0.0",
+    "@aztec-labs/accounts": "6.0.0",
+    "@aztec-labs/aztec.js": "6.0.0",
+    "@aztec-labs/constants": "6.0.0",
+    "@aztec-labs/ethereum": "6.0.0",
+    "@aztec-labs/foundation": "6.0.0",
+    "@aztec-labs/noir-contracts.js": "6.0.0",
+    "@aztec-labs/noir-protocol-circuits-types": "6.0.0",
+    "@aztec-labs/protocol-contracts": "6.0.0",
+    "@aztec-labs/stdlib": "6.0.0",
+    "@aztec-labs/world-state": "6.0.0",
+    "viem": "2.57.1"
   },
   "devDependencies": {
     "typescript": "~6"

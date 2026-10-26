@@ -9,8 +9,8 @@
 import type { ChildProcess } from 'node:child_process';
 import { cpSync, mkdirSync, openSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { EthAddress } from '@aztec/aztec.js/addresses';
-import { Fr } from '@aztec/aztec.js/fields';
+import { EthAddress } from '@aztec-labs/aztec.js/addresses';
+import { Fr } from '@aztec-labs/aztec.js/fields';
 import { type Browser, chromium, type Page, type Route } from '@playwright/test';
 import type { BridgeRecord } from '@yacana/bridge/record';
 import { deployYacana, TEST_PORTAL } from '@yacana/deploy/deploy';

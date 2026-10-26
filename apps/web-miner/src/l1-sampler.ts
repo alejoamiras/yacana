@@ -3,7 +3,7 @@
 // bridge's session, which needs an account, is not involved. Failures are logged and waited out.
 // The RPC is trusted as the user chose it: a chain id check keeps another chain's rollup out, nothing
 // authenticates the answers, and an answer from an RPC no longer in use is dropped.
-import { RollupAbi } from '@aztec/l1-artifacts/RollupAbi';
+import { RollupAbi } from '@aztec-foundation/l1-artifacts/RollupAbi';
 import { ethRpcClient } from '@yacana/web-kit/browser/eth-rpc';
 import { recordL1 } from '@yacana/web-kit/browser/node-health';
 import type { Hex } from 'viem';

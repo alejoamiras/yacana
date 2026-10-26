@@ -1,5 +1,5 @@
 {
-  "aztecVersion": "5.2.0",
+  "aztecVersion": "6.0.0",
   "flavor": "UltraFlavor (non-ZK), Poseidon2 transcript, verifier target noir-recursive-no-zk",
   "constants": {
     "CONST_PROOF_SIZE_LOG_N": 25,
