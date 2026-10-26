@@ -6,3 +6,4 @@
 2026-10-26 phase 1 gate green: lint, typecheck, bun test (704/0), test:components, test:replay (9/9)
 2026-10-26 a1 codex r1 (01a178e5) 2 findings + opus 3 findings: 4 fixed, 1 known limit #85
 2026-10-26 a1 codex r2: clean (converged in 2 rounds); final gate green (lint, typecheck, bun test 704/0, components, replay 9/9)
+2026-10-26 a2 approved as amended (OA2: versioned origins stay; a2 = V5 retirement; #87 the V7-move preparation); branch site-2-a2 from origin/main e3013e1

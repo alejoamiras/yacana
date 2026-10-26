@@ -10,11 +10,11 @@ eli5_mode: skipped (orchestrator-owned)
 quality_bar: production
 hardening: not scheduled
 budget: "recon: 1 Sonnet sweep; codex gpt-6.1-sol at high; code-review off"
-status: planned 2026-10-26 — codex r1 conditional approve (6 adopted); final fresh pass conditional approve (3 adopted) → resumed: approve; awaiting the orchestrator's approval
+status: a1 merged (#86); a2 amended 2026-10-26 after OA2 (the V5 retirement), in implementation
 created: 2026-10-26
 ---
 
-# site-2: a saved default is no choice; the previous origin
+# site-2: a saved default is no choice; V5's old origin retired
 
 Over the 150-line target: two arcs' change maps, the audit ledger (§7) and the verbatim Codex rules (§8) carry
 evidence that cannot be cut.
@@ -22,9 +22,10 @@ evidence that cannot be cut.
 Two follow-ups of the move to V6:
 - **a1.** "Use the default" stores no URL. A saved node equal to a retired default counts as no choice. So a
   returning visitor who saved V5's node boots on V6's default, and a later change of the default strands nobody.
-- **a2.** The old origin stops naming a version. It becomes `previous.yacana.network` on the Worker
-  `yacana-previous`. Every version move deploys the retiring version's last build there. The V5 Worker and its
-  domain come down in an operator step.
+- **a2.** V5's old origin is retired. The repository stops carrying it: `apps/site/v5/` goes, and the V6 app
+  carries no old origin until the next version move. The owner deletes the `yacana-v5` Worker and its custom domain
+  in the Cloudflare dashboard. The per-version old origin (`v<N>.yacana.network`, deployed by hand at a move) stays.
+  The first draft's shared `previous` origin was withdrawn by the owner (OA2); see "a2 as amended" below.
 
 ## 1. Scope
 
@@ -34,14 +35,16 @@ Two follow-ups of the move to V6:
   so a later change of the default strands nobody. It needs one unit test and touches nothing the deployment
   pinned." On screen: a visitor who saved V5's node boots on the default instead of meeting "Cannot start". After
   a later "Use the default", the row reads "· default" once the page reloads. Nothing else changes.
-- **UI impact (a2)**, ask11 (owner): "the only visible effect is the old-tab notice and any link to the old origin
-  now naming previous.yacana.network."
+- **UI impact (a2)**, ask11 (owner, after OA2): "the versioned old origins stay, V5's comes down now, the V7-move
+  preparation is filed as its own issue; the only visible effect is that nothing in the V6 app links V5 any more."
 - **Owner asks** (`OWNER-ASKS.md`):
   - OA1: the row right after "Use the default" — answered A by the owner (2026-10-26), built in a1: "compare
     normalized URLs in the row (and the five `onDefault` sites). The row says "· default" and drops the link at once."
-  - OA2: one previous origin replaces the version before it — open with the owner; a2 waits for it.
-- **ask11's check, amended once**: the once-only retirement section of `docs/upgrades.md` names `v5.yacana.network`
-  and `yacana-v5`. An instruction that deletes a Worker must name it (§7 r1 #5).
+  - OA2: answered by the owner (2026-10-26): "the versioned old origins stay, one per retiring version; no shared
+    "previous" origin." The planner's a2 is withdrawn. The V7-move preparation (the old-origin Worker deriving its
+    name and route from the record) is #87, not this lane.
+- **ask11's check** exempts implementations-plan/, docs history and the archived records. The once-only retirement
+  note in `docs/upgrades.md` is history of that kind: it names what the owner deletes.
 - **Out**: the Ethereum RPC's "Use the default" (same pattern, no decision); any Cloudflare command; deployment
   records, `migration`, bridge, contracts; the rig's `v5.yacana.test`; the role names `versioned`, `old`,
   `oldAppOrigin`, `dist-old`; the existing text of the `Archived —` sections.
@@ -53,8 +56,8 @@ Two follow-ups of the move to V6:
 - **Excellent**:
   1. A load ignores a saved retired default, whatever its spelling (`https://h` or `https://h/`). "Use the default"
      leaves no URL behind. A custom node survives every save and load. One unit test proves all three.
-  2. A move needs one `deploy -c previous/wrangler.jsonc` from the retiring version's checkout, with no DNS, Worker
-     or `site.env` edit. Every step that redeploys from a kept checkout first checks what the origin serves.
+  2. The V6 site builds, passes its artifact checks and its E2E with no old origin. Nothing in it links V5. An
+     old-role production build without its own origin fails at build time, not as a page that restores nothing.
 - **Good enough**: archived docs keep their text; the rig keeps its names.
 
 ## 3. Assumptions
@@ -69,8 +72,10 @@ Two follow-ups of the move to V6:
 - F4 `defaultNodeUrl()` reads the env live, while `defaults` is captured at import. Vitest stubs after import.
 - F5 Nothing in CI or Workers Builds reads `apps/site/v5/`. The old origin is deployed by hand (step 8).
 - F6 `OldTabNotice` links `VITE_OLD_APP_ORIGIN`, and only when `/build.json` names another miner or rollup.
-- F7 The guards accept `https://previous.yacana.network` (`config.ts:292-295`). The suffix
-  `-yacana-previous.alejo-amiras.workers.dev` fits `PREVIEW_SUFFIX` (:265) and cannot match the apex's.
+- F7 `VITE_OLD_APP_ORIGIN` is required and parsed today (`config.ts:188`, `url()`), and the production guard parses
+  it (:292). Only `OldTabNotice.tsx:16` and `host.ts:19` read it at runtime: the notice hides its link and its
+  old-app sentence when it is empty (:53, :62), and `versionedHost()` returns ''. No bridge dialog reads it (grep of
+  `apps/`, `packages/`).
 - F8 Cloudflare keeps a removed Custom Domain's certificate. Its docs say nothing of the DNS record.
 - F9 Wrangler 4.127.1 skips auth on `--dry-run`, and the deploy handler still sends telemetry (Codex, §7 r1 #7).
 
@@ -79,9 +84,9 @@ Two follow-ups of the move to V6:
   `deployments/*.json` names either host, so the narrower reading would exempt nothing.
 - I2 After a1, no "Use the default" stores a URL. The retired list still matters for values saved before a1, and
   for a custom URL that later became the default. So append every retired default; it is one line per move.
-- I3 One origin serves one version. A move replaces the version before it. Holders of that version lose its page
-  only if it still proves when the next flip comes. The FAQ promises the old app "while it [proves]"
-  (`faq-copy.ts:83`). → OA2.
+- I3 (withdrawn with the shared origin: OA2 keeps one origin per version.)
+- I4 An old-role build is served from its own origin, and `hostKind` finds `versioned` only by that value. Without
+  it the old page reads its host as `unknown` and restores nothing. So a production old-role build must name one.
 
 **Asks**: none open.
 
@@ -101,45 +106,45 @@ Two follow-ups of the move to V6:
   - Dropping a stored *current* default on read: a label change beyond P2-01 (§7 r1 #1).
   - Falling back from a failing saved node at boot: a recovery policy that overrides real choices.
 
-**a2**:
-- `git mv apps/site/v5/wrangler.jsonc apps/site/previous/wrangler.jsonc`. Set `name` to `yacana-previous` and the
-  route to `previous.yacana.network`. The comments name `-c previous/wrangler.jsonc` and the one-version rule.
-- `deployments/site.env:18-21`: the origin and suffix move to `previous`, and the comment names `yacana-previous`.
+**a2 as amended** (the V5 retirement):
+- `git rm -r apps/site/v5`.
+- `deployments/site.env:18-21`: both old-origin values empty. The comment says they stay empty until this version
+  retires to an origin of its own.
+- `packages/web-kit/src/config.ts`: `VITE_OLD_APP_ORIGIN` may be empty; a value must still parse. The production
+  guard checks a set value as before. A new `assertOldOrigin` refuses an `old`-role production build without one
+  (I4). The docs of `SiteConfig.oldAppOrigin` and `vite-env.d.ts` say empty when none.
+- Surfaces (F7): no code change. A gallery case shows the old-tab notice with no origin: the warning and Reload, no
+  link, no old-app sentence.
 - Tests:
-  - `config.test.ts:171,194,203,213` and `shell.vitest.tsx:154-166` move to `previous`.
-  - `gallery.vitest.tsx:434` moves to `previous` and asserts the notice's `href` (§7 r1 #6).
-- Comments: `assemble.ts:3-4,22`, `host.ts:3`, and `origin.e2e.ts:2` (stale: the rig uses `v5.yacana.test`).
-- Site E2E: `run-setup.ts:5,104,113`, `run.ts:5`, `site.e2e.ts:111` move to `previous.localhost`.
+  - `config.test.ts`: production accepts the empty pair. An old-role production build without an origin is refused.
+    The examples move to `v6`.
+  - `shell.vitest.tsx` and `gallery.vitest.tsx` take a `v6` example.
+- Site E2E: the apex is built with no old origin, as production now is. The old role keeps its own (the mechanism).
+  The existing old-tab check also asserts no link and no old-app sentence.
+- Comments: `assemble.ts:3-4,22`, `host.ts:3`.
 - `CLAUDE.md:18,73`.
-- `docs/upgrades.md` steps 8, 11, 12 and "Then":
-  - The kept worktree is `../yacana-previous`, and the deploy is `bun run site:wrangler deploy -c previous/wrangler.jsonc`.
-  - The move replaces the version before it (I3).
-  - Before step 11's or 12's redeploy, `https://previous.yacana.network/build.json` must name the worktree's miner
-    and rollup version. If it names a later one, remove the stale worktree instead.
-  - The origin is never taken down at a deadline; only the worktree goes.
-  - The first deploy, at the next move, creates the domain. Until then nothing serves it.
-- `docs/upgrades.md`, new "Once: retire the V5 origin" (amended check):
-  1. In the dashboard, remove the custom domain `v5.yacana.network` from `yacana-v5`.
-  2. Delete its DNS record if it stayed, and its edge certificate.
-  3. Delete the Worker by name in the dashboard, never with `wrangler delete` from `apps/site`, whose config names
-     the apex `yacana`.
-  4. Check that `https://v5.yacana.network` no longer answers.
-- `docs/deployments.md`:
-  - The origin paragraph (:192-206) and its heading describe the previous origin.
-  - Its dated V5 history moves word for word to the end of `Archived — 2026-09-13`.
-  - :242 and :315 stay as written.
-- `docs/roadmap.md:28`: "its Worker" replaces the name.
+- `docs/upgrades.md`:
+  - Steps 8 and 11 and "Then" use `v<N>`. The Worker config `apps/site/v<N>/wrangler.jsonc` is written into the
+    step. Its two `site.env` values are set in the retiring version's worktree before its old-role build.
+  - A once-only note: V5's origin is retired, and the owner deletes the `yacana-v5` Worker and the custom domain
+    `v5.yacana.network` in the dashboard, with its certificate. The owner deletes by name in the dashboard, never
+    with `wrangler delete` from `apps/site`, whose config names the apex.
+- `docs/deployments.md`: the origin paragraph (:192-206) describes the mechanism and says this deployment has
+  none. Its V5 history moves verbatim to `Archived — 2026-09-13`, with a "Retired 2026-10-26" line.
+  `:242`, `:315` and `docs/roadmap.md:28` stay (history).
+- *Withdrawn*: the shared `previous` origin (the whole first-draft a2, §7 r1 #2, #4, #5, and the final pass's #2),
+  by the owner's OA2 answer.
 
 ## 5. Security & Adversarial Considerations
 
 - **Stored input**: `yacana.connection` is same-origin and holds no secret; a script that writes it owns the page.
   a1 only narrows what a stored value does. A crafted URL meets the same probe and guard. `sameNode` never throws
   on garbage. The e2e query pin is untouched.
-- **Cloudflare**: deleting a Worker is irreversible, and the lead runs no Cloudflare command. The runbook names
-  the Worker and keeps `wrangler delete` away from the apex's config. It removes the stale certificate and checks
-  the end state. The `build.json` check stops a stale worktree from overwriting a later version.
-- **Origins and keys**: `previous.yacana.network` sits under the RP ID `yacana.network`, so the apex's passkeys
-  restore there (restore only, `host.ts`). `workers_dev` stays off. Previews fit only their own suffix.
+- **Cloudflare**: deleting a Worker is irreversible, and the lead runs no Cloudflare command. The note names the
+  Worker and keeps `wrangler delete` away from the apex's config. It removes the stale certificate and checks the
+  end state (`https://v5.yacana.network` no longer answers).
+- **Origins and keys**: with no old origin, no host reads as `versioned`, so restore-only never applies on the
+  apex. An old-role build without its origin fails closed at build time (I4).
 - **Supply chain / crypto**: no dependency or cryptographic change.
 
 ## 6. Phases
@@ -169,19 +174,19 @@ Two follow-ups of the move to V6:
 two red runs are in `lessons/phase-1.md`. Layers: lint/typecheck, unit, component. E2E: none. No spec moves, and
 the unit test covers this storage logic; the PR's CI runs the shards.
 
-### Phase 2 (arc a2): the previous origin
-1. Apply §4 a2.
-2. Run `git grep -n -I -E 'v5\.yacana\.network|yacana-v5|v5/wrangler' -- ':!implementations-plan'`. It must print
-   only the `Archived —` sections of `docs/deployments.md` and the once-only section of `docs/upgrades.md`.
-3. Run `git grep -n 'v5\.localhost' -- apps/site`. It must print nothing.
-4. Build: `bun run site:build`, then `YACANA_APP_ROLE=old bun run site:build`.
-5. Run `WRANGLER_SEND_METRICS=false bun run site:wrangler deploy --dry-run -c previous/wrangler.jsonc`. Run it with
-   no Cloudflare token in the environment. It deploys and uploads nothing, and its exit 0 is the packaging check.
+### Phase 2 (arc a2): V5's old origin retired
+1. Measure `bun run e2e:agent -- bun run site:e2e` on the base, for the wall-clock before.
+2. Apply §4 a2.
+3. Run `git grep -n -I -E 'v5\.yacana\.network|yacana-v5|v5/wrangler' -- ':!implementations-plan'`. It must print
+   only `docs/deployments.md`'s `Archived —` sections, `docs/roadmap.md:28` and the once-only note in
+   `docs/upgrades.md`.
+4. Build: `bun run site:build` must exit 0 (production, no old origin, the artifact checks). Then
+   `YACANA_APP_ROLE=old bun run site:build` must fail with the old-origin guard's message (never-happens), so the
+   checks run with and without the guard tripping.
 
 **Validation gate**:
-- `bun run lint`, `bun run typecheck`, `bun test`, `bun run test:components`, both builds and the dry run exit 0.
-- `apps/site/dist-old/build.json` says role `old`. `apps/site/previous/wrangler.jsonc` names `yacana-previous`,
-  the route `previous.yacana.network` and `../dist-old`. The dry run prints no name, so this is read from the file.
+- `bun run lint`, `bun run typecheck`, `bun test`, `bun run test:components` and
+  `bun run --cwd apps/web-miner test:replay` exit 0. Step 3 prints only what it names; step 4 behaves as stated.
 - `bun run e2e:agent -- bun run site:e2e` passes at retry 0. The PR body gives its wall-clock before and after.
 - Layers: lint/typecheck, unit, component, integration (assembly and its production guards), e2e (the site).
 
@@ -274,11 +279,11 @@ disposition stands. Converged in 2 rounds. Final head gate: lint 0, typecheck 0,
 | Arc | Phases | Branch | PR title | Body |
 |---|---|---|---|---|
 | a1 | 1 | `worktree-site-2` (carries this plan) | `fix(web-kit): a saved default node is no choice` | P2-01 by id and text; no issue |
-| a2 | 2, close-out | `site-2-previous`, from a1's final head | `feat(site): the previous origin, unversioned` | `Delivers ask11`; the operator's steps (§4 "Once" now; the first `previous` deploy at the next move); the amended check |
+| a2 | 2, close-out | `site-2-a2`, from `origin/main` after #86 | `feat(site): retire v5's old origin; the v6 app carries none` | `Delivers ask11`; P2's decisions quoted; the owner's dashboard step |
 
 - Both PRs go against `main`, and each opens only after its gate and its Codex loop pass. The orchestrator merges in
   order.
-- a2's PR says it builds on a1. After a1 merges, run `git merge origin/main` into a2, with no rewrite.
+- Deviation: a2 branches from `origin/main` once #86 merged, by the implementer brief's rule, not from a1's head.
 - No lanes: the arcs are small and serial.
 
 ## Seeds (not run: the orchestrator owns ELI5 and seeds)
