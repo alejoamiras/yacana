@@ -51,3 +51,4 @@
 
 - r1, Codex gpt-6.1-sol high (`01a1765e…`): findings 1, low (the uninstall doc). Beside it, Opus 5.5 general-purpose: 5 low, none high or medium; all folded (plan.md Audit, "fix r1").
 - Gates after the fold: lint, typecheck, actionlint 0; root `bun test` 703 pass / 44 skip / 0 fail at retry 0 (175 s); `test:components` 347 pass; the guard trio 22 pass, with the refusal disabled 9 fail (`node-guard.test.ts` alone 7); `portal:build`, the l1-deploy test 1 pass, `--anvil` 0; without the toolchain 0 pass / 3 skip / 0 fail. Sepolia dry run, fresh: 28,088,860 at block 11,995,519.
+- r2, Codex resumed: clean (every fold verified, no new material finding). Converged in 2 rounds.

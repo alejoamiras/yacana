@@ -141,7 +141,7 @@ rows)". UI impact: none. `OWNER-ASKS.md`: none.
 
 ## Phases
 
-### P0 (a1, amendment): #83, every guard suite gives the realm back
+### P0 (a1, amendment): #83, every guard suite gives the realm back — ✓ 2026-10-26
 
 The orchestrator added #83 to a1 (2026-10-26): it was the one red command in P1's gate. The fix: each bun suite
 that loads web-kit's fetch guard installs it in its setup and calls a new tests-only `uninstallNodeGuard()` last
@@ -161,7 +161,7 @@ that fetch: `original` is bound, and `setOriginalFetch` re-points it. The guard'
 passes at retry 0, with `l1-deploy.test.ts` in it. With the guard's refusal disabled, the suites that test the
 guard fail both alone and after another guard suite's teardown.
 
-### P1 (a1): the creation at the node's quote — steps 1–4 done 2026-10-26
+### P1 (a1): the creation at the node's quote — ✓ 2026-10-26
 
 1. Make `forgeScript` async. Run `bun run portal:build && bun tools/deploy/scripts/l1-deploy.ts --anvil`: it must
    still pass.
@@ -240,6 +240,7 @@ exits 0. `git diff --stat origin/main` shows `docs/deployments.md` and the plan 
 | final-v | same session, resumed | **approve** | folds verified, no regression | — |
 | impl | Codex gpt-6.1-sol high (root `bun test` red) | C, outside the lane | the leak filed as #83; a1 reported blocked, no bypass | A: the suite swaps in `Bun.fetch` (a compensating monkey-patch); B: a child-process driver (a contract for the leak alone) |
 | fix r1 | Codex gpt-6.1-sol high + Opus 5.5 (same family) | 1 + 5 low | Codex 1 / Opus 4: `uninstallNodeGuard`'s doc read as if wrappers survived → rewritten; Opus 1: health wiring stays on the dropped state → one clause in that doc; Opus 2: two stale comments, a dead `setNodeGate(null)` → fixed, removed; Opus 3: `presto-session` teardown threw before the uninstall on a failed setup → `fake?.`; Opus 4: one comment repeated in 24 suites → deleted; Opus 5: "code deposit 7×" → "the portal's creation 7×" | none |
+| fix r2 | Codex, same session resumed | **clean** | the six folds verified, no new material finding; converged in 2 rounds | — |
 
 Size: about 230 lines against light's 150. The verbatim fix-loop rules, the test's specification, the dry run
 and the evidence for two claims that did not hold carry the excess.

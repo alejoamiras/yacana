@@ -11,3 +11,4 @@
 - 2026-10-26: filed #83 (the guard leak); a1 stops at the red root gate, unpushed, no PR.
 - 2026-10-26: orchestrator amendment: #83 joins a1 as P0. P0 gate green (probe clean, root bun test 703 pass / 0 fail at retry 0, mutation control red as required).
 - 2026-10-26: fix loop r1: Codex 1 low + Opus 5 low, all folded; gates green at retry 0; resuming Codex to verify.
+- 2026-10-26: fix loop r2 (Codex resumed) clean: converged in 2 rounds. P0 and P1 ✓.
