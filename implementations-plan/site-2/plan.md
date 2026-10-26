@@ -10,9 +10,32 @@ eli5_mode: skipped (orchestrator-owned)
 quality_bar: production
 hardening: not scheduled
 budget: "recon: 1 Sonnet sweep; codex gpt-6.1-sol at high; code-review off"
-status: a1 merged (#86); a2 amended 2026-10-26 after OA2 (the V5 retirement), in implementation
+status: completed 2026-10-26 (a1 merged as #86; a2 on `site-2-a2`, open for review at close-out)
 created: 2026-10-26
 ---
+
+## Outcome
+
+- **Date**: 2026-10-26. **Status**: completed. Phases 1–2 ✓; each arc's Codex loop converged in 2 rounds (§7).
+- **Shipped**:
+  - a1 is #86, `fix(web-kit): a saved default node is no choice`, squash-merged as `e3013e1`. It builds P2-01:
+    "Use the default" stores no URL, and a saved retired default counts as no choice. OA1 = A is built: the row and
+    the five `onDefault` sites compare normalized URLs.
+  - a2 is branch `site-2-a2`, `feat(site): retire v5's old origin; the v6 app carries none`, which delivers ask11.
+    `apps/site/v5/` is gone and `site.env`'s old-origin pair is empty. The guards accept the empty pair, an old-role
+    build without its origin stops, and a set origin must be an https subdomain of the RP ID. The old-tab bar's
+    Reload-only form is shown in Vitest and the site E2E. Step 8 is written for `v<N>`, with the pair on `main`
+    before the move, and V5's retirement is noted once.
+- **Owner asks**:
+  - OA1 answered A, built in a1.
+  - OA2 answered: "the versioned old origins stay, one per retiring version; no shared "previous" origin." The
+    first draft's `previous` origin was withdrawn.
+- **The owner's step**: delete `yacana-v5` and its custom domain in the Cloudflare dashboard (`docs/upgrades.md`,
+  "Retired").
+- **Known limits**: #85 (a non-string stored node setting stops a page from starting; pre-existing; closed).
+- **Open items**: #87 (one deploy per version move, nothing to add for the old origin).
+- **Rejected**: a2 round 1's O4, the archived lines' present tense, which stays until the Worker is deleted.
+- **Seeds retired**: the `/goal` and `/loop` at the end are not to be run.
 
 # site-2: a saved default is no choice; V5's old origin retired
 
