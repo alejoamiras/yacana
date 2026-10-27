@@ -280,7 +280,7 @@ export async function continuationOf(
     ].filter(([, same]) => !same);
     if (differ.length)
       throw new Error(
-        `the source node and YACANA_CONTINUE_* disagree: ${differ.map(([k, , node, given]) => `${k} node ${node}, given ${given}`).join('; ')}. Read both again (docs/upgrades.md step 6)`,
+        `the source node and YACANA_CONTINUE_* disagree: ${differ.map(([k, , got, given]) => `${k} node ${got}, given ${given}`).join('; ')}. Read both again (docs/upgrades.md step 6)`,
       );
   }
   return { ...read, source: sourceRecord };
@@ -314,6 +314,14 @@ if (import.meta.main) {
   const dir = resolve(repo, 'deployments');
   const file = resolve(dir, `${PROFILE}.json`);
   const source = process.env.YACANA_CONTINUE_FROM;
+  // Without its source the tuple would be ignored and an immutable genesis deployed instead.
+  if (
+    !source &&
+    (process.env.YACANA_CONTINUE_FIRST_EPOCH ||
+      process.env.YACANA_CONTINUE_SEED ||
+      process.env.YACANA_CONTINUE_TARGET)
+  )
+    throw new Error('YACANA_CONTINUE_* is set without YACANA_CONTINUE_FROM');
   if (source && resolve(repo, source) === file)
     throw new Error(
       `${source} is where this deploy writes: move the source record aside first (docs/upgrades.md)`,

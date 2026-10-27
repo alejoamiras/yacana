@@ -68,7 +68,11 @@ if (import.meta.main) {
     layout,
     (chunk) => deriveSlotTable(layout, chunk),
   );
+  // Origins only: a node URL can carry a provider API key in its path.
+  const origin = new URL(nodeUrl).origin;
+  const own =
+    origin === new URL(deployment.nodeUrl).origin ? ": the record's own node, not a second source" : '';
   console.log(
-    `continue from here: YACANA_CONTINUE_FIRST_EPOCH=${open.epoch + 1} YACANA_CONTINUE_SEED=0x${open.seed.toString(16)} YACANA_CONTINUE_TARGET=${open.target}`,
+    `continue from here (read from ${origin}${own}): YACANA_CONTINUE_FIRST_EPOCH=${open.epoch + 1} YACANA_CONTINUE_SEED=0x${open.seed.toString(16)} YACANA_CONTINUE_TARGET=${open.target}`,
   );
 }

@@ -182,7 +182,7 @@ until the next move gives the live version one (step 8). The owner deletes it on
 | close deposits | `close-deposits` | `deposit.bun.test.ts` (H2: a deposit lands where it named; after the close the next is refused) |
 | observe the flip | `note-transitions` | `migration.bun.test.ts` (H3), `skip-version.bun.test.ts`, `never-settled.bun.test.ts` (H5), `browser.bun.test.ts` |
 | retire | `retire` (L1, then L2) | `migration.bun.test.ts` (H3: no mining claim mints after; a rerun resumes), `browser.bun.test.ts` |
-| the continuation | `bun run deploy` with `YACANA_CONTINUE_FROM` | `migration.bun.test.ts`, `browser.bun.test.ts` (V6 as V5's continuation) |
+| the continuation | `bun run deploy` with `YACANA_CONTINUE_FROM` and `YACANA_CONTINUE_*` | `migration.bun.test.ts`, `skip-version.bun.test.ts`, `browser.bun.test.ts` (the new version as V5's continuation, read from the rig's own node alone); the comparison with `YACANA_CONTINUE_*` is unit-tested against a stub node (`tools/deploy/src/continuation.test.ts`) |
 | pause | `pause`, `pause-all`, `unpause` | `bridge.bun.test.ts` (H9: held exits, the budget charged), `migration.bun.test.ts` (`pause-all` reaches every version) |
 | forward | `forward` | `migration.bun.test.ts` (H11: a stranger refused, a wrong target held, the forwarder and the holder accepted, all from the archive with the source node gone), `bridge.bun.test.ts` (H1, H6, H10), `never-settled.bun.test.ts` (an unproven epoch forwards nothing) |
 | the holder's side | — | `browser.bun.test.ts` (V5, the flip, V6 through the page), `origin.bun.test.ts` (one passkey across the apex and the old origin) |
