@@ -76,10 +76,10 @@ bun run rig -- flip|all|browser|origin|<case>   # the upgrade rig: the local net
 YACANA_L1_RPC_URL=… YACANA_L1_PRIVATE_KEY=… YACANA_REGISTRY=… YACANA_OPERATORS=… bun tools/deploy/scripts/l1-deploy.ts deployments/<profile>.json   # YACA + the portal, the record's bridge block
 ETHERSCAN_API_KEY=… bun tools/deploy/scripts/l1-verify.ts deployments/<profile>.json   # both contracts' source on Etherscan (keyed run: deployments/etherscan.env.example)
 YACANA_L1_PRIVATE_KEY=… [YACANA_RECORD=…] bun run bridge -- status|register|note-transitions|pause|pause-all|unpause|close-deposits|set-forwarder|retire|forward|note-stop|retire-node   # the operator script (docs/upgrades.md); the last two write the record alone
-AZTEC_NODE_URL=… YACANA_DEPLOYER_SECRET=… YACANA_PORTAL=0x… [YACANA_LAUNCH_AT=<unix s>] [YACANA_CONTINUE_FROM=deployments/<old>.json] bun run deploy   # deploy the generated profile → deployments/<profile>.json (announce before launch_at; a continuation starts after the source's last epoch)
+AZTEC_NODE_URL=… YACANA_DEPLOYER_SECRET=… YACANA_PORTAL=0x… [YACANA_LAUNCH_AT=<unix s>] [YACANA_CONTINUE_FROM=deployments/<old>.json YACANA_CONTINUE_FIRST_EPOCH=… YACANA_CONTINUE_SEED=… YACANA_CONTINUE_TARGET=…] bun run deploy   # deploy the generated profile → deployments/<profile>.json (announce before launch_at; a continuation starts after the source's open epoch, and the source node's read must match the given one: docs/upgrades.md step 6)
 AZTEC_NODE_URL=… bun run launch -- commit|reveal|open   # launch lottery of the recorded deployment (anyone; see docs/deployments.md)
 AZTEC_NODE_URL=… bun run soak -- --hours 2 --epochs 24     # headless soak miner with a hashrate schedule
-bun run epoch:stats            # epoch history of deployments/<profile>.json from public storage (--json <file> keeps the rows)
+bun run epoch:stats            # epoch history of deployments/<profile>.json from public storage (--json <file> keeps the rows), then the open epoch as YACANA_CONTINUE_* values
 bun packages/miner-core/scripts/gen-slots.ts   # the slot table the stats/landing read path fetches (packages/miner-core/generated/slots, gitignored)
 bun run --cwd apps/web-miner dev | build   # both run scripts/prebuild.ts first (pinned CRS, artifacts, slot table)
 bun tools/localnet/src/isolated-node.ts --smoke

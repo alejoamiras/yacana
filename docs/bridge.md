@@ -33,8 +33,9 @@ a device find its exits again; only Outbox membership authorises issuance.
   then, and anything still there at the deadline, never leaves. The stats page says the numbers: "N tYACA may
   leave V5 right now · grows M an hour; exits beyond it wait for it to grow, until the flip freezes it".
 - **The pause stops what comes after it.** The operators may pause a version's exits and deposits for at most 30
-  days per call and 60 days per version, charged up front and refunded by `unpause`; a pause adds nothing to the cap
-  and removes nothing from it, and every charged second extends the version's deadline. Mining on Aztec does not
+  days per call and 60 days per version, charged up front and refunded by `unpause` (per second: a pause undone in
+  its own block costs nothing, [#90](https://github.com/alejoamiras/yacana/issues/90)); a pause adds nothing to the
+  cap and removes nothing from it, and every charged second extends the version's deadline. Mining on Aztec does not
   pause with the portal.
 - **The deadline ends a version.** A version's exits close at the later of the observed activation of the version
   after next and 180 days after its flip, plus its paused seconds; until both the flip and the version after next
@@ -103,6 +104,12 @@ forwarders, close a version's deposits (one-way, the day before an announced fli
 address. The policy
 (`PER_HOUR`, `ALLOWANCE`, the pause bounds, the launch bounds) is immutable, set at deployment. No timelock: the
 bounds are the guard. `retire` and `noteTransition` are permissionless.
+
+The pause budget is charged per second, while an exit is refused per block. A `pause(v, 1)` and an `unpause(v)` in
+the same block refuse every exit between them and charge nothing, so operators who can order their two calls
+around each exit can hold a version's exits without spending budget or moving its deadline. The deployed portal
+keeps this as a known limit ([#90](https://github.com/alejoamiras/yacana/issues/90)); the next portal charges each
+pause a minimum that `unpause` never refunds.
 
 ```
 YACANA_L1_PRIVATE_KEY=0x… [YACANA_RECORD=deployments/<profile>.json] [YACANA_L1_RPC_URL=…] \

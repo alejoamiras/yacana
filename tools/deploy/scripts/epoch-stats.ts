@@ -1,6 +1,6 @@
 // Epoch history of a deployment read straight from public storage (no wallet, no PXE), through
 // the same reader the stats page uses: per epoch its target, opening time, claim count, duration,
-// retarget ratio and what closed it.
+// retarget ratio and what closed it; last, the open epoch as a continuation's YACANA_CONTINUE_* values.
 //   AZTEC_NODE_URL=… bun tools/deploy/scripts/epoch-stats.ts [deployments/<profile>.json] [--json out.json]
 import { resolve } from 'node:path';
 import { AztecAddress } from '@aztec-labs/aztec.js/addresses';
@@ -14,6 +14,7 @@ import {
   linkRows,
   readEpochs,
   readOpenEpochNumber,
+  readOpenEpochWithSeed,
   rowsToJson,
 } from '@yacana/miner-core/reader';
 import { deriveSlotTable, loadLayouts } from '@yacana/miner-core/slots';
@@ -59,4 +60,19 @@ if (import.meta.main) {
     );
   }
   if (jsonOut) await Bun.write(resolve(jsonOut), rowsToJson(rows));
+  // The second source a continuation's deploy checks its own node against (docs/upgrades.md step 6).
+  const layout = (await loadLayouts()).miner;
+  const open = await readOpenEpochWithSeed(
+    createAztecNodeClient(nodeUrl, { maxBatchSize: NODE_MAX_BATCH }),
+    AztecAddress.fromStringUnsafe(deployment.miner),
+    layout,
+    (chunk) => deriveSlotTable(layout, chunk),
+  );
+  // Origins only: a node URL can carry a provider API key in its path.
+  const origin = new URL(nodeUrl).origin;
+  const own =
+    origin === new URL(deployment.nodeUrl).origin ? ": the record's own node, not a second source" : '';
+  console.log(
+    `continue from here (read from ${origin}${own}): YACANA_CONTINUE_FIRST_EPOCH=${open.epoch + 1} YACANA_CONTINUE_SEED=0x${open.seed.toString(16)} YACANA_CONTINUE_TARGET=${open.target}`,
+  );
 }

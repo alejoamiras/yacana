@@ -67,12 +67,19 @@ after the flip lands like any other once its epoch is proven (rig case H4). The 
    `VITE_AZTEC_NODE_URL` in `deployments/site.env` to V6's node (the apps' default node comes from there, not
    from the deploy's environment) and empty its two old-origin values (step 8: they name V5's, and V6 has none
    yet); unless the old default also serves V6, append it to `RETIRED_DEFAULT_NODES` in
-   `packages/web-kit/src/browser/connection.ts`, so a browser that saved it boots on the new one; commit, then
-   `YACANA_CONTINUE_FROM=deployments/testnet-v5.json YACANA_PORTAL=<portal> AZTEC_NODE_URL=<V6 node>
-   YACANA_DEPLOYER_SECRET=… bun run deploy`: the V6 miner as
-   V5's continuation (it starts at the epoch V5 left off, with V5's last target), bound to the same portal,
-   written to `deployments/testnet.json` with the `bridge` block carried from V5's record. The deploy refuses to
-   write over its own source, and refuses a source whose portal is not `YACANA_PORTAL`. The record's
+   `packages/web-kit/src/browser/connection.ts`, so a browser that saved it boots on the new one; commit. Stop
+   V5's roll keeper, then read V5's open epoch from a V5 node other than the record's: `AZTEC_NODE_URL=<another V5
+   node> bun run epoch:stats -- deployments/testnet-v5.json` ends with the three `YACANA_CONTINUE_*` values. Then
+   `YACANA_CONTINUE_FROM=deployments/testnet-v5.json YACANA_CONTINUE_FIRST_EPOCH=… YACANA_CONTINUE_SEED=…
+   YACANA_CONTINUE_TARGET=… YACANA_PORTAL=<portal> AZTEC_NODE_URL=<V6 node> YACANA_DEPLOYER_SECRET=… bun run
+   deploy`: the V6 miner as V5's continuation (it starts at the epoch V5 left off, with V5's last target), bound
+   to the same portal, written to `deployments/testnet.json` with the `bridge` block carried from V5's record.
+   The deploy reads the same epoch from the record's node and refuses unless both reads match, so one node answer
+   cannot fix V6's immutable start; on a refusal, read both again. A continuation needs V5's node to answer: there
+   is no by-hand path once that node is gone, so deploy it before step 12. Anyone may still roll V5 after `T_MAX`
+   (retirement stops claims, not rolls), so two matching reads show agreement, not that the epoch is V5's last
+   ([#91](https://github.com/alejoamiras/yacana/issues/91)). The deploy refuses to write over its own source, and
+   refuses a source whose portal is not `YACANA_PORTAL`. The record's
    `continuation.firstEpoch` is where every epoch read starts (the stats page, the landing's strip,
    `epoch:stats`): a continuation has no epoch before it. Once a claim lands on
    V6, `AZTEC_NODE_URL=<V6 node> bun tools/deploy/scripts/record-example-claim.ts <txHash>` records the
@@ -176,7 +183,7 @@ until the next move gives the live version one (step 8). The owner deletes it on
 | close deposits | `close-deposits` | `deposit.bun.test.ts` (H2: a deposit lands where it named; after the close the next is refused) |
 | observe the flip | `note-transitions` | `migration.bun.test.ts` (H3), `skip-version.bun.test.ts`, `never-settled.bun.test.ts` (H5), `browser.bun.test.ts` |
 | retire | `retire` (L1, then L2) | `migration.bun.test.ts` (H3: no mining claim mints after; a rerun resumes), `browser.bun.test.ts` |
-| the continuation | `bun run deploy` with `YACANA_CONTINUE_FROM` | `migration.bun.test.ts`, `browser.bun.test.ts` (V6 as V5's continuation) |
+| the continuation | `bun run deploy` with `YACANA_CONTINUE_FROM` and `YACANA_CONTINUE_*` | `migration.bun.test.ts`, `skip-version.bun.test.ts`, `browser.bun.test.ts` (the new version as V5's continuation, read from the rig's own node alone); the comparison with `YACANA_CONTINUE_*` is unit-tested against a stub node (`tools/deploy/src/continuation.test.ts`) |
 | pause | `pause`, `pause-all`, `unpause` | `bridge.bun.test.ts` (H9: held exits, the budget charged), `migration.bun.test.ts` (`pause-all` reaches every version) |
 | forward | `forward` | `migration.bun.test.ts` (H11: a stranger refused, a wrong target held, the forwarder and the holder accepted, all from the archive with the source node gone), `bridge.bun.test.ts` (H1, H6, H10), `never-settled.bun.test.ts` (an unproven epoch forwards nothing) |
 | the holder's side | — | `browser.bun.test.ts` (V5, the flip, V6 through the page), `origin.bun.test.ts` (one passkey across the apex and the old origin) |
