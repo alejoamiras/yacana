@@ -57,7 +57,6 @@ function kept(s: Trade): string {
   return landed(s) && last ? KEPT[last.phase] : 'Nothing has moved.';
 }
 
-/** The way on from a failure; `requotes` when the retry asks for a new quote first. */
 export const retryLabel = (requotes: boolean): string => (requotes ? 'Get a new quote' : 'Try again');
 
 /** A failure as the visitor reads it: what happened, what was not lost, the one thing to do. */

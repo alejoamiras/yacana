@@ -90,7 +90,6 @@ const sameToken = (a: Token, b: Token) => a.chainId === b.chainId && a.address =
 
 export type Trade = Extract<Funding, { at: 'trade' }>;
 
-/** A trade under way or landed: what the progress views draw. */
 export type Shown = Extract<Funding, { at: 'trade' | 'done' }>;
 
 const withStep = (s: Trade, phase: Phase, patch: (x: StepState) => StepState | null): Funding => {

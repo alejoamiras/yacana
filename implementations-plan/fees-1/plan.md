@@ -421,6 +421,8 @@ the live lane (`bun run e2e:agent`, with the e2e helpers' passkey sign-in); that
   - Comments: the wrong one on `Visible` (the bridge dialog has only the row), the stale `ROWS` list, the missing
     `steps[i]` invariant, and four narrating ones.
   - Every fix has a forced break that failed its case.
+- Round 2 (resumed), clean: both fixes verified, plus StrictMode on the drop-on-unmount, `useRequotes` at and past
+  expiry, and the production fold of `feesSearch`. Two restating comments deleted. Converged in two rounds.
 
 ## 8. Post-implementation
 
