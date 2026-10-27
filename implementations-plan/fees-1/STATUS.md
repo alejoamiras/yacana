@@ -7,3 +7,5 @@
 - 2026-10-27 final fresh Codex pass: approve at r3. Plan committed; stopped at the approval gate.
 - 2026-10-27 a1 P1 gate green: lint 0, typecheck 0, `bun test packages/web-kit apps/web-miner/tests/fund-fees-absent.bun.test.ts`
   79 pass; the forced break (gate condition `true`) failed the production case on `src/fees/Slot.tsx`, reverted.
+- 2026-10-27 a1 P2 gate green: lint 0, typecheck 0, web-miner Vitest 29 files / 165 tests, `bun test apps/web-miner/src/fees`
+  5 pass; the forced break (no abort in `cancel`) failed the runner case, reverted.

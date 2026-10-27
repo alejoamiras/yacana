@@ -140,9 +140,9 @@ export interface FeeFundingProvider {
   - `fees-hold`: `sign` (the first wallet ask never answers), or a phase name (that phase never finishes after its
     signature). A hold ends only on abort. With `fees-fail=late`, the held message still reports late first.
 - **`machine.ts`**: a pure reducer with no clock of its own (`now` rides in events).
-  - States: `idle | pick | quote{token, amountIn, quote|null, refreshed} | trade{quote, steps: Record<Phase, StepRun>, failure|null} | done{quote, received}`.
-    `StepRun.status` is `todo | signing | running | late | done | failed`. Nothing is named `Step`, which ui exports.
-  - Events: `open, choose, amount, quoted, back, confirm, step, stepDone, stepFailed, retry, reset`.
+  - States: `idle | pick | quote{token, amountIn, quote|null, refreshed, error} | trade{quote, steps: StepState[] (the quote's order), failure|null} | done{quote, received}`.
+    `StepState.status` is `todo | signing | running | late | done | failed`. Nothing is named `Step`, which ui exports.
+  - Events: `open, choose, amount, quoted, quoteFailed, lapse, back, confirm, started, step, stepDone, stepFailed, retry, reset`.
   - `next(state)` names the phase the runner must start: the quote's first step not done, with none in flight and
     no failure.
   - `confirm` on an expired quote returns to `quote` with no quote. `stepFailed(expired)` before any step is done
@@ -246,7 +246,7 @@ refusal (D6).
   Pass: exit 0, both new cases green. Then break it on purpose: make the gate's condition `true`, see the
   production case fail, and revert. Layers: lint, typecheck, unit, build.
 
-### Phase 2 (a1): the provider, the mock, the machine, the runner
+### Phase 2 (a1): the provider, the mock, the machine, the runner ✓
 1. Write `provider.ts`, `mock.ts`, `machine.ts` and `run.ts` as in §4.
 2. Write `machine.test.ts` (Vitest, pure, also run by `bun test`). It holds five cases, each with a success control:
    - a swap route and a direct route run every step in order to `done`;
