@@ -9,9 +9,29 @@ explainer: off
 eli5_mode: skipped (orchestrator-owned)
 budget: "recon 1 Sonnet agent; codex at high (gpt-6.1-sol); code-review off"
 hardening: not scheduled
-status: approved by the final Codex pass 2026-10-27 (awaiting the orchestrator)
+status: completed 2026-10-27
 created: 2026-10-27
 ---
+
+## Outcome
+
+- **Date**: 2026-10-27. **Status**: completed; PR #92 is open for the orchestrator's merge at close-out.
+- **Shipped** (a1, PR #92, `Delivers ask21`):
+  - A continuation deploy reads the source's open epoch, seed and target from the record's node. It refuses any
+    field the operator's `YACANA_CONTINUE_*` tuple does not match, and a tuple set without its source.
+  - `epoch:stats` prints that tuple and names the node it read. The rig opts into `'node-only'`.
+  - The launch secret is written 0600 and exclusively, before the commit is sent.
+  - Two closed known limits, linked from the docs.
+- **Removed on purpose** (accepted by the orchestrator): the by-hand continuation for a dead source node. A
+  continuation needs the source node to answer, so the runbook deploys it before step 12.
+- **Rejected**: these alternatives were considered and not taken (see Alternatives and Audit):
+  - a second node read automatically;
+  - a `commit` rerun that resends a stored commitment;
+  - `assertDeployment` as the second source;
+  - a separate secret-writing module.
+- **Known limits**: #90 (the pause charged per second, refused per block), #91 (a retired version can still roll).
+- **Open items**: none.
+- **Seeds**: the `/goal` and `/loop` at the bottom are retired. They are a record, not instructions.
 
 # deploy-2: a continuation checked against a second source, the lottery secret kept private, the pause limit filed
 
