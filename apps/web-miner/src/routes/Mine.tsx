@@ -1,6 +1,6 @@
 import { cn, TileBoundary } from '@yacana/ui';
 import { useAtomValue } from 'jotai';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { isOldRole } from '../bridge/env';
 import { BalanceCard } from '../components/BalanceCard';
 import type { MinerController } from '../controller';
@@ -14,6 +14,7 @@ import { NoticeCard } from '../features/NoticeCard';
 import { OldApp } from '../features/OldApp';
 import { RailTile } from '../features/RailTile';
 import { usePresto } from '../features/use-presto';
+import { FeesSlot, feesOption } from '../fees-gate';
 import { introAtom } from '../intro';
 import { useTileLog } from '../lib/tile-log';
 import type { Session } from '../session';
@@ -46,12 +47,13 @@ function GuidedPath({ session }: { session: Session }) {
 
 /** The right column is one flex column at `xl` so that, however tall it grows, the left column's rows stay packed. */
 const RIGHT = 'contents xl:flex xl:flex-col xl:gap-[14px] xl:col-start-4 xl:row-span-3';
-/** The last left row takes the slack; a card above the cockpit (the first visit's strip, a notice, the upgrade card) adds a row before it. */
+/** The last left row takes the slack; a card above the cockpit (the first visit's strip, a notice, the upgrade card, a flagged build's fees card) adds a row before it. */
 const ROWS = [
   'xl:grid-rows-[auto_auto_1fr]',
   'xl:grid-rows-[auto_auto_auto_1fr]',
   'xl:grid-rows-[auto_auto_auto_auto_1fr]',
   'xl:grid-rows-[auto_auto_auto_auto_auto_1fr]',
+  'xl:grid-rows-[auto_auto_auto_auto_auto_auto_1fr]',
 ];
 
 /**
@@ -80,7 +82,11 @@ export function Mine({
   const bridgeOpen = useAtomValue(bridgeSessionAtom) !== null;
   // The versioned origin is one page: nothing is mined there, so no cockpit.
   if (isOldRole()) return <OldApp session={session} />;
-  const above = (intro ? 1 : 0) + (notice ? 1 : 0) + (upgradeShown && bridgeOpen && session && ready ? 1 : 0);
+  const above =
+    (intro ? 1 : 0) +
+    (notice ? 1 : 0) +
+    (upgradeShown && bridgeOpen && session && ready ? 1 : 0) +
+    (feesOption === 'b' ? 1 : 0);
   const start = onStart ?? (() => controller()?.start());
   return (
     <div
@@ -96,6 +102,11 @@ export function Mine({
         <div className="md:col-span-2 xl:col-span-4">
           <NoticeCard notice={notice} />
         </div>
+      )}
+      {FeesSlot && (
+        <Suspense fallback={null}>
+          <FeesSlot at="cockpit" />
+        </Suspense>
       )}
       {session && ready && <GuidedPath session={session} />}
       <TileBoundary name="loop" onError={onError} className="md:col-span-2 xl:col-span-3">

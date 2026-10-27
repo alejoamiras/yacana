@@ -51,6 +51,8 @@ export interface SiteConfig {
   prestoE2ePort: string;
   /** The wallet's PXE skips proving (`VITE_E2E_PROVERLESS=1`, e2e builds only): every transaction leaves unproved. */
   proverless: boolean;
+  /** The miner's mocked fee-funding flow (`VITE_DEV_FUND_FEES=1`, dev and e2e builds only): never in production. */
+  devFundFees: boolean;
   /** The landing's hero is the launch lottery (mainnet's launch week); `VITE_LAUNCH_MODE=1`. */
   launchMode: boolean;
   /** The block explorer's origin, or `off`: every address, block and transaction the pages show links there. */
@@ -168,6 +170,17 @@ const firstEpochOf = (pick: (key: string, fallback: string) => string, record: D
   return Number(first);
 };
 
+/** What only a non-production build may switch on, each from its own `VITE_*`; production resolves none. */
+const testSwitches = (
+  mode: SiteMode,
+  env: Env,
+): Pick<SiteConfig, 'queryOverrides' | 'prestoE2ePort' | 'proverless' | 'devFundFees'> => ({
+  queryOverrides: mode === 'e2e' && env.VITE_E2E_QUERY_OVERRIDES === '1',
+  prestoE2ePort: mode === 'production' ? '' : (env.VITE_PRESTO_E2E_PORT ?? ''),
+  proverless: mode === 'e2e' && env.VITE_E2E_PROVERLESS === '1',
+  devFundFees: mode !== 'production' && env.VITE_DEV_FUND_FEES === '1',
+});
+
 export function loadSiteConfig(opts: {
   mode: SiteMode;
   siteEnv: Record<string, string>;
@@ -205,9 +218,7 @@ export function loadSiteConfig(opts: {
     token: pick('VITE_YACANA_TOKEN', deployment.token),
     minerClassId: pick('VITE_YACANA_MINER_CLASS', deployment.minerClassId),
     tokenClassId: pick('VITE_YACANA_TOKEN_CLASS', deployment.tokenClassId),
-    queryOverrides: mode === 'e2e' && env.VITE_E2E_QUERY_OVERRIDES === '1',
-    prestoE2ePort: mode === 'production' ? '' : (env.VITE_PRESTO_E2E_PORT ?? ''),
-    proverless: mode === 'e2e' && env.VITE_E2E_PROVERLESS === '1',
+    ...testSwitches(mode, env),
     launchMode: pick('VITE_LAUNCH_MODE', siteEnv.VITE_LAUNCH_MODE ?? '') === '1',
     explorerUrl: pick('VITE_EXPLORER_URL', siteEnv.VITE_EXPLORER_URL ?? 'off'),
     ethRpcUrl,
@@ -342,6 +353,7 @@ export const viteDefine = (c: SiteConfig): Record<string, string> =>
       VITE_E2E_QUERY_OVERRIDES: c.queryOverrides ? '1' : '',
       VITE_PRESTO_E2E_PORT: c.prestoE2ePort,
       VITE_E2E_PROVERLESS: c.proverless ? '1' : '',
+      VITE_DEV_FUND_FEES: c.devFundFees ? '1' : '',
       VITE_LAUNCH_MODE: c.launchMode ? '1' : '',
       VITE_EXPLORER_URL: c.explorerUrl,
       VITE_ETH_RPC_URL: c.ethRpcUrl,

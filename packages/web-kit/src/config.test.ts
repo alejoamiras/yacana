@@ -27,10 +27,13 @@ describe('site config', () => {
         VITE_E2E_QUERY_OVERRIDES: '1',
         VITE_PRESTO_E2E_PORT: '59833',
         VITE_E2E_PROVERLESS: '1',
+        VITE_DEV_FUND_FEES: '1',
       },
     });
     expect(c.nodeUrl).toBe(siteEnv.VITE_AZTEC_NODE_URL);
     expect(c.proverless).toBe(false);
+    expect(c.devFundFees).toBe(false);
+    expect(viteDefine(c)['import.meta.env.VITE_DEV_FUND_FEES']).toBe('""');
     // A hostile e2e environment cannot hand production a plaintext Presto port.
     expect(c.prestoE2ePort).toBe('');
     expect(viteDefine(c)['import.meta.env.VITE_PRESTO_E2E_PORT']).toBe('""');
@@ -63,8 +66,14 @@ describe('site config', () => {
         VITE_EXPLORER_URL: 'off',
         VITE_PRESTO_E2E_PORT: '24996',
         VITE_E2E_PROVERLESS: '1',
+        VITE_DEV_FUND_FEES: '1',
       },
     });
+    // The fee-funding flow is any non-production build's: dev serves it to the eye, e2e to the replay lane.
+    expect(c.devFundFees).toBe(true);
+    expect(viteDefine(c)['import.meta.env.VITE_DEV_FUND_FEES']).toBe('"1"');
+    expect(loadSiteConfig({ ...base, mode: 'dev', env: { VITE_DEV_FUND_FEES: '1' } }).devFundFees).toBe(true);
+    expect(loadSiteConfig({ ...base, mode: 'dev', env: {} }).devFundFees).toBe(false);
     // The proverless flag needs the exact mode `e2e`: a dev build with it set still proves.
     expect(loadSiteConfig({ ...base, mode: 'dev', env: { VITE_E2E_PROVERLESS: '1' } }).proverless).toBe(
       false,
