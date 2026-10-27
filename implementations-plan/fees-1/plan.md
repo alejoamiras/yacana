@@ -160,11 +160,15 @@ export interface FeeFundingProvider {
   - `parts/TokenPicker.tsx`: a chain `Segmented`, a search `Input`, token rows with balances.
   - `parts/QuoteView.tsx`: `AmountField` + `AmountBelow`, checked by `amountRefusal`/`parseAmount` from
     `features/withdraw-form.ts`. Then `Row`s: you get (about, at least), costs, arrives in, "new quote in 0:24".
-  - `views.ts` maps state to `Stepper` steps, `Trail` items or `Timeline` items.
+  - `parts/Choose.tsx`: the picker-then-quote screens A's and B's dialogs share, and `Held`, the account's Fee
+    Juice, remounted when a trade lands.
+  - `views.tsx` maps state to `Stepper` steps, `Trail` items or `Timeline` items; each phase's name is a span
+    carrying the test id and the machine's status.
   - `copy.ts` holds phase labels and failure lines, with no ✦ (nothing proves).
-  - Test ids every option shares: `fees-entry`, `fees-chain-<id>`, `fees-search`, `fees-token-<symbol>`,
-    `fees-amount`, `fees-quote`, `fees-go`, `fees-step-<phase>` (`data-state`), `fees-failure`, `fees-retry`,
-    `fees-done`.
+  - Test ids every option shares: `fees-entry`, `fees-search`, `fees-token-<symbol>`, `fees-amount`,
+    `fees-quote`, `fees-countdown`, `fees-go`, `fees-step-<phase>` (`data-state`: the machine's status),
+    `fees-refreshed`, `fees-failure`, `fees-retry`, `fees-done`, `fees-held`. A chain is the `Segmented`'s radio by
+    its name ("Base"): `Segmented` takes no per-option test id, and ui stays untouched.
 - **The gate** `src/fees-gate.ts` is the only production-reachable file. One expression holds the define comparison,
   the query and the `import()` (F11):
   `FeesSlot = import.meta.env.VITE_DEV_FUND_FEES === '1' && option ? lazy(() => import('./fees/Slot')) : null`.
@@ -190,8 +194,8 @@ being the bridge dialogs' own grammar, but its entry is one line of the balance 
 a sponsor and own fees coexist and fees become a setting, but Settings is off the miner's path.
 
 **File map.**
-- New: `src/fees-gate.ts`, `src/fees/{provider,mock,machine,run,views,copy}.ts`, `src/fees/Slot.tsx`,
-  `src/fees/parts/{TokenPicker,QuoteView}.tsx`, `src/fees/options/{A,B,C}.tsx`, `src/fees/machine.test.ts`,
+- New: `src/fees-gate.ts`, `src/fees/{provider,mock,machine,run,copy}.ts`, `src/fees/{Slot,views}.tsx`,
+  `src/fees/parts/{TokenPicker,QuoteView,Choose}.tsx`, `src/fees/options/{A,B,C}.tsx`, `src/fees/machine.test.ts`,
   `src/fees/fees.vitest.tsx`, `tests/fund-fees-absent.bun.test.ts`, `e2e/replay/fund-fees.replay.ts`.
 - Modified: `packages/web-kit/src/config.ts` (`devFundFees`, the define), `config.test.ts`, `browser/vite-env.d.ts`;
   `src/components/BalanceCard.tsx` (slot `balance`); `src/routes/Mine.tsx` (slot `cockpit`, a fifth `ROWS` entry,
@@ -260,8 +264,8 @@ refusal (D6).
 - **Validation gate**: `bun run lint && bun run typecheck && bun run --cwd apps/web-miner test:components && bun test apps/web-miner/src/fees`.
   Pass: exit 0, the six new cases green. Layers: lint, typecheck, unit.
 
-### Phase 3 (a1): the three options
-1. Write `parts/`, `views.ts`, `copy.ts`, `options/A.tsx`, `B.tsx` and `C.tsx`, and route the slots in `Slot.tsx`
+### Phase 3 (a1): the three options ✓
+1. Write `parts/`, `views.tsx`, `copy.ts`, `options/A.tsx`, `B.tsx` and `C.tsx`, and route the slots in `Slot.tsx`
    (a → `balance`, b → `cockpit`, c → `settings`).
 2. In `Mine`, count B's card in `above` through the gate's `feesOption`, and add the fifth `ROWS` entry.
 3. Add six cases to `fees.vitest.tsx`, on the mock with fake timers:
@@ -314,7 +318,7 @@ the live lane (`bun run e2e:agent`, with the e2e helpers' passkey sign-in); that
 | State | Query after `?presto=off&fees=<a\|b\|c>` | Recipe, then capture when |
 |---|---|---|
 | entry | none | load; `fees-entry` visible |
-| picker | none | click `fees-entry`, `fees-chain-8453`, type "usd" in `fees-search` |
+| picker | none | click `fees-entry`, the radio named "Base", type "usd" in `fees-search` |
 | quote | none | then `fees-token-USDC`, type 25 in `fees-amount`; `fees-quote` visible |
 | wallet ask | `&fees-hold=sign` | then `fees-go`; `fees-step-swap` is `signing` |
 | each phase running | `&fees-hold=swap`, `&fees-hold=deposit`, `&fees-hold=message`, `&fees-hold=claim` | then `fees-go`; `fees-step-<phase>` has `data-state="running"` |

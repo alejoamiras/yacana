@@ -62,7 +62,7 @@ export type FundingEvent =
   | { readonly type: 'retry'; readonly now: number }
   | { readonly type: 'reset' };
 
-const IN_FLIGHT: ReadonlySet<StepStatus> = new Set(['signing', 'running', 'late']);
+export const IN_FLIGHT: ReadonlySet<StepStatus> = new Set(['signing', 'running', 'late']);
 
 export const inFlight = (s: Funding): boolean =>
   s.at === 'trade' && s.steps.some((x) => IN_FLIGHT.has(x.status));

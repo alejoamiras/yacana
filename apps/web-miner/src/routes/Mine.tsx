@@ -14,7 +14,7 @@ import { NoticeCard } from '../features/NoticeCard';
 import { OldApp } from '../features/OldApp';
 import { RailTile } from '../features/RailTile';
 import { usePresto } from '../features/use-presto';
-import { FeesSlot } from '../fees-gate';
+import { FeesSlot, feesOption } from '../fees-gate';
 import { introAtom } from '../intro';
 import { useTileLog } from '../lib/tile-log';
 import type { Session } from '../session';
@@ -53,6 +53,7 @@ const ROWS = [
   'xl:grid-rows-[auto_auto_auto_1fr]',
   'xl:grid-rows-[auto_auto_auto_auto_1fr]',
   'xl:grid-rows-[auto_auto_auto_auto_auto_1fr]',
+  'xl:grid-rows-[auto_auto_auto_auto_auto_auto_1fr]',
 ];
 
 /**
@@ -81,7 +82,11 @@ export function Mine({
   const bridgeOpen = useAtomValue(bridgeSessionAtom) !== null;
   // The versioned origin is one page: nothing is mined there, so no cockpit.
   if (isOldRole()) return <OldApp session={session} />;
-  const above = (intro ? 1 : 0) + (notice ? 1 : 0) + (upgradeShown && bridgeOpen && session && ready ? 1 : 0);
+  const above =
+    (intro ? 1 : 0) +
+    (notice ? 1 : 0) +
+    (upgradeShown && bridgeOpen && session && ready ? 1 : 0) +
+    (feesOption === 'b' ? 1 : 0);
   const start = onStart ?? (() => controller()?.start());
   return (
     <div
