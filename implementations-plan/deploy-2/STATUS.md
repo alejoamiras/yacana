@@ -7,3 +7,4 @@
 - 2026-10-27 codex final pass: conditional approve → folded → conditional approve (A3) → folded → approve; plan committed
 - 2026-10-27 P1 gate green: lint, typecheck, bun test tools/deploy packages/miner-core (76 pass, 9 skip, 0 fail); refusals red without the comparison
 - 2026-10-27 P2 gate green: lint, typecheck, bun test tools/deploy (25 pass, 9 skip, 0 fail); the mode and the overwrite each red first
+- 2026-10-27 P3 gate green: #90 CLOSED NOT_PLANNED known-limit; lint 0; protocol/ unchanged

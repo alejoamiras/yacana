@@ -152,7 +152,7 @@ and step 3's failures quoted in `lessons/phase-1.md`. Layers: lint, typecheck, u
 **Validation gate**: `bun run lint && bun run typecheck && bun test tools/deploy`. Pass: exit 0, and step 2's
 failure quoted in `lessons/phase-2.md`. Layers: lint, typecheck, unit (real file system).
 
-### P3 (a1): the pause limit, filed and linked
+### P3 (a1): the pause limit, filed and linked — ✓ 2026-10-27 (#90)
 
 1. Dedupe: `gh issue list --state all --search "pause unpause same block"` must show none.
 2. File the issue with the label `known-limit`, in #82's shape, naming no plan, review or audit:
