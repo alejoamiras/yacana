@@ -168,7 +168,7 @@ failure quoted in `lessons/phase-2.md`. Layers: lint, typecheck, unit (real file
 **Validation gate**: `gh issue view <n> --json state,stateReason,labels` shows CLOSED, NOT_PLANNED and
 `known-limit`. `bun run lint` exits 0. `git diff --stat origin/main -- protocol` is empty.
 
-### Arc gate (a1)
+### Arc gate (a1) — ✓ 2026-10-27
 
 `bun run lint && bun run typecheck && bun test && bun run test:components`, then `bun run rig -- skip-version`
 (the `'node-only'` path end to end; estimated 5 min, measured in `lessons/phase-3.md`). Pass: every command exits 0.
@@ -215,6 +215,8 @@ continuation needs two sources; the lottery secret stays private`. Body: what an
 | final | Codex gpt-6.1-sol high, fresh session | conditional approve | 1 the second issue exceeds the brief's "one issue" → reconciled in A3 and UI impact, droppable by the orchestrator; 2 a missing log line does not prove a commit failed → the refusal says keep the file; 3 Fact 6 overstated → only the records' immediate launch; 4 the reproducer must survive → the full test goes into the issue (kept in scratch until then); `FIRST_EPOCH = open + 1` spelled out | none |
 | final-v | same session, resumed | conditional approve | resolve A3 before filing → a1 files nothing for Fact 3; the docs say it, the report asks the orchestrator | — |
 | final-v2 | same session, resumed | **approve** | the fold verified, no regression | — |
+| fix r1 | Codex gpt-6.1-sol high + Opus 5.5 (same family) | Codex **clean**; Opus 3 low | Opus 1: `epoch:stats` could be run against the record's own node unseen → the line names the origin read and flags the record's own; Opus 2: a tuple without `YACANA_CONTINUE_FROM` deployed a genesis → refused; Opus 3: the coverage row overstated the rig → corrected, `skip-version` added; a shadowed `node` renamed | Opus test gaps (the write-before-send order, the CLI passing `'node-only'`): both sit in `import.meta.main` blocks; testing them means restructuring the scripts for a test, and the code is two adjacent lines |
+| fix r2 | Codex, same session resumed | **clean** | the fixes verified, no regression; converged in 2 rounds | — |
 
 Size: about 230 lines against light's 150. The verbatim fix-loop rules, two claims that did not hold and the
 issue specification carry the excess.
