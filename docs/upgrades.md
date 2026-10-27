@@ -75,10 +75,11 @@ after the flip lands like any other once its epoch is proven (rig case H4). The 
    deploy`: the V6 miner as V5's continuation (it starts at the epoch V5 left off, with V5's last target), bound
    to the same portal, written to `deployments/testnet.json` with the `bridge` block carried from V5's record.
    The deploy reads the same epoch from the record's node and refuses unless both reads match, so one node answer
-   cannot fix V6's immutable start; on a refusal, read both again. It needs V5's node to answer. Anyone may still
-   roll V5 after `T_MAX` (retirement stops claims, not rolls), so two matching reads show agreement, not that the
-   epoch is V5's last. The deploy refuses to write over its own source, and refuses a source whose portal is not
-   `YACANA_PORTAL`. The record's
+   cannot fix V6's immutable start; on a refusal, read both again. A continuation needs V5's node to answer: there
+   is no by-hand path once that node is gone, so deploy it before step 12. Anyone may still roll V5 after `T_MAX`
+   (retirement stops claims, not rolls), so two matching reads show agreement, not that the epoch is V5's last
+   ([#91](https://github.com/alejoamiras/yacana/issues/91)). The deploy refuses to write over its own source, and
+   refuses a source whose portal is not `YACANA_PORTAL`. The record's
    `continuation.firstEpoch` is where every epoch read starts (the stats page, the landing's strip,
    `epoch:stats`): a continuation has no epoch before it. Once a claim lands on
    V6, `AZTEC_NODE_URL=<V6 node> bun tools/deploy/scripts/record-example-claim.ts <txHash>` records the

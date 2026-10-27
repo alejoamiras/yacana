@@ -9,3 +9,4 @@
 - 2026-10-27 P2 gate green: lint, typecheck, bun test tools/deploy (25 pass, 9 skip, 0 fail); the mode and the overwrite each red first
 - 2026-10-27 P3 gate green: #90 CLOSED NOT_PLANNED known-limit; lint 0; protocol/ unchanged
 - 2026-10-27 arc gate green: lint, typecheck, bun test (709/44/0, toolchain on PATH), test:components, rig skip-version (266 s); codex fix loop converged in 2 rounds
+- 2026-10-27 ORCHY-STEER: file the roll() limit as a second closed known-limit issue, link it from upgrades.md step 6, both numbers in the PR body; say plainly that a continuation needs an answering source node (docs + Outcome)

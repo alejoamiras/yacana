@@ -24,10 +24,10 @@ accounting becomes a closed `known-limit` issue, linked from the docs. Recon: `r
 
 - **In**: `tools/deploy/src/deploy.ts` and `continuation.test.ts`; `tools/deploy/scripts/launch.ts`, a new
   `launch.test.ts` and `epoch-stats.ts`; one helper in `packages/miner-core/src/reader.ts`; the three rig callers;
-  `docs/upgrades.md` step 6, `docs/bridge.md`, `docs/threat-model.md:56`, `CLAUDE.md`'s command lines; one closed issue.
+  `docs/upgrades.md` step 6, `docs/bridge.md`, `docs/threat-model.md:56`, `CLAUDE.md`'s command lines; two closed issues.
 - **Out** (lane brief): the portal contract, `deployments/` beyond reading, every keyed or networked command, the
   other operator scripts' secret handling, any CI gate made advisory.
-- **Issues**: none to close. a1 files one closed `known-limit` issue (P3). **Asks**: ask21 → a1.
+- **Issues**: none to close. a1 files two closed `known-limit` issues: #90 (P3) and #91 (A3). **Asks**: ask21 → a1.
 
 ## UI impact
 
@@ -83,7 +83,8 @@ and one issue)". UI impact: none on any app. Operator consoles change: the deplo
 - A2: `epoch:stats` ends with the open epoch's tuple, so the operator can read it from a second node.
 - A3: Fact 3 is a known limit, which the program files as a closed issue, but the brief names one issue. a1 writes
   it into `docs/upgrades.md` step 6 and the Outcome, and files nothing. The final report asks the orchestrator
-  whether to file it.
+  whether to file it. **Answered** (orchestrator, 2026-10-27): file it in #90's shape and link it from step 6 →
+  #91. The orchestrator also accepted A1, to be said plainly in step 6 and the Outcome.
 
 ## Architecture & Implementation
 
@@ -177,7 +178,7 @@ failure quoted in `lessons/phase-2.md`. Layers: lint, typecheck, unit (real file
 
 One arc, one PR against `main`: a1 = P1–P3 on `worktree-deploy-2`, carrying this plan. Title `fix(deploy): a
 continuation needs two sources; the lottery secret stays private`. Body: what and why, the gates with outcomes,
-`Delivers ask21`, the issue number. `code_review: off`. The close-out is the PR's last commits. No parallelism.
+`Delivers ask21`, both issue numbers (#90, #91). `code_review: off`. The close-out is the PR's last commits. No parallelism.
 
 ## Post-implementation
 
