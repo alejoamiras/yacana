@@ -17,3 +17,6 @@
   The forced break (a same-origin `fetch('/fees-probe')` in the mock's quote) failed option a on that URL; reverted.
 - 2026-10-27 a1 review round 1: Codex changes requested (2 findings, comments) and Opus (2 medium, 6 low, comments);
   every finding fixed with a test and a forced break; lint 0, typecheck 0, fees specs 13 + machine 5 green.
+- 2026-10-27 a1 Codex round 2 clean (converged in two). Arc gate on the final head: lint 0, typecheck 0, `bun test`
+  716 pass / 44 skip / 0 fail (with the pinned Aztec bin on PATH: `vk-pinning.test.ts` shells out to `aztec-nargo`),
+  test:components green, replay 10 passed in 2.2 min (scenario 48.1 s), site:build 0 with no flow string in dist.

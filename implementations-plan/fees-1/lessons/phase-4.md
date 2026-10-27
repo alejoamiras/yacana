@@ -8,3 +8,5 @@
   in place and restored): the module sets differ by `apps/web-miner/src/fees-gate.ts` alone. The flagged e2e build
   shows 12 first-paint chunks with no `src/fees/` module; `Slot` is a lazy 23.9 kB chunk.
 - 2026-10-27 forcing `fetch('/fees-probe')` into the mock's quote failed option a with that URL as the stray; reverted.
+- 2026-10-27 the whole `bun test` failed once on `protocol/work-circuit/src/vk-pinning.test.ts`: this shell had no
+  `aztec-nargo` on PATH. With `~/.aztec/current/bin` first on PATH it passed; nothing in the arc touches protocol.
