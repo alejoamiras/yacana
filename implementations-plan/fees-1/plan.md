@@ -167,7 +167,7 @@ export interface FeeFundingProvider {
   - `copy.ts` holds phase labels and failure lines, with no ✦ (nothing proves).
   - Test ids every option shares: `fees-entry`, `fees-search`, `fees-token-<symbol>`, `fees-amount`,
     `fees-quote`, `fees-countdown`, `fees-go`, `fees-step-<phase>` (`data-state`: the machine's status),
-    `fees-refreshed`, `fees-failure`, `fees-retry`, `fees-done`, `fees-held`. A chain is the `Segmented`'s radio by
+    `fees-refreshed`, `fees-failure`, `fees-retry`, `fees-done`; `fees-held` in A and C, which show the figure. A chain is the `Segmented`'s radio by
     its name ("Base"): `Segmented` takes no per-option test id, and ui stays untouched.
 - **The gate** `src/fees-gate.ts` is the only production-reachable file. One expression holds the define comparison,
   the query and the `import()` (F11):
@@ -392,6 +392,35 @@ the live lane (`bun run e2e:agent`, with the e2e helpers' passkey sign-in); that
     to save about 4 s.
   - Extracting `withdraw-form`'s amount helpers (Codex, conditional). The module's one SDK import is a pure address
     parser, and it is already in the first paint.
+
+**a1 Codex fix loop** (`git diff 8f9d4a2..HEAD`, high, gpt-6.1-sol):
+- Round 1, changes requested:
+  - Medium, demonstrated, fixed. The quote field restored its amount at six decimals: ETH 0.0000001 came back as
+    `0` with confirm still enabled, so the shown and the confirmed amount differed. Editable figures (the restored
+    text, MAX) now keep every decimal. A new case remounts on a 7-decimal ETH amount; reverting the fix fails it.
+  - Low, demonstrated, fixed. The runner's stale-completion check landed in `idle`, where the reducer ignores it
+    anyway, so the identity guard went untested. The case now starts a second trade to the same phase before the
+    old deposit answers; removing the guard fails it.
+  - Comments: six that named their code were deleted, and `Held`'s now states only its remount contract.
+- Opus same-family review, beside round 1:
+  - Medium, demonstrated by trace, fixed. `Slot` read the mock's switches from `location.search` at its first
+    render, and in-app navigation pushes a path with no query. C's switches were saved by a race (the Mine slots
+    loading first); after a2 keeps only C they would read empty. The gate now keeps the query as loaded
+    (`feesSearch`, folded like `feesOption`).
+  - Medium, demonstrated by trace, fixed. No case drove `expired` after a step landed, so `onFailed`'s landed guard
+    could go unnoticed (a re-quote there would swap twice). The machine case now does, and removing the guard fails it.
+  - Low, fixed. Re-picking C's current token dropped the amount with the field still showing it; the same choice
+    now changes nothing, and `QuoteView` is keyed by chain and address.
+  - Low, fixed. A pick or a quote whose view unmounted stayed in the tab's runner and re-quoted at every lapse off
+    screen. `useFunding` drops it on unmount, as A's close already did; a trade still outlives its view.
+  - Low, fixed. A retry past an unused quote re-quotes, but the button said "Try again". It now says "Get a new
+    quote" from the quote's expiry, as §4's table has it (`useRequotes`).
+  - Low, fixed. `OptionProps` moved to `run.ts` and `Held` to its own file, so deleting A and B leaves C whole;
+    `Trade` and `Shown` are declared once in `machine.ts`.
+  - Low, fixed. The late line names the deposit only for the crossing.
+  - Comments: the wrong one on `Visible` (the bridge dialog has only the row), the stale `ROWS` list, the missing
+    `steps[i]` invariant, and four narrating ones.
+  - Every fix has a forced break that failed its case.
 
 ## 8. Post-implementation
 

@@ -2,7 +2,7 @@ import { Alert, AlertDescription, AmountBlock, AmountField, Note } from '@yacana
 import { useEffect, useState } from 'react';
 import { Actions, AmountBelow, Primary, Row, Rows } from '../../features/dialogs/Frame';
 import { amountRefusal, parseAmount } from '../../features/withdraw-form';
-import { clockMinutes, duration } from '../../lib/format';
+import { amount, clockMinutes, duration } from '../../lib/format';
 import { arrivesIn, confirmations, FEE_JUICE, fj, tokenAmount } from '../copy';
 import type { Funding } from '../machine';
 import type { Chain, Quote } from '../provider';
@@ -10,24 +10,21 @@ import type { FundingRun } from '../run';
 
 type Quoting = Extract<Funding, { at: 'quote' }>;
 
-/** Unix ms, ticking each second while `on`. */
-function useNow(on: boolean): number {
+function useNow(): number {
   const [now, setNow] = useState(Date.now);
   useEffect(() => {
-    if (!on) return;
-    setNow(Date.now());
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
-  }, [on]);
+  }, []);
   return now;
 }
 
 function Countdown({ expiresAt }: { expiresAt: number }) {
-  const now = useNow(true);
+  const now = useNow();
   return <span data-testid="fees-countdown">new quote in {clockMinutes((expiresAt - now) / 1000)}</span>;
 }
 
-/** What funding makes public: the row and the note the bridge's own dialog has for its deposit. */
+/** What funding makes public: the deposit names this account on Ethereum, and a self-paid transaction its payer. */
 function Visible() {
   return (
     <>
@@ -89,9 +86,9 @@ export function QuoteView({
   onConfirm: () => void;
 }) {
   const { token } = s;
-  const [text, setText] = useState(() =>
-    s.amountIn === null ? '' : tokenAmount(s.amountIn, token.decimals),
-  );
+  // Editable figures keep every decimal: a shortened one would re-parse to another amount than the quoted.
+  const exact = (raw: bigint) => amount(raw, token.decimals, token.decimals);
+  const [text, setText] = useState(() => (s.amountIn === null ? '' : exact(s.amountIn)));
   const line = amountRefusal(text, token.balance, token.decimals);
   const edit = (t: string) => {
     setText(t);
@@ -107,7 +104,7 @@ export function QuoteView({
         value={text}
         onChange={edit}
         unit={token.symbol}
-        max={tokenAmount(token.balance, token.decimals)}
+        max={exact(token.balance)}
         invalid={text !== '' && line !== null}
         below={<AmountBelow line={text !== '' ? line : null} balance={balance} />}
         data-testid="fees-amount"

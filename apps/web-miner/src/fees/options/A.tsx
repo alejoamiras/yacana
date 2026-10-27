@@ -4,14 +4,13 @@
 import { Alert, AlertDescription, AlertTitle, Stepper } from '@yacana/ui';
 import { useState } from 'react';
 import { Actions, Foot, Primary, Quiet, TxDialog, useElapsed } from '../../features/dialogs/Frame';
-import { FEE_JUICE, failureCopy, fj, PICK_BODY, phaseName, tradeLine } from '../copy';
-import type { Failure, Funding } from '../machine';
-import { Choose, Held, type OptionProps } from '../parts/Choose';
+import { FEE_JUICE, failureCopy, fj, PICK_BODY, phaseName, retryLabel, tradeLine } from '../copy';
+import type { Failure, Funding, Shown, Trade } from '../machine';
+import { Choose } from '../parts/Choose';
+import { Held } from '../parts/Held';
 import { useChains } from '../parts/TokenPicker';
-import { type FundingRun, useFunding } from '../run';
-import { flight, type Shown, stepperSteps } from '../views';
-
-type Trade = Extract<Funding, { at: 'trade' }>;
+import { type FundingRun, type OptionProps, useFunding } from '../run';
+import { flight, stepperSteps, useRequotes } from '../views';
 
 function Progress({ s, run }: { s: Shown; run: FundingRun }) {
   const elapsed = useElapsed(flight(s)?.since);
@@ -33,7 +32,8 @@ function Progress({ s, run }: { s: Shown; run: FundingRun }) {
 }
 
 function Failed({ s, failure, run }: { s: Trade; failure: Failure; run: FundingRun }) {
-  const { title, body } = failureCopy(s, failure);
+  const requotes = useRequotes(s);
+  const { title, body } = failureCopy(s, failure, requotes);
   return (
     <>
       <Alert variant="bad" data-testid="fees-failure">
@@ -42,7 +42,7 @@ function Failed({ s, failure, run }: { s: Trade; failure: Failure; run: FundingR
       </Alert>
       <Actions>
         <Primary onClick={run.retry} data-testid="fees-retry">
-          Try again
+          {retryLabel(requotes)}
         </Primary>
       </Actions>
     </>

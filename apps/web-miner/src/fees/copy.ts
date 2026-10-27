@@ -1,14 +1,11 @@
 // What the flow says. No ✦ anywhere: nothing here proves.
 
 import { amount } from '../lib/format';
-import { type Failure, type Funding, landed, type StepStatus } from './machine';
+import { type Failure, landed, type Shown, type StepStatus, type Trade } from './machine';
 import { FEE_JUICE_DECIMALS, type Phase, type Quote, type QuoteStep } from './provider';
-
-type Shown = Extract<Funding, { at: 'trade' | 'done' }>;
 
 export const FEE_JUICE = 'Fee Juice';
 
-/** The picker's line under the dialog's title. */
 export const PICK_BODY = `Pick what you pay with. It becomes ${FEE_JUICE}, which pays for this account's transactions.`;
 
 export const fj = (raw: bigint): string => amount(raw, FEE_JUICE_DECIMALS, 2);
@@ -39,12 +36,12 @@ const RUNNING: Readonly<Record<Phase, (step: QuoteStep) => string>> = {
   claim: () => `This account claims its ${FEE_JUICE} on Aztec.`,
 };
 
-/** What a step is doing now, in one sentence. */
 export function phaseLine(status: StepStatus, step: QuoteStep): string {
   if (status === 'signing') return 'Confirm in your wallet.';
-  if (status === 'late')
-    return 'Taking longer than usual. Nothing is lost: the deposit waits until Aztec picks it up.';
-  return RUNNING[step.phase](step);
+  if (status !== 'late') return RUNNING[step.phase](step);
+  return step.phase === 'message'
+    ? 'Taking longer than usual. Nothing is lost: the deposit waits until Aztec picks it up.'
+    : 'Taking longer than usual. Nothing is lost.';
 }
 
 const KEPT: Readonly<Record<Phase, string>> = {
@@ -55,24 +52,25 @@ const KEPT: Readonly<Record<Phase, string>> = {
 };
 
 /** What a failure leaves where it was: the last step that finished, or nothing moved. */
-function kept(s: Extract<Funding, { at: 'trade' }>): string {
+function kept(s: Trade): string {
   const last = [...s.steps].reverse().find((x) => x.status === 'done');
   return landed(s) && last ? KEPT[last.phase] : 'Nothing has moved.';
 }
 
+/** The way on from a failure; `requotes` when the retry asks for a new quote first. */
+export const retryLabel = (requotes: boolean): string => (requotes ? 'Get a new quote' : 'Try again');
+
 /** A failure as the visitor reads it: what happened, what was not lost, the one thing to do. */
-export function failureCopy(
-  s: Extract<Funding, { at: 'trade' }>,
-  f: Failure,
-): { title: string; body: string } {
+export function failureCopy(s: Trade, f: Failure, requotes: boolean): { title: string; body: string } {
   const what =
     f.reason === 'rejected'
       ? 'Your wallet did not confirm.'
       : f.reason === 'expired'
         ? 'The quote ran out.'
         : `${phaseName(f.phase, s.quote)} did not go through.`;
-  const todo =
-    f.phase === 'claim' && f.reason === 'failed'
+  const todo = requotes
+    ? 'The quote ran out meanwhile: get a new one to go on.'
+    : f.phase === 'claim' && f.reason === 'failed'
       ? 'Try again to claim it.'
       : f.reason === 'rejected'
         ? 'Try again to ask it once more.'

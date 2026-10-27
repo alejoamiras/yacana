@@ -47,7 +47,7 @@ function GuidedPath({ session }: { session: Session }) {
 
 /** The right column is one flex column at `xl` so that, however tall it grows, the left column's rows stay packed. */
 const RIGHT = 'contents xl:flex xl:flex-col xl:gap-[14px] xl:col-start-4 xl:row-span-3';
-/** The last left row takes the slack; a card above the cockpit (the first visit's strip, a notice, the upgrade card) adds a row before it. */
+/** The last left row takes the slack; a card above the cockpit (the first visit's strip, a notice, the upgrade card, a flagged build's fees card) adds a row before it. */
 const ROWS = [
   'xl:grid-rows-[auto_auto_1fr]',
   'xl:grid-rows-[auto_auto_auto_1fr]',

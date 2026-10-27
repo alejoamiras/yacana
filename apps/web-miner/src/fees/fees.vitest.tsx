@@ -5,9 +5,8 @@ import { MOCK_TIMING, MOCK_TOKENS, mockProvider, scriptFrom } from './mock';
 import { OptionA } from './options/A';
 import { OptionB } from './options/B';
 import { OptionC } from './options/C';
-import type { OptionProps } from './parts/Choose';
 import type { FeeFundingProvider, Phase, Quote, Token } from './provider';
-import { FundingRun } from './run';
+import { FundingRun, type OptionProps } from './run';
 
 const USDC = MOCK_TOKENS.find((t) => t.chainId === 8453 && t.symbol === 'USDC') as Token;
 
@@ -48,7 +47,7 @@ afterEach(() => {
 });
 
 describe('the funding runner', () => {
-  test('one step at a time; an answer for an old amount, or after a reset, changes nothing', async () => {
+  test('one step at a time; an answer for an old amount, or from a trade since reset, changes nothing', async () => {
     const { provider, quotes, runs } = byHand();
     const run = new FundingRun(provider);
     run.dispatch({ type: 'open' });
@@ -74,10 +73,23 @@ describe('the funding runner', () => {
 
     run.dispatch({ type: 'reset' });
     expect(runs[1]?.signal.aborted).toBe(true);
+    // A new trade reaches the same phase before the old deposit answers: the answer must not finish the new one.
+    run.dispatch({ type: 'open' });
+    run.dispatch({ type: 'choose', token: USDC });
+    run.dispatch({ type: 'amount', amountIn: 30n });
+    await vi.advanceTimersByTimeAsync(300);
+    quotes[2]?.answer(quoteFor(30n));
+    await vi.advanceTimersByTimeAsync(0);
+    run.confirm();
+    await vi.advanceTimersByTimeAsync(0);
+    runs[2]?.done();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(runs.map((r) => r.phase)).toEqual(['swap', 'deposit', 'swap', 'deposit']);
     runs[1]?.done();
     await vi.advanceTimersByTimeAsync(0);
-    expect(run.getState()).toEqual({ at: 'idle' });
-    expect(runs).toHaveLength(2);
+    const now = run.getState();
+    expect(now.at === 'trade' && now.steps.map((x) => x.status)).toEqual(['done', 'running', 'todo', 'todo']);
+    expect(runs).toHaveLength(4);
   });
 });
 
@@ -87,12 +99,19 @@ const stateOf = (phase: Phase) => id(`fees-step-${phase}`).getAttribute('data-st
 /** Base's USDC, 25 of it: a swap route of four steps, about 9.9 s of mock time. */
 const TRADE_MS = 15_000;
 
+/** The option on a fresh mock; `remount` unmounts it and renders it again on the same runner, as a route change does. */
 async function show(Option: (p: OptionProps) => React.ReactNode, search = '') {
   const provider = mockProvider(scriptFrom(search));
   const run = new FundingRun(provider);
-  render(<Option run={run} provider={provider} account={`0x${'0'.repeat(60)}fee5`} />);
+  const ui = () => <Option run={run} provider={provider} account={`0x${'0'.repeat(60)}fee5`} />;
+  let view = render(ui());
   await tick(0);
-  return run;
+  const remount = async () => {
+    view.unmount();
+    view = render(ui());
+    await tick(0);
+  };
+  return { run, remount };
 }
 
 /** From the open picker: Base, a search for "usd", USDC, 25, and the quote it brings. */
@@ -146,13 +165,47 @@ describe('the three options on the mock', () => {
     expect(id('fees-held').textContent).toContain('none');
     fireEvent.click(id('fees-entry'));
     await quoteUsdc();
+    // Choosing the same token again keeps the amount and its quote.
+    fireEvent.click(id('fees-entry'));
+    fireEvent.click(screen.getByRole('radio', { name: 'Base' }));
+    await tick(0);
+    fireEvent.click(id('fees-token-USDC'));
+    await tick(0);
+    expect((id('fees-go') as HTMLButtonElement).disabled).toBe(false);
     fireEvent.click(id('fees-go'));
     await tick(TRADE_MS);
     expect(id('fees-done').textContent).toContain('Fees ready: 12.45 Fee Juice.');
     expect(id('fees-held').textContent).toContain('12.45');
   });
+});
 
-  test('A refused by the wallet says nothing moved; Try again asks again and runs to done', async () => {
+describe('what the options share', () => {
+  test('a quote left behind is dropped; one that ran out comes back with every decimal of its amount', async () => {
+    const { run, remount } = await show(OptionC, '?fees-fail=expired');
+    const ethOnBase = async () => {
+      fireEvent.click(id('fees-entry'));
+      fireEvent.click(screen.getByRole('radio', { name: 'Base' }));
+      await tick(0);
+      fireEvent.click(id('fees-token-ETH'));
+      fireEvent.change(id('fees-amount'), { target: { value: '0.0000001' } });
+      await tick(300 + MOCK_TIMING.quote);
+      expect(id('fees-quote')).toBeTruthy();
+    };
+    await ethOnBase();
+    await remount();
+    expect(run.getState()).toEqual({ at: 'idle' });
+    expect(screen.queryByTestId('fees-amount')).toBeNull();
+    await ethOnBase();
+    fireEvent.click(id('fees-go'));
+    await tick(0);
+    expect(id('fees-refreshed')).toBeTruthy();
+    expect((id('fees-amount') as HTMLInputElement).value).toBe('0.0000001');
+    expect(screen.queryByTestId('amount-refusal')).toBeNull();
+    await tick(300 + MOCK_TIMING.quote);
+    expect((id('fees-go') as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  test('A refused by the wallet says nothing moved; past the quote, the retry gets a new one and runs to done', async () => {
     await show(OptionA, '?fees-fail=rejected');
     fireEvent.click(id('fees-entry'));
     await quoteUsdc();
@@ -160,13 +213,20 @@ describe('the three options on the mock', () => {
     await tick(MOCK_TIMING.sign);
     expect(id('fees-failure').textContent).toContain('Your wallet did not confirm.Nothing has moved.');
     expect(stateOf('swap')).toBe('failed');
+    expect(id('fees-retry').textContent).toBe('Try again');
+    // Left past the quote's life, the retry asks for a new quote first, and the button says so.
+    await tick(MOCK_TIMING.life);
+    expect(id('fees-retry').textContent).toBe('Get a new quote');
     fireEvent.click(id('fees-retry'));
+    await tick(300 + MOCK_TIMING.quote);
+    expect(id('fees-refreshed')).toBeTruthy();
+    fireEvent.click(id('fees-go'));
     await tick(TRADE_MS);
     expect(id('fees-done')).toBeTruthy();
   });
 
   test('a quote left to run out is replaced by a fresh one', async () => {
-    const run = await show(OptionA);
+    const { run } = await show(OptionA);
     fireEvent.click(id('fees-entry'));
     await quoteUsdc();
     const first = run.getState();

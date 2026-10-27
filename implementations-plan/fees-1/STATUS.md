@@ -15,3 +15,5 @@
 - 2026-10-27 a1 P4 gate green at retry 0: lint 0, typecheck 0, e2e-inventory 8 pass, replay lane 10 passed in 2.0 min
   (was 1.2 min for 9), the scenario 47.6 s and 47.5 s on two runs (estimate 65 s, ceiling 70 s); check-chunks exit 0.
   The forced break (a same-origin `fetch('/fees-probe')` in the mock's quote) failed option a on that URL; reverted.
+- 2026-10-27 a1 review round 1: Codex changes requested (2 findings, comments) and Opus (2 medium, 6 low, comments);
+  every finding fixed with a test and a forced break; lint 0, typecheck 0, fees specs 13 + machine 5 green.

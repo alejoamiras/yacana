@@ -103,9 +103,11 @@ describe('the fee-funding machine', () => {
       at: 'quote',
       refreshed: true,
     });
-    // The wallet refused the deposit after the swap landed: retrying past expiry asks the wallet again.
-    const [refused] = drive(confirmed(SWAP), { phase: 'deposit', reason: 'failed' });
-    const again = reduce(refused, { type: 'retry', now: SWAP.expiresAt + 1 });
+    // The quote ran out at the deposit, after the swap landed: no re-quote (the swap would run twice); the
+    // deposit fails in place, and retrying past expiry runs it again.
+    const [ranOut] = drive(confirmed(SWAP), { phase: 'deposit', reason: 'expired' });
+    expect(statuses(ranOut)).toEqual(['swap:done', 'deposit:failed', 'message:todo', 'claim:todo']);
+    const again = reduce(ranOut, { type: 'retry', now: SWAP.expiresAt + 1 });
     expect(next(again)).toBe('deposit');
     // Before anything landed, the same retry past expiry re-quotes.
     const [rejected] = drive(confirmed(SWAP), { phase: 'swap', reason: 'failed' });

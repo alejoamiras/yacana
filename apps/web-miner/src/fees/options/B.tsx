@@ -5,11 +5,12 @@ import { Button, HeroCard, type HeroTone, Stepper } from '@yacana/ui';
 import { type ReactNode, useState } from 'react';
 import { TxDialog, useElapsed } from '../../features/dialogs/Frame';
 import { duration } from '../../lib/format';
-import { FEE_JUICE, failureCopy, fj, PICK_BODY, phaseLine, phaseName, tradeLine } from '../copy';
-import { Choose, type OptionProps } from '../parts/Choose';
+import { FEE_JUICE, failureCopy, fj, PICK_BODY, phaseLine, phaseName, retryLabel, tradeLine } from '../copy';
+import type { Shown } from '../machine';
+import { Choose } from '../parts/Choose';
 import { useChains } from '../parts/TokenPicker';
-import { type FundingRun, useFunding } from '../run';
-import { flight, type Shown, trailItems } from '../views';
+import { type FundingRun, type OptionProps, useFunding } from '../run';
+import { flight, trailItems, useRequotes } from '../views';
 
 const CARD = 'md:col-span-2 xl:col-span-4';
 
@@ -37,8 +38,7 @@ function Entry({ run, onHow }: { run: FundingRun; onHow: () => void }) {
   );
 }
 
-/** The card's tone, title and line for a trade in progress, stopped, or landed. */
-function face(s: Shown): { tone: HeroTone; title: ReactNode; line: string } {
+function face(s: Shown, requotes: boolean): { tone: HeroTone; title: ReactNode; line: string } {
   if (s.at === 'done')
     return {
       tone: 'ok',
@@ -50,7 +50,7 @@ function face(s: Shown): { tone: HeroTone; title: ReactNode; line: string } {
       line: "This account can pay its own transactions' fees now.",
     };
   if (s.failure) {
-    const { title, body } = failureCopy(s, s.failure);
+    const { title, body } = failureCopy(s, s.failure, requotes);
     return { tone: 'bad', title: <span data-testid="fees-failure">{title}</span>, line: body };
   }
   const now = flight(s);
@@ -65,7 +65,8 @@ function face(s: Shown): { tone: HeroTone; title: ReactNode; line: string } {
 
 function Trade({ s, run }: { s: Shown; run: FundingRun }) {
   const elapsed = useElapsed(flight(s)?.since);
-  const { tone, title, line } = face(s);
+  const requotes = useRequotes(s);
+  const { tone, title, line } = face(s, requotes);
   const stopped = s.at === 'trade' && s.failure !== null;
   return (
     <HeroCard
@@ -82,7 +83,7 @@ function Trade({ s, run }: { s: Shown; run: FundingRun }) {
       actions={
         stopped ? (
           <Button variant="uv" onClick={run.retry} data-testid="fees-retry">
-            Try again
+            {retryLabel(requotes)}
           </Button>
         ) : s.at === 'done' ? (
           <Button variant="ghost" onClick={() => run.dispatch({ type: 'reset' })}>

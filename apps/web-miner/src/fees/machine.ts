@@ -35,6 +35,7 @@ export type Funding =
   | {
       readonly at: 'trade';
       readonly quote: Quote;
+      /** `steps[i]` is the state of `quote.steps[i]`. */
       readonly steps: readonly StepState[];
       readonly failure: Failure | null;
     }
@@ -87,7 +88,10 @@ const requote = (quote: Quote, refreshed: boolean): Funding => ({
 
 const sameToken = (a: Token, b: Token) => a.chainId === b.chainId && a.address === b.address;
 
-type Trade = Extract<Funding, { at: 'trade' }>;
+export type Trade = Extract<Funding, { at: 'trade' }>;
+
+/** A trade under way or landed: what the progress views draw. */
+export type Shown = Extract<Funding, { at: 'trade' | 'done' }>;
 
 const withStep = (s: Trade, phase: Phase, patch: (x: StepState) => StepState | null): Funding => {
   let changed = false;

@@ -36,7 +36,6 @@ const matches = (t: Token, query: string): boolean => {
   return q === '' || t.symbol.toLowerCase().includes(q) || t.name.toLowerCase().includes(q);
 };
 
-/** A chain, a search, the tokens the wallet holds there. */
 export function TokenPicker({
   provider,
   chains,

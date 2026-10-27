@@ -14,14 +14,16 @@ import {
 } from '@yacana/ui';
 import { useState } from 'react';
 import { useElapsed } from '../../features/dialogs/Frame';
-import { FEE_JUICE, failureCopy, fj, tradeLine } from '../copy';
-import type { Funding } from '../machine';
-import { Held, type OptionProps } from '../parts/Choose';
+import { FEE_JUICE, failureCopy, fj, retryLabel, tradeLine } from '../copy';
+import type { Funding, Shown } from '../machine';
+import { Held } from '../parts/Held';
 import { QuoteView } from '../parts/QuoteView';
 import { TokenPicker, useChains } from '../parts/TokenPicker';
 import type { Chain, FeeFundingProvider, Token } from '../provider';
-import { type FundingRun, useFunding } from '../run';
-import { flight, type Shown, timelineItems } from '../views';
+import { type FundingRun, type OptionProps, useFunding } from '../run';
+import { flight, timelineItems, useRequotes } from '../views';
+
+const tokenKey = (t: Token) => `${t.chainId}:${t.address}`;
 
 function Form({
   s,
@@ -35,12 +37,14 @@ function Form({
   chains: readonly Chain[];
 }) {
   const [picking, setPicking] = useState(false);
-  // The machine picks one token at a time: a second choice goes back through the picker state first.
+  // The machine picks one token at a time: another choice goes back through the picker state first, and
+  // the same one changes nothing (a fresh choice would drop the amount the field still shows).
   const choose = (token: Token) => {
+    setPicking(false);
+    if (s.at === 'quote' && tokenKey(s.token) === tokenKey(token)) return;
     if (s.at === 'idle') run.dispatch({ type: 'open' });
     if (s.at === 'quote') run.dispatch({ type: 'back' });
     run.dispatch({ type: 'choose', token });
-    setPicking(false);
   };
   return (
     <>
@@ -55,7 +59,7 @@ function Form({
         </PopoverContent>
       </Popover>
       {s.at === 'quote' && (
-        <QuoteView key={s.token.address} run={run} s={s} chains={chains} block onConfirm={run.confirm} />
+        <QuoteView key={tokenKey(s.token)} run={run} s={s} chains={chains} block onConfirm={run.confirm} />
       )}
     </>
   );
@@ -63,8 +67,8 @@ function Form({
 
 function Progress({ s, run }: { s: Shown; run: FundingRun }) {
   const elapsed = useElapsed(flight(s)?.since);
-  const failure = s.at === 'trade' ? s.failure : null;
-  const copy = s.at === 'trade' && failure ? failureCopy(s, failure) : null;
+  const requotes = useRequotes(s);
+  const copy = s.at === 'trade' && s.failure ? failureCopy(s, s.failure, requotes) : null;
   return (
     <>
       <p className="font-mono text-xs text-ink-3">{tradeLine(s)}</p>
@@ -73,7 +77,7 @@ function Progress({ s, run }: { s: Shown; run: FundingRun }) {
         <Note tone="bad" title={<span data-testid="fees-failure">{copy.title}</span>}>
           {copy.body}{' '}
           <Button variant="uv" size="sm" className="mt-2" onClick={run.retry} data-testid="fees-retry">
-            Try again
+            {retryLabel(requotes)}
           </Button>
         </Note>
       )}

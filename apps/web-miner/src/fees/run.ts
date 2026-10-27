@@ -2,7 +2,7 @@
 // route left and come back to, finds the same trade. A provider's answer counts only while the
 // request that asked for it is the current one.
 
-import { useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { firstLine } from '../features/dialogs/Frame';
 import { type Funding, type FundingEvent, next, reduce } from './machine';
 import { type FeeFundingProvider, FundingError } from './provider';
@@ -125,4 +125,21 @@ export class FundingRun {
   }
 }
 
-export const useFunding = (run: FundingRun): Funding => useSyncExternalStore(run.subscribe, run.getState);
+export interface OptionProps {
+  run: FundingRun;
+  provider: FeeFundingProvider;
+  /** The Aztec account the Fee Juice is for. */
+  account: string;
+}
+
+/** The runner's state for a view. A pick or a quote the view leaves is dropped, so nothing re-quotes off screen. */
+export function useFunding(run: FundingRun): Funding {
+  useEffect(
+    () => () => {
+      const { at } = run.getState();
+      if (at === 'pick' || at === 'quote') run.dispatch({ type: 'reset' });
+    },
+    [run],
+  );
+  return useSyncExternalStore(run.subscribe, run.getState);
+}

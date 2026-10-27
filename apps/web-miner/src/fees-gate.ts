@@ -3,7 +3,6 @@
 // production build as an orphan chunk.
 import { lazy } from 'react';
 
-/** The options under design, each in its own place: a line under the balance, a card over the cockpit, a Settings tile. */
 export type FeesOption = 'a' | 'b' | 'c';
 export type FeesPlacement = 'balance' | 'cockpit' | 'settings';
 
@@ -18,9 +17,12 @@ const optionFrom = (search: string): FeesOption | null => {
   return v === 'a' || v === 'b' || v === 'c' ? v : null;
 };
 
-/** `?fees=a|b|c`, read once at load so in-app navigation keeps it; null in a production build. */
+/** The query as the page loaded: in-app navigation drops it, and the flow's switches live in it. */
+export const feesSearch: string = import.meta.env.VITE_DEV_FUND_FEES === '1' ? location.search : '';
+
+/** `?fees=a|b|c`; null in a production build. */
 export const feesOption: FeesOption | null =
-  import.meta.env.VITE_DEV_FUND_FEES === '1' ? optionFrom(location.search) : null;
+  import.meta.env.VITE_DEV_FUND_FEES === '1' ? optionFrom(feesSearch) : null;
 
 /** The slot each placement mounts; null unless a flagged build was opened with `?fees=`. */
 export const FeesSlot =

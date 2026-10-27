@@ -3,12 +3,11 @@
 
 import type { Step, TimelineItem, TrailItem } from '@yacana/ui';
 import type * as React from 'react';
+import { useEffect, useState } from 'react';
 import { duration } from '../lib/format';
 import { phaseLine, phaseName, STATION } from './copy';
-import { type Funding, IN_FLIGHT, type StepState, type StepStatus } from './machine';
+import { type Funding, IN_FLIGHT, landed, type Shown, type StepState, type StepStatus } from './machine';
 import type { QuoteStep } from './provider';
-
-export type Shown = Extract<Funding, { at: 'trade' | 'done' }>;
 
 const STEPPER: Readonly<Record<StepStatus, Step['state']>> = {
   todo: 'pending',
@@ -46,7 +45,6 @@ function Mark({ step, children }: { step: StepState; children: React.ReactNode }
   );
 }
 
-/** Each step with the quote's view of it; a finished trade reads as every step done. */
 function rows(s: Shown): { step: StepState; plan: QuoteStep }[] {
   return s.quote.steps.map((plan, i) => ({
     plan,
@@ -54,7 +52,6 @@ function rows(s: Shown): { step: StepState; plan: QuoteStep }[] {
   }));
 }
 
-/** The step in flight, if any: its start feeds the elapsed time beside it. */
 export const flight = (s: Funding): StepState | undefined =>
   s.at === 'trade' ? s.steps.find((x) => IN_FLIGHT.has(x.status)) : undefined;
 
@@ -94,3 +91,20 @@ export const timelineItems = (s: Shown, elapsed: number | undefined): TimelineIt
     detail: timelineLine(step, plan, elapsed),
     state: TIMELINE[step.status],
   }));
+
+/**
+ * Whether a stopped trade's retry asks for a new quote first: nothing landed and the quote ran out, as the
+ * machine's retry decides. Flips at the quote's expiry while the failure stands.
+ */
+export function useRequotes(s: Funding): boolean {
+  const waiting = s.at === 'trade' && s.failure !== null && !landed(s);
+  const expiresAt = s.at === 'trade' ? s.quote.expiresAt : 0;
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    if (!waiting) return;
+    setNow(Date.now());
+    const id = setTimeout(() => setNow(Date.now()), Math.max(0, expiresAt - Date.now()));
+    return () => clearTimeout(id);
+  }, [waiting, expiresAt]);
+  return waiting && now >= expiresAt;
+}
