@@ -301,6 +301,20 @@ export async function readEpochs(
   return linkRows(rows);
 }
 
+/** The open epoch with its seed: what a continuation of this version starts from. */
+export async function readOpenEpochWithSeed(
+  node: Node,
+  miner: AztecAddress,
+  layout: StorageLayout,
+  load: SlotLoader,
+  limits = DEFAULT_LIMITS,
+): Promise<{ epoch: number; target: bigint; seed: bigint }> {
+  const epoch = await readOpenEpochNumber(node, miner, layout, limits);
+  const [row] = await readEpochs(node, miner, { from: epoch, to: epoch }, load, { withSeed: true, limits });
+  if (row?.seed === undefined) throw new Error(`could not read epoch ${epoch} of the miner`);
+  return { epoch, target: row.target, seed: row.seed };
+}
+
 /** Fills each row's closing facts from its successor; the last row stays open. */
 export function linkRows(rows: EpochRow[]): EpochRow[] {
   return rows.map((row, i) => {

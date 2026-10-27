@@ -169,7 +169,7 @@ describe.skipIf(!enabled)('the migration V5 → V6', () => {
     expect(await v5.operator.yaca.read.balanceOf([RECIPIENT])).toBe(slice);
 
     // V5's continuation, read while its node still answers; then V5 paused and stopped, V6 started.
-    const continuation = await continuationOf(v5.recordPath);
+    const continuation = await continuationOf(v5.recordPath, 'node-only');
     await user.stop();
     await rig.stopNode();
     const node6 = await rig.startNode(v6v);

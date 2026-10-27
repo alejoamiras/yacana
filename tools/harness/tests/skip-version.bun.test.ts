@@ -85,7 +85,7 @@ describe.skipIf(!enabled)('a skipped version (H7)', () => {
     );
 
     // V7's miner is V5's continuation; V6 stays a Registry entry Yacana never registered.
-    const continuation = await continuationOf(v5.recordPath);
+    const continuation = await continuationOf(v5.recordPath, 'node-only');
     await user.stop();
     await rig.stopNode();
     const node7 = await rig.startNode(v7v);

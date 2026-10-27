@@ -124,7 +124,7 @@ and one issue)". UI impact: none on any app. Operator consoles change: the deplo
 
 ## Phases
 
-### P1 (a1): the continuation needs two sources
+### P1 (a1): the continuation needs two sources — ✓ 2026-10-27
 
 1. Add `readOpenEpoch` and `announcedFromEnv`. Change `continuationOf`, the CLI, `epoch-stats.ts` and the rig callers.
 2. Rewrite `continuation.test.ts` with a `Bun.serve({ port: 0 })` JSON-RPC stub (`aztec_getPublicStorageAt`,
@@ -136,6 +136,7 @@ and one issue)". UI impact: none on any app. Operator consoles change: the deplo
 4. Update `deploy.ts`'s header, `docs/upgrades.md` step 6 and `CLAUDE.md`. Step 6 says: read the tuple with
    `AZTEC_NODE_URL=<another V5 node> bun run epoch:stats -- <record>`, set it, deploy, and read again on a mismatch.
    It also says that anyone may still roll V5 after `T_MAX`, so two agreeing reads are not proof of V5's last epoch.
+   Deviation (the tree wins): the helper is `readOpenEpochWithSeed`; `epoch.ts` already exports a `readOpenEpoch`.
 
 **Validation gate**: `bun run lint && bun run typecheck && bun test tools/deploy packages/miner-core`. Pass: exit 0,
 and step 3's failures quoted in `lessons/phase-1.md`. Layers: lint, typecheck, unit (stub node over HTTP).

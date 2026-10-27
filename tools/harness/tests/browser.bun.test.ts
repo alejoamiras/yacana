@@ -263,7 +263,7 @@ describe.skipIf(!enabled)('the migration through the page (browser)', () => {
     'on V6: restore, the recovery file, the holder’s own forward and claim, the redeem — through the page',
     async () => {
       await serial(async () => {
-        const continuation = await continuationOf(v5.recordPath);
+        const continuation = await continuationOf(v5.recordPath, 'node-only');
         await rig.stopNode();
         const node6 = await rig.startNode(v6v);
         const v6 = await deployMiner(rig, node6, bridge, { continuation });

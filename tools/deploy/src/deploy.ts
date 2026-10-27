@@ -3,8 +3,8 @@
 // miner, then one bind_token. Fees go through the sponsored FPC; the deployer is an
 // initializerless Schnorr account derived from YACANA_DEPLOYER_SECRET (never logged).
 //   AZTEC_NODE_URL=… YACANA_DEPLOYER_SECRET=0x… YACANA_PORTAL=0x… [YACANA_LAUNCH_AT=<unix seconds>] \
-//     [YACANA_CONTINUE_FROM=deployments/<source>.json] [YACANA_DEPLOY_SALT=0x…] [YACANA_DEPLOY_FORCE=1] \
-//     bun tools/deploy/src/deploy.ts
+//     [YACANA_CONTINUE_FROM=deployments/<source>.json YACANA_CONTINUE_FIRST_EPOCH=… YACANA_CONTINUE_SEED=0x… \
+//      YACANA_CONTINUE_TARGET=…] [YACANA_DEPLOY_SALT=0x…] [YACANA_DEPLOY_FORCE=1] bun tools/deploy/src/deploy.ts
 
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -242,48 +242,60 @@ const bridgeRecord = (
       }),
 });
 
+/** A continuation's start as read from the source: its open epoch + 1, that epoch's seed and target. */
+export type Announced = Omit<NonNullable<DeployOverrides['continuation']>, 'source'>;
+
 /**
- * What a continuation needs from its source: the source record names the node and the miner, and
- * the miner's last epoch and its seed are read from the source chain's public storage. The
- * source's node must still answer; once it is gone, the announced values are passed by hand
- * (YACANA_CONTINUE_FIRST_EPOCH + YACANA_CONTINUE_SEED + YACANA_CONTINUE_TARGET), taken as given:
- * checking them against the announcement is the operator's, not this script's.
+ * What a continuation needs from its source, read from the source record's node. Its start is
+ * immutable on the new miner, so one node answer must not decide it: outside a local network the
+ * operator's own read from another node (`announced`) must match field for field. Only the rig, whose
+ * node is its own, passes 'node-only'. Agreement is not finality: anyone may still roll a retired
+ * version after T_MAX.
  */
 export async function continuationOf(
   sourceRecord: string,
+  announced: Announced | 'node-only',
 ): Promise<NonNullable<DeployOverrides['continuation']>> {
   const source = (await Bun.file(resolve(repo, sourceRecord)).json()) as Deployment;
-  const first = process.env.YACANA_CONTINUE_FIRST_EPOCH;
-  const seed = process.env.YACANA_CONTINUE_SEED;
-  const target = process.env.YACANA_CONTINUE_TARGET;
-  if (first && seed && target) {
-    return {
-      firstEpoch: BigInt(first),
-      sourceSeed: Fr.fromString(seed),
-      sourceTarget: BigInt(target),
-      source: sourceRecord,
-    };
-  }
-  if (first || seed || target)
-    throw new Error(
-      'YACANA_CONTINUE_FIRST_EPOCH, YACANA_CONTINUE_SEED and YACANA_CONTINUE_TARGET go together',
-    );
-  // The source's open epoch and its seed, straight from its public storage through the read path.
-  const { readEpochs, readOpenEpochNumber } = await import('@yacana/miner-core/reader');
+  const { readOpenEpochWithSeed } = await import('@yacana/miner-core/reader');
   const { deriveSlotTable, loadLayouts } = await import('@yacana/miner-core/slots');
   const node = createAztecNodeClient(source.nodeUrl, { maxBatchSize: NODE_MAX_BATCH });
-  const miner = AztecAddress.fromStringUnsafe(source.miner);
   const layout = (await loadLayouts()).miner;
-  const last = await readOpenEpochNumber(node, miner, layout);
-  const load = (chunk: number) => deriveSlotTable(layout, chunk);
-  const [row] = await readEpochs(node, miner, { from: last, to: last }, load, { withSeed: true });
-  if (row?.seed === undefined) throw new Error(`could not read epoch ${last} of the source miner`);
-  return {
-    firstEpoch: BigInt(last) + 1n,
-    sourceSeed: new Fr(row.seed),
-    sourceTarget: row.target,
-    source: sourceRecord,
+  const open = await readOpenEpochWithSeed(
+    node,
+    AztecAddress.fromStringUnsafe(source.miner),
+    layout,
+    (chunk) => deriveSlotTable(layout, chunk),
+  );
+  const read: Announced = {
+    firstEpoch: BigInt(open.epoch) + 1n,
+    sourceSeed: new Fr(open.seed),
+    sourceTarget: open.target,
   };
+  if (announced !== 'node-only') {
+    const differ = [
+      ['FIRST_EPOCH', read.firstEpoch === announced.firstEpoch, read.firstEpoch, announced.firstEpoch],
+      ['SEED', read.sourceSeed.equals(announced.sourceSeed), read.sourceSeed, announced.sourceSeed],
+      ['TARGET', read.sourceTarget === announced.sourceTarget, read.sourceTarget, announced.sourceTarget],
+    ].filter(([, same]) => !same);
+    if (differ.length)
+      throw new Error(
+        `the source node and YACANA_CONTINUE_* disagree: ${differ.map(([k, , node, given]) => `${k} node ${node}, given ${given}`).join('; ')}. Read both again (docs/upgrades.md step 6)`,
+      );
+  }
+  return { ...read, source: sourceRecord };
+}
+
+/** The operator's read of the source from another node: all three keys, or the deploy refuses. */
+export function announcedFromEnv(env: Record<string, string | undefined> = process.env): Announced {
+  const first = env.YACANA_CONTINUE_FIRST_EPOCH;
+  const seed = env.YACANA_CONTINUE_SEED;
+  const target = env.YACANA_CONTINUE_TARGET;
+  if (!first || !seed || !target)
+    throw new Error(
+      'a continuation needs YACANA_CONTINUE_FIRST_EPOCH, YACANA_CONTINUE_SEED and YACANA_CONTINUE_TARGET, read from another node (docs/upgrades.md step 6)',
+    );
+  return { firstEpoch: BigInt(first), sourceSeed: Fr.fromString(seed), sourceTarget: BigInt(target) };
 }
 
 /** A fixed, non-zero portal for local runs that never touch Ethereum; the miner refuses zero. */
@@ -314,10 +326,7 @@ if (import.meta.main) {
   if (launchAt < 0n || launchAt >= 1n << 63n) throw new Error('YACANA_LAUNCH_AT must be unix seconds');
   if (!process.env.YACANA_PORTAL) throw new Error('YACANA_PORTAL (the Ethereum portal address) is required');
   const portal = EthAddress.fromString(process.env.YACANA_PORTAL);
-  // A continuation names its source deployment record; the first epoch and seed are read from it.
-  const continuation = process.env.YACANA_CONTINUE_FROM
-    ? await continuationOf(process.env.YACANA_CONTINUE_FROM)
-    : undefined;
+  const continuation = source ? await continuationOf(source, announcedFromEnv()) : undefined;
   // The bridge block is settled before anything is spent: a mismatch refuses the deploy.
   const side = resolve(dir, `${PROFILE}.bridge.json`);
   const bridge = carriedBridge(portal.toString(), [
