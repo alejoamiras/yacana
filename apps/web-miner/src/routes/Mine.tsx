@@ -1,6 +1,6 @@
 import { cn, TileBoundary } from '@yacana/ui';
 import { useAtomValue } from 'jotai';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { isOldRole } from '../bridge/env';
 import { BalanceCard } from '../components/BalanceCard';
 import type { MinerController } from '../controller';
@@ -14,6 +14,7 @@ import { NoticeCard } from '../features/NoticeCard';
 import { OldApp } from '../features/OldApp';
 import { RailTile } from '../features/RailTile';
 import { usePresto } from '../features/use-presto';
+import { FeesSlot } from '../fees-gate';
 import { introAtom } from '../intro';
 import { useTileLog } from '../lib/tile-log';
 import type { Session } from '../session';
@@ -96,6 +97,11 @@ export function Mine({
         <div className="md:col-span-2 xl:col-span-4">
           <NoticeCard notice={notice} />
         </div>
+      )}
+      {FeesSlot && (
+        <Suspense fallback={null}>
+          <FeesSlot at="cockpit" />
+        </Suspense>
       )}
       {session && ready && <GuidedPath session={session} />}
       <TileBoundary name="loop" onError={onError} className="md:col-span-2 xl:col-span-3">

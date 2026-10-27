@@ -19,7 +19,7 @@ import { relyingParty } from '@yacana/web-kit/browser/host';
 import { ownVersionName } from '@yacana/web-kit/browser/version-name';
 import { useAtomValue, useSetAtom } from 'jotai';
 import type * as React from 'react';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { bridgeRecord, isOldRole } from '../bridge/env';
 import { NodeTile } from '../components/NodeTile';
 import type { Connection } from '../config';
@@ -28,6 +28,7 @@ import { links } from '../explorer';
 import { EthRpcTile } from '../features/EthRpcTile';
 import { SignOutDialog } from '../features/SignOutDialog';
 import { type PrestoView, usePresto } from '../features/use-presto';
+import { FeesSlot } from '../fees-gate';
 import { apexHost, FAQ_HREF } from '../lib/apex';
 import { shortAddress } from '../lib/format';
 import { useTileLog } from '../lib/tile-log';
@@ -275,6 +276,11 @@ export function Settings({
           </div>
         </Tile>
       </TileBoundary>
+      {FeesSlot && (
+        <Suspense fallback={null}>
+          <FeesSlot at="settings" />
+        </Suspense>
+      )}
       {!old && (
         <TileBoundary name="mining" onError={onError}>
           <MiningTile

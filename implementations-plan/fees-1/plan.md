@@ -232,7 +232,7 @@ refusal (D6).
 
 ## 6. Phases
 
-### Phase 1 (a1): the flag and its proof
+### Phase 1 (a1): the flag and its proof ✓
 1. Add `devFundFees: mode !== 'production' && env.VITE_DEV_FUND_FEES === '1'` to `SiteConfig`. Add its define and its
    env type. Add one `config.test.ts` case: production ignores it, and dev and e2e honour it.
 2. Write `src/fees-gate.ts`, and a `src/fees/Slot.tsx` that renders nothing yet. Mount the slot in `BalanceCard`,
