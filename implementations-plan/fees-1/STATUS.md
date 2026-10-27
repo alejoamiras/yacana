@@ -12,3 +12,6 @@
 - 2026-10-27 a1 P3 gate green: lint 0, typecheck 0, test:components (web-miner 171, ui 90, stats-view 83, landing 15,
   web-stats 2), `bun test apps/web-miner` 325 pass / 4 skip (env-gated, not this lane's), build 0, check-chunks
   "first paint: 9 chunks, no stats module". The forced break (A's close drops the trade) failed the reopen case.
+- 2026-10-27 a1 P4 gate green at retry 0: lint 0, typecheck 0, e2e-inventory 8 pass, replay lane 10 passed in 2.0 min
+  (was 1.2 min for 9), the scenario 47.6 s and 47.5 s on two runs (estimate 65 s, ceiling 70 s); check-chunks exit 0.
+  The forced break (a same-origin `fetch('/fees-probe')` in the mock's quote) failed option a on that URL; reverted.

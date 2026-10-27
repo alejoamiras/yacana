@@ -278,7 +278,7 @@ refusal (D6).
   Pass: exit 0. `cockpit.vitest.tsx` and `settings.vitest.tsx` pass unchanged. The bundle test is still green with
   the real modules. check-chunks prints the same first paint. Layers: lint, typecheck, unit, component, build.
 
-### Phase 4 (a1): the browser scenario
+### Phase 4 (a1): the browser scenario ✓
 1. Set `VITE_DEV_FUND_FEES: '1'` in `replayEnv`.
 2. Write `e2e/replay/fund-fees.replay.ts`, one test: "the mocked fee funding runs end to end in every option,
    through a failed claim and its retry".

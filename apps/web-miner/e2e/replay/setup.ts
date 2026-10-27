@@ -71,6 +71,7 @@ const replayEnv = (d: ReplayDeployment): NodeJS.ProcessEnv => ({
   VITE_AZTEC_NODE_URL: REPLAY_NODE_ORIGIN,
   VITE_RP_ID: 'localhost',
   VITE_E2E_QUERY_OVERRIDES: '1',
+  VITE_DEV_FUND_FEES: '1',
   VITE_PRESTO_E2E_PORT: '',
   VITE_CHAIN_ID: d.chainId,
   VITE_ROLLUP_VERSION: d.rollupVersion,
