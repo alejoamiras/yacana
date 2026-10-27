@@ -218,6 +218,7 @@ continuation needs two sources; the lottery secret stays private`. Body: what an
 | final-v2 | same session, resumed | **approve** | the fold verified, no regression | — |
 | fix r1 | Codex gpt-6.1-sol high + Opus 5.5 (same family) | Codex **clean**; Opus 3 low | Opus 1: `epoch:stats` could be run against the record's own node unseen → the line names the origin read and flags the record's own; Opus 2: a tuple without `YACANA_CONTINUE_FROM` deployed a genesis → refused; Opus 3: the coverage row overstated the rig → corrected, `skip-version` added; a shadowed `node` renamed | Opus test gaps (the write-before-send order, the CLI passing `'node-only'`): both sit in `import.meta.main` blocks; testing them means restructuring the scripts for a test, and the code is two adjacent lines |
 | fix r2 | Codex, same session resumed | **clean** | the fixes verified, no regression; converged in 2 rounds | — |
+| fix r3 | Codex, same session resumed (docs only) | **clean** | #91 and the step-6 wording match the code | — |
 
 Size: about 230 lines against light's 150. The verbatim fix-loop rules, two claims that did not hold and the
 issue specification carry the excess.
