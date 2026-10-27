@@ -6,3 +6,4 @@
 - 2026-10-27 codex plan r1: reject; 7 findings accepted (tuple-only path removed, commit refusal kept, roll-after-retire as a known limit)
 - 2026-10-27 codex final pass: conditional approve → folded → conditional approve (A3) → folded → approve; plan committed
 - 2026-10-27 P1 gate green: lint, typecheck, bun test tools/deploy packages/miner-core (76 pass, 9 skip, 0 fail); refusals red without the comparison
+- 2026-10-27 P2 gate green: lint, typecheck, bun test tools/deploy (25 pass, 9 skip, 0 fail); the mode and the overwrite each red first

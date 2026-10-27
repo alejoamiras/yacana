@@ -141,7 +141,7 @@ and one issue)". UI impact: none on any app. Operator consoles change: the deplo
 **Validation gate**: `bun run lint && bun run typecheck && bun test tools/deploy packages/miner-core`. Pass: exit 0,
 and step 3's failures quoted in `lessons/phase-1.md`. Layers: lint, typecheck, unit (stub node over HTTP).
 
-### P2 (a1): the lottery secret
+### P2 (a1): the lottery secret — ✓ 2026-10-27
 
 1. Write `launch.test.ts`. In a `mkdtempSync` dir under `process.umask(0o002)`, restored after: the first
    `writeLaunchSecret` leaves mode 0600, and the JSON reads back. A second call throws `EEXIST`, and the file is
