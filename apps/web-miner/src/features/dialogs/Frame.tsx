@@ -4,6 +4,10 @@ import { Button, cn, Dialog, DialogContent, DialogDescription, DialogTitle } fro
 import type * as React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+/** For content that can outgrow the window: centred and uncapped, its title and its action would leave it. */
+export const FITS_WINDOW =
+  'top-[clamp(24px,20vh,180px)] max-h-[calc(100vh_-_clamp(24px,20vh,180px)_-_24px)] translate-y-0 overflow-y-auto';
+
 export function TxDialog({
   open,
   onOpenChange,
@@ -11,6 +15,8 @@ export function TxDialog({
   title,
   body,
   locked = false,
+  fitsWindow = false,
+  className,
   children,
   ...props
 }: Omit<React.ComponentProps<typeof DialogContent>, 'title'> & {
@@ -21,11 +27,14 @@ export function TxDialog({
   body?: React.ReactNode;
   /** While something proves or a wallet is being asked: no close, no dismiss. */
   locked?: boolean;
+  /** Content that can be longer than the window: the account dialog's rule, `FITS_WINDOW`. */
+  fitsWindow?: boolean;
 }) {
   return (
     <Dialog open={open} onOpenChange={(o) => !o && !locked && onOpenChange(false)}>
       <DialogContent
         size="tx"
+        className={cn(fitsWindow && FITS_WINDOW, className)}
         hideClose={locked}
         onEscapeKeyDown={(e) => locked && e.preventDefault()}
         onInteractOutside={(e) => locked && e.preventDefault()}

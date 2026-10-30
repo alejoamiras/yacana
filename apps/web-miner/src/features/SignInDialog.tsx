@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogTitle } from '@yacana/ui';
+import { cn, Dialog, DialogContent, DialogTitle } from '@yacana/ui';
 import { keysAllowed } from '@yacana/web-kit/browser/host';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useEffect, useState } from 'react';
@@ -14,6 +14,7 @@ import { Start } from './account/Start';
 import { Welcome } from './account/Welcome';
 import { WordsBackup } from './account/Words';
 import { WordsLogIn } from './account/WordsLogIn';
+import { FITS_WINDOW } from './dialogs/Frame';
 import { SignOutDialog } from './SignOutDialog';
 
 type Screen = 'start' | 'create' | 'login' | 'words' | 'words-login' | 'welcome';
@@ -220,7 +221,7 @@ export function SignInDialog({ session }: { session: Session }) {
         hideClose
         size="tx"
         overlayClassName="bg-[rgba(10,10,11,.42)]"
-        className="top-[clamp(24px,20vh,180px)] max-h-[calc(100vh_-_clamp(24px,20vh,180px)_-_24px)] translate-y-0 overflow-y-auto shadow-[0_24px_80px_rgba(0,0,0,.6)]"
+        className={cn(FITS_WINDOW, 'shadow-[0_24px_80px_rgba(0,0,0,.6)]')}
         onEscapeKeyDown={dismiss}
         onInteractOutside={dismiss}
         aria-describedby={undefined}

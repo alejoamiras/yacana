@@ -1,4 +1,6 @@
-import { dialogOverflow, openDialog, virtualAuthenticator } from '../helpers.ts';
+import { generatePrivateKey } from 'viem/accounts';
+import { connectTestWallet, installL1Wallet } from '../helpers/l1-wallet.ts';
+import { BOOT_MS, dialogOverflow, openDialog, virtualAuthenticator } from '../helpers.ts';
 import { expect, type Page, test } from './fixtures.ts';
 
 /**
@@ -50,4 +52,103 @@ test('the account screens and their notes fit the dialog at 720 px tall', async 
   await page.getByTestId('written').check();
   await expect(page.getByTestId('quiz')).toBeVisible();
   await fits(page, 'words-done');
+});
+
+/**
+ * The search's and the chain tabs' heights, measured again with the list out of the layout: a flex
+ * column under a height cap squeezes every child that may shrink, not only the list.
+ */
+async function controlsWhole(page: Page) {
+  const picker = page.getByTestId('fees-picker');
+  const controls = picker.locator('[data-testid=fees-search], [aria-label=Chain]');
+  const heights = () => controls.evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height));
+  const pressed = await heights();
+  const list = picker.getByTestId('fees-token-list');
+  await list.evaluate((l) => {
+    l.style.display = 'none';
+  });
+  expect(await heights()).toEqual(pressed);
+  await list.evaluate((l) => {
+    l.style.display = '';
+  });
+}
+
+const feeDialogBox = (page: Page) =>
+  page.getByTestId('fees-dialog').evaluate((d) => {
+    const r = d.getBoundingClientRect();
+    return { top: r.top, bottom: r.bottom, scrolls: d.scrollHeight - d.clientHeight };
+  });
+
+// The dialog itself must not scroll: scrolled as a whole, it carries its head and foot away with the list.
+async function feeDialogFits(page: Page, foot: boolean) {
+  const dialog = page.getByTestId('fees-dialog');
+  const list = dialog.getByTestId('fees-token-list');
+  const rows = list.locator('[data-testid^=fees-token-]');
+  await expect(rows.first()).toBeVisible();
+  const box = await feeDialogBox(page);
+  expect(box.top).toBeGreaterThanOrEqual(0);
+  expect(box.bottom).toBeLessThanOrEqual(720);
+  expect(box.scrolls).toBeLessThanOrEqual(0);
+  const ends = [
+    dialog.getByRole('heading', { name: 'Fund fees.' }),
+    dialog.getByTestId('eth-account'),
+    dialog.getByTestId('fees-search'),
+    ...(foot ? [dialog.getByText('Resuming a funding? Load its file')] : []),
+  ];
+  for (const part of ends) await expect(part).toBeInViewport();
+  expect(await list.evaluate((l) => l.scrollHeight - l.clientHeight)).toBeGreaterThan(0);
+  await rows.last().scrollIntoViewIfNeeded();
+  await expect(rows.last()).toBeInViewport();
+  for (const part of ends) await expect(part).toBeInViewport();
+  await controlsWhole(page);
+}
+
+test('the fee dialog stays inside the window, its token list scrolling between the search and the file link', async ({
+  page,
+  replay,
+}) => {
+  await page.setViewportSize({ width: 900, height: 720 });
+  await installL1Wallet(page.context(), {
+    rpcUrl: 'http://127.0.0.1:1',
+    privateKey: generatePrivateKey(),
+    chainId: 11155111,
+  });
+  const open = async (option: string) => {
+    await page.goto(replay.url({ fees: option, 'fees-session': 'stand-in' }));
+    await expect(page.getByTestId('cockpit')).toBeVisible({ timeout: BOOT_MS });
+    await page.getByTestId('fees-entry').click();
+  };
+  // E lists every supported token: the held first, then the rest under their heading.
+  await open('e');
+  await connectTestWallet(page);
+  await feeDialogFits(page, true);
+  // Reloaded, the wallet reconnects on its own and E opens straight on the full list.
+  await page.reload();
+  await expect(page.getByTestId('cockpit')).toBeVisible({ timeout: BOOT_MS });
+  await page.getByTestId('fees-entry').click();
+  await feeDialogFits(page, true);
+  // A list too short for the floor is not padded to it.
+  await page.getByTestId('fees-search').fill('no such token');
+  await expect(page.getByText('No token that buys Fee Juice matches')).toBeVisible();
+  const picker = page.getByTestId('fees-picker');
+  const pad = await picker.evaluate(
+    (p) =>
+      p.getBoundingClientRect().bottom - (p.lastElementChild as HTMLElement).getBoundingClientRect().bottom,
+  );
+  expect(pad).toBeLessThanOrEqual(0);
+  // D and F list the held tokens alone; a broad search lists most of them.
+  for (const option of ['d', 'f']) {
+    await open(option);
+    await page.getByTestId('fees-search').fill('a');
+    await feeDialogFits(page, false);
+  }
+  // Under the picker's floor the dialog scrolls as a whole, still inside the window, its tabs whole.
+  await page.setViewportSize({ width: 900, height: 480 });
+  await open('f');
+  await expect(page.getByRole('radiogroup', { name: 'Chain' })).toBeVisible();
+  const box = await feeDialogBox(page);
+  expect(box.top).toBeGreaterThanOrEqual(0);
+  expect(box.bottom).toBeLessThanOrEqual(480);
+  expect(box.scrolls).toBeGreaterThan(0);
+  await controlsWhole(page);
 });
