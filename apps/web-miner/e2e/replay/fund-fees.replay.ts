@@ -17,8 +17,8 @@ const CONNECT_ASKS = new Set([
 const SEPOLIA = 11155111;
 
 interface Window {
-  /** Same-origin fetches and XHRs, as `METHOD URL BODY`. */
-  same: string[];
+  /** Same-origin fetches and XHRs, as `METHOD URL BODY`, and when each left, in ms from the window's start. */
+  same: { line: string; at: number }[];
   /** The JSON-RPC methods the page sent the node. */
   node: Set<string>;
   /** Every request's URL and body, whatever its origin or type. */
@@ -28,12 +28,13 @@ interface Window {
 /** The page's requests from now until `stop`. */
 function watch(page: Page, app: string): { stop: () => Window } {
   const w: Window = { same: [], node: new Set(), all: [] };
+  const start = Date.now();
   const on = (r: Request) => {
     const url = new URL(r.url());
     const body = r.postData() ?? '';
     w.all.push(`${r.url()} ${body}`);
     if (r.resourceType() !== 'fetch' && r.resourceType() !== 'xhr') return;
-    if (url.origin === app) w.same.push(`${r.method()} ${r.url()} ${body}`);
+    if (url.origin === app) w.same.push({ line: `${r.method()} ${r.url()} ${body}`, at: Date.now() - start });
     if (url.origin === REPLAY_NODE_ORIGIN) {
       const calls = [r.postDataJSON() as { method: string } | { method: string }[]].flat();
       for (const c of calls) w.node.add(c.method);
@@ -48,21 +49,26 @@ function watch(page: Page, app: string): { stop: () => Window } {
   };
 }
 
+/** The old-tab check's first look comes 20 s after a load; a second of slack for the window's own start. */
+const OLD_TAB_FIRST_MS = 19_000;
+
 /**
- * The old-tab check's first `GET /build.json` lands 20 s after a load: a window long enough holds it
- * once and the baseline may not, so one is set aside on both sides before they are compared.
+ * The window's requests, sorted, with the old-tab check's first `GET /build.json` set aside: a window
+ * long enough holds it once and the baseline may not. Only one that late is set aside, so the flow's
+ * own fetch of it, earlier or a second time, still counts.
  */
-function settled(same: readonly string[], app: string): string[] {
+function settled(w: Window, app: string): string[] {
   const timed = `GET ${app}/build.json `;
-  const out = [...same];
-  const i = out.indexOf(timed);
-  if (i >= 0) out.splice(i, 1);
-  return out.sort();
+  const i = w.same.findIndex((r) => r.line === timed && r.at >= OLD_TAB_FIRST_MS);
+  return w.same
+    .filter((_, j) => j !== i)
+    .map((r) => r.line)
+    .sort();
 }
 
 /** What the page sent from a navigation on equals the baseline load's: same requests, node methods among its. */
 function likeBaseline(w: Window, base: Window, app: string, where: string) {
-  expect(settled(w.same, app), where).toEqual(settled(base.same, app));
+  expect(settled(w, app), where).toEqual(settled(base, app));
   expect(
     [...w.node].filter((m) => !base.node.has(m)),
     where,
@@ -185,12 +191,16 @@ test('the mocked fee funding runs end to end in every ask27 option, and its reco
   const base = baseline.stop();
   everything.push(...base.all);
 
+  // The wallet's address names the visitor: no request, file or file name may carry it.
+  const sentinel = l1.address.slice(2).toLowerCase();
+  const leaks = (lines: readonly string[]) => lines.filter((r) => r.toLowerCase().includes(sentinel));
   const run = async (o: string, url: string, body: () => Promise<{ name: string; text: string }>) => {
     const w = watch(page, app);
     await openAt(page, url);
     files.push(await body());
     const seen = w.stop();
     everything.push(...seen.all);
+    expect(leaks(seen.all), o).toEqual([]);
     likeBaseline(seen, base, app, o);
   };
   await run('f', flagged('f'), () => optionF(page, l1, testInfo.outputPath('f.json')));
@@ -212,8 +222,10 @@ test('the mocked fee funding runs end to end in every ask27 option, and its reco
   await expect(page.getByTestId('fees-step-message')).toHaveAttribute('data-state', 'running');
   const pre = before.stop();
   everything.push(...pre.all);
+  expect(leaks(pre.all), 'e before the reload').toEqual([]);
+  const known = settled(base, app);
   expect(
-    settled(pre.same, app).filter((r) => !base.same.includes(r)),
+    settled(pre, app).filter((r) => !known.includes(r)),
     'e before the reload',
   ).toEqual([]);
 
@@ -232,6 +244,7 @@ test('the mocked fee funding runs end to end in every ask27 option, and its reco
   await doneAndDismissed(page);
   const resumed = after.stop();
   everything.push(...resumed.all);
+  expect(leaks(resumed.all), 'e after the reload').toEqual([]);
   likeBaseline(resumed, base, app, 'e after the reload');
   const landed = await page.evaluate(() => [
     ...(window as unknown as { __feesSeen: Set<string> }).__feesSeen,
@@ -243,16 +256,9 @@ test('the mocked fee funding runs end to end in every ask27 option, and its reco
   await page.waitForLoadState('networkidle');
   await expect(page.getByTestId('fees-card')).toHaveCount(0);
 
-  // The wallet's address names the visitor: no request, file or file name carries it, and the wallet was asked to connect only.
-  const sentinel = l1.address.slice(2).toLowerCase();
-  expect(everything.filter((r) => r.toLowerCase().includes(sentinel))).toEqual([]);
-  expect(files.map((f) => `${f.name} ${f.text}`.toLowerCase()).filter((f) => f.includes(sentinel))).toEqual(
-    [],
-  );
-  expect(files.map((f) => f.name)).toEqual([
-    expect.stringMatching(/^yacana-fees-\d+-\d+\.json$/),
-    expect.any(String),
-    expect.any(String),
-  ]);
+  // Every save made its own file, named for the network and its index alone; the wallet was asked to connect only.
+  expect(leaks(everything)).toEqual([]);
+  expect(leaks(files.map((f) => `${f.name} ${f.text}`))).toEqual([]);
+  expect(files.map((f) => /^yacana-fees-\d+-\d+\.json$/.test(f.name))).toEqual([true, true, true]);
   expect(l1.asked().filter((m) => !CONNECT_ASKS.has(m))).toEqual([]);
 });
