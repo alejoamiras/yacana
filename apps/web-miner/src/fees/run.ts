@@ -127,9 +127,9 @@ export class FundingRun {
   };
 
   /**
-   * Resumes the funding a recovery file names, from idle or the picker. Resolves to the line saying
-   * why it could not, or null: resumed, or superseded by a reset, another restore or anything the
-   * visitor did meanwhile (idle and the picker change only by the visitor's hand).
+   * Resumes the funding a recovery file names, from idle or the picker. Resolves to null when resumed
+   * or superseded by a reset or another restore; otherwise to the line saying why not, `SET_ASIDE`
+   * when the visitor moved on meanwhile (idle and the picker change only by the visitor's hand).
    */
   restore = async (file: Blob): Promise<string | null> => {
     this.restoring?.abort();

@@ -485,6 +485,30 @@ chunks, no stats module". Forced breaks: a second `GET /build.json` and a `POST`
 `/build.json?a=<wallet>` fails f's sentinel; a restore that reruns the deposit fails the observer
 (`deposit:signing`, `deposit:running`); `getBalance` as above.
 
+**a2 fix loop** (Codex `gpt-6.1-sol`, high, session `01a18dd6-4735-7482-9720-09eae6707aa2`; Opus general-purpose
+beside round 1):
+- r1 Codex changes requested (five) and Opus conditional approve (ten); fixed in `4f53201`, each race with a spec
+  that failed when its fix was removed:
+  1. Two quick saves made two records, and a save resolving after a reset and the same pair re-entered confirmed
+     a trade nobody clicked → one shared derivation; download and confirm only while the state is the one the save
+     began from; a funding binds to its first save (both reviewers).
+  2. A restore pending across the visitor's own moves replaced the picker with the old trade → set aside, with a
+     line (both).
+  3. e's pre-reload window lost multiplicity → `likeBaseline` (both).
+  4. The import guard missed namespace, default, dynamic and double-quoted imports, and reads through the page's
+     wallet and bridge modules → every form refused, those modules allowlisted by name, eight controls (both).
+  5. Narrating comments; the header's other-account claim did not hold under the stand-in master → trimmed,
+     qualified (Codex).
+  6. Opus alone: Go stayed enabled when the balance changed under a quote, and a quote outlived its wallet → Go
+     waits on the field's refusal, another wallet goes back to the picker; a partial `landed` list reran earlier
+     steps → every step up to the last landed is done; D's late save ran an expired quote with no way out → the save
+     re-quotes, and Cancel; a forged `constructor` symbol hit the rate table's prototype → own keys only; Restore's
+     reading state and silent drop → the latest load only, and the set-aside line; E's empty line contradicted its
+     list → copy per layout. Not taken: the test title keeps the plan's wording (a3 retitles); the download after
+     an await holds for this derivation, and the real lane's is the real provider's concern.
+- r2 (resumed) **approve**: "No material findings remain. Confidence: high." One low comment correction (the
+  restore's return contract), applied. Converged in two rounds.
+
 ## 8. Post-implementation
 
 - Comments to the bar as you code; attempts in `lessons/phase-N.md`; `agent-worktree status fees-1 "<gate>"` at each
