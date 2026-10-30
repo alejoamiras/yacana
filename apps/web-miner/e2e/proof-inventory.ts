@@ -115,7 +115,7 @@ export const SPEC_FILES: readonly string[] = Object.keys(INVENTORY);
 export const REPLAYED: Readonly<Record<string, readonly string[]>> = {
   'dialog-geometry.replay.ts': ['the account screens and their notes fit the dialog at 720 px tall'],
   'fund-fees.replay.ts': [
-    'the mocked fee funding runs end to end in every option, through a failed claim and its retry',
+    'the mocked fee funding runs end to end in every ask27 option, and its recovery file finishes the claim after the site data is cleared',
   ],
   'lna.replay.ts': [
     'the boundary is real: a secure context, targetAddressSpace, the descriptor that answers, and a fresh context reads prompt',

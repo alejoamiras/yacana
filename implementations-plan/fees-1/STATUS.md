@@ -20,3 +20,31 @@
 - 2026-10-27 a1 Codex round 2 clean (converged in two). Arc gate on the final head: lint 0, typecheck 0, `bun test`
   716 pass / 44 skip / 0 fail (with the pinned Aztec bin on PATH: `vk-pinning.test.ts` shells out to `aztec-nargo`),
   test:components green, replay 10 passed in 2.2 min (scenario 48.1 s), site:build 0 with no flow string in dist.
+- 2026-10-30 a1 merged as #93 (e8b7d06); `origin/main` merged into the branch. Revision started for a2, the shots
+  and a3 under P3-01 B, P3-03 S, P3-04 I, ask25 and ask27.
+- 2026-10-30 revision recon (one Sonnet sweep) and the planner's checks: FeeJuice 6.0.0 has no private balance; the
+  portal deposits only publicly; the bridge's recovery file holds no secret. Drafted the revision and outline Z.
+- 2026-10-30 dual audit: Codex r1 conditional approve (7 findings) and Opus conditional approve (12, five new);
+  all accepted and folded (§7); OA7 added; outline Z's case corrected. Final fresh Codex pass next.
+- 2026-10-30 final fresh Codex pass (new session): r1 conditional approve (4 accepted), r2 conditional approve (2
+  accepted), r3 approve. Revised plan committed; stopped at the approval gate.
+- 2026-10-30 a2 on branch `fees-1-a2` (origin/main + the plan commit). P5 gate green: lint 0, typecheck 0,
+  test:components (web-miner 175), `bun test apps/web-miner` 328 pass / 4 skip, replay 10 passed in 1.7 min (the
+  B scenario 18.3 s). Forced break (the entry rule ignoring the balance) failed the Dismiss case; reverted.
+- 2026-10-30 a2 P6 gate green: lint 0, typecheck 0, test:components (web-miner 179), `bun test apps/web-miner` 328
+  pass / 4 skip, replay 10 passed in 1.8 min (the B scenario, now connecting the injected test wallet, 18.3 s).
+  Forced break (the flow's wallet ignoring a bridge session's config) failed the handover case; reverted. The
+  flow's own wagmi config got a refusing transport: it reads no chain, so a stray read fails before any RPC.
+- 2026-10-30 a2 P7 gate green: lint 0, typecheck 0, test:components (web-miner 190), `bun test apps/web-miner` 334
+  pass / 4 skip, replay 10 passed in 1.6 min (the B scenario, now saving its file on Fund fees, 18.3 s). Forced
+  break (`next()` ignoring `saved`) failed "no step starts before the file is saved"; reverted. The commitment is
+  SHA-256 of the HKDF secret (pinned by a vector computed outside the code), not Poseidon2: the page has no bb wasm
+  here. The runner takes the derivation as an option, since WebCrypto and Blob reads never settle under fake timers.
+  The mock's token addresses became real hex (the file's address check refused the old spelling).
+- 2026-10-30 a2 P8 green: lint 0, typecheck 0, inventory 8 pass, replay 10 passed in 2.2 min (the scenario 50.7 s;
+  49 s alone after the baseline fix), check-chunks 0. Forced breaks recorded in plan §7 (a2 implementation). Codex
+  loop next.
+- 2026-10-30 a2 Codex loop converged in two rounds (r1 changes requested + Opus conditional approve, fixed in
+  `4f53201`; r2 approve). Arc gate on `b403343`: lint 0, typecheck 0, `bun test` 727 pass / 44 skip / 0 fail
+  (pinned Aztec bin on PATH), test:components (web-miner 197), replay 10 passed in 2.3 min (the scenario 49.3 s),
+  fund-fees-absent 2 pass, site:build 0, lint:actions 0. Push and PR next.

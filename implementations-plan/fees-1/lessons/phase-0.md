@@ -17,3 +17,19 @@
 - 2026-10-27 final fresh Codex pass (session 01a17f5c-ac12-7ca0-ae23-247cf20b793b): r1 conditional approve (four
   conditions), r2 conditional approve (the page fetches the CRS and the miner artifact same-origin at boot, so a
   navigation-wide request log needs a baseline; one leftover "often"), r3 approve.
+- 2026-10-30 revision recon (one Sonnet sweep): every claim checked against the tree held. It found that
+  `BridgeProviders` renders nothing without a bridge session and that e2e builds carry no bridge record, so the
+  flagged flow needs its own wagmi config when signed out; and that the bridge's file name carries the account.
+- 2026-10-30 Codex r1 on the revision (gpt-6.1-sol, high, read-only; session 01a18d72-2748-7f40-b367-3a98e13a9d5f):
+  conditional approve, seven findings, all accepted. It probed wagmi 3.7.7 in memory: connect asks
+  `wallet_requestPermissions` and swallows a refusal, so a wallet stand-in that refuses methods proves nothing about
+  what the page asks; and it showed the draft's recovery tag authenticated nothing under a public stand-in master.
+- 2026-10-30 Opus (Plan agent) on the revision: conditional approve, twelve findings, five beyond Codex's, all
+  accepted. It caught a phase-order stall (the save guard landing a phase before any option could save), that the
+  generic `injected()` connector has no `rdns` so one installed wallet makes two connectors, and that the recon's
+  claim that `installL1Wallet` needs anvil was wrong (its client is lazy).
+- 2026-10-30 final fresh Codex pass on the revision (session 01a18d81-d690-7952-b6e2-6ddcf688e0af): r1 conditional
+  approve. Its probe showed the dual audit's accepted connector fix was itself wrong (wagmi gives a discovered
+  wallet the id of its rdns, not an `rdns` property), that `resume(commit)` left the mock nothing to rebuild from,
+  that two phase gates could not pass in order, and that the request log matched paths only. r2: f's check could
+  pass on a reconnected wallet, and URL membership let a same-URL POST through. r3 approve.

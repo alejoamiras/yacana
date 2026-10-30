@@ -8,6 +8,8 @@ export const FEE_JUICE = 'Fee Juice';
 
 export const PICK_BODY = `Pick what you pay with. It becomes ${FEE_JUICE}, which pays for this account's transactions.`;
 
+export const CONNECT_BODY = 'Connect the Ethereum wallet you pay from.';
+
 export const fj = (raw: bigint): string => amount(raw, FEE_JUICE_DECIMALS, 2);
 
 export const tokenAmount = (raw: bigint, decimals: number): string => amount(raw, decimals, 6);
@@ -33,7 +35,7 @@ const RUNNING: Readonly<Record<Phase, (step: QuoteStep) => string>> = {
   swap: (step) => `${step.via ?? 'The route'} turns it into ${FEE_JUICE} on Ethereum.`,
   deposit: () => `The portal takes the ${FEE_JUICE} and sends it to Aztec.`,
   message: () => 'Aztec picks the deposit up. This takes a few minutes.',
-  claim: () => `This account claims its ${FEE_JUICE} on Aztec.`,
+  claim: () => `This account claims its ${FEE_JUICE} privately; the claim pays its own fee from it.`,
 };
 
 export function phaseLine(status: StepStatus, step: QuoteStep): string {

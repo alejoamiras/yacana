@@ -1,9 +1,7 @@
 import { PARAMS } from '@yacana/miner-core/generated/params';
 import { Button, ExternalLink, Kpi, Skeleton, Tile, TileHeader, Tip, useTweenedNumber } from '@yacana/ui';
 import { useAtomValue, useSetAtom } from 'jotai';
-import { Suspense } from 'react';
 import { links } from '../explorer';
-import { FeesSlot } from '../fees-gate';
 import { amount, shortAddress } from '../lib/format';
 import { MINTED_FRESH_MS } from '../lib/reducer';
 import { navigate } from '../routes';
@@ -92,11 +90,6 @@ export function BalanceCard({ className }: { className?: string }) {
             Wallet →
           </Button>
         </div>
-        {FeesSlot && (
-          <Suspense fallback={null}>
-            <FeesSlot at="balance" />
-          </Suspense>
-        )}
         {ready && (
           // For assistive tech and the specs: the account this balance belongs to and this device's wins.
           <p className="sr-only">

@@ -1,4 +1,4 @@
-import { Alert, AlertDescription, AmountBlock, AmountField, Note } from '@yacana/ui';
+import { Alert, AlertDescription, AmountField, cn, Note } from '@yacana/ui';
 import { useEffect, useState } from 'react';
 import { Actions, AmountBelow, Primary, Row, Rows } from '../../features/dialogs/Frame';
 import { amountRefusal, parseAmount } from '../../features/withdraw-form';
@@ -24,44 +24,29 @@ function Countdown({ expiresAt }: { expiresAt: number }) {
   return <span data-testid="fees-countdown">new quote in {clockMinutes((expiresAt - now) / 1000)}</span>;
 }
 
-/** What funding makes public: the deposit names this account on Ethereum, and a self-paid transaction its payer. */
-function Visible() {
-  return (
-    <>
-      <Row label="Visible on Ethereum">your wallet, the amount and this account</Row>
-      <Note title="When this account pays its own fees, each transaction shows it as the payer.">
-        Today the sponsor still pays every transaction here; funding changes nothing about that yet.
-      </Note>
-    </>
-  );
-}
+/** Short of the claim minimum: the least the route may deliver would not cover a claim on Aztec. */
+const short = (quote: Quote) => quote.feeJuiceMin < quote.claimMin;
 
-function QuoteRows({ quote, block }: { quote: Quote; block: boolean }) {
+function QuoteRows({ quote }: { quote: Quote }) {
   return (
     <div className="flex flex-col gap-3" data-testid="fees-quote">
-      {block && (
-        <AmountBlock
-          value={`≈ ${fj(quote.feeJuiceOut)}`}
-          unit={FEE_JUICE}
-          aside={`at least ${fj(quote.feeJuiceMin)}`}
-          tone="quiet"
-        />
-      )}
       <Rows>
-        {!block && (
-          <Row label="You get" sub={`at least ${fj(quote.feeJuiceMin)}`}>
-            about {fj(quote.feeJuiceOut)} {FEE_JUICE}
-          </Row>
-        )}
+        <Row label="You get" sub={`at least ${fj(quote.feeJuiceMin)}`}>
+          about {fj(quote.feeJuiceOut)} {FEE_JUICE}
+        </Row>
         {quote.costs.map((c) => (
           <Row key={c.label} label={c.label}>
             {tokenAmount(c.amount, c.decimals)} {c.symbol}
           </Row>
         ))}
+        <Row label="Claim on Aztec">paid from what arrives</Row>
+        <Row label="Least to claim" className={cn(short(quote) && 'text-warn')} data-testid="fees-claim-min">
+          {fj(quote.claimMin)} {FEE_JUICE}
+        </Row>
         <Row label="Arrives" sub={confirmations(quote)}>
           in about {duration(arrivesIn(quote))}
         </Row>
-        <Visible />
+        <Row label="Visible on Ethereum">your wallet and the amount</Row>
       </Rows>
     </div>
   );
@@ -75,28 +60,34 @@ export function QuoteView({
   run,
   s,
   chains,
-  block = false,
+  balance,
   onConfirm,
+  onSave,
 }: {
   run: FundingRun;
   s: Quoting;
   chains: readonly Chain[];
-  /** The figure the visitor gets as a big amount block, rather than a summary row. */
-  block?: boolean;
+  /** What the connected wallet holds of the token. */
+  balance: bigint;
   onConfirm: () => void;
+  onSave?: () => void;
 }) {
   const { token } = s;
   // Editable figures keep every decimal: a shortened one would re-parse to another amount than the quoted.
   const exact = (raw: bigint) => amount(raw, token.decimals, token.decimals);
   const [text, setText] = useState(() => (s.amountIn === null ? '' : exact(s.amountIn)));
-  const line = amountRefusal(text, token.balance, token.decimals);
+  const below =
+    s.quote && short(s.quote)
+      ? `Too little to claim: at least ${fj(s.quote.claimMin)} ${FEE_JUICE} must arrive`
+      : null;
+  const line = amountRefusal(text, balance, token.decimals) ?? below;
   const edit = (t: string) => {
     setText(t);
-    const ok = amountRefusal(t, token.balance, token.decimals) === null;
+    const ok = amountRefusal(t, balance, token.decimals) === null;
     run.dispatch({ type: 'amount', amountIn: ok ? parseAmount(t, token.decimals) : null });
   };
   const chain = chains.find((c) => c.id === token.chainId)?.name ?? `chain ${token.chainId}`;
-  const balance = `${tokenAmount(token.balance, token.decimals)} ${token.symbol} on ${chain}`;
+  const held = `${tokenAmount(balance, token.decimals)} ${token.symbol} on ${chain}`;
   return (
     <>
       <AmountField
@@ -104,9 +95,9 @@ export function QuoteView({
         value={text}
         onChange={edit}
         unit={token.symbol}
-        max={exact(token.balance)}
+        max={exact(balance)}
         invalid={text !== '' && line !== null}
-        below={<AmountBelow line={text !== '' ? line : null} balance={balance} />}
+        below={<AmountBelow line={text !== '' ? line : null} balance={held} />}
         data-testid="fees-amount"
       />
       {s.refreshed && (
@@ -120,15 +111,50 @@ export function QuoteView({
         </Alert>
       )}
       {s.quote ? (
-        <QuoteRows quote={s.quote} block={block} />
+        <QuoteRows quote={s.quote} />
       ) : (
         s.amountIn !== null && !s.error && <p className="text-xs text-ink-3">Getting a quote…</p>
       )}
-      <Actions below={s.quote ? <Countdown expiresAt={s.quote.expiresAt} /> : undefined}>
-        <Primary disabled={!s.quote} onClick={onConfirm} data-testid="fees-go">
-          Fund fees
-        </Primary>
-      </Actions>
+      <Go s={s} refused={line !== null} onConfirm={onConfirm} onSave={onSave} />
     </>
+  );
+}
+
+/**
+ * "Fund fees", after the save's own beat when the option has one. Neither goes on a missing or short
+ * quote, nor on an amount the field refuses: the wallet's balance can change under a shown quote.
+ */
+function Go({
+  s,
+  refused,
+  onConfirm,
+  onSave,
+}: {
+  s: Quoting;
+  refused: boolean;
+  onConfirm: () => void;
+  onSave?: () => void;
+}) {
+  const blocked = !s.quote || short(s.quote) || refused;
+  return (
+    <Actions below={s.quote ? <Countdown expiresAt={s.quote.expiresAt} /> : undefined}>
+      {onSave && (
+        <Primary
+          variant={s.saved ? 'ghost' : 'uv'}
+          disabled={blocked}
+          onClick={onSave}
+          data-testid="fees-save"
+        >
+          {s.saved ? 'Save it again' : 'Save recovery file'}
+        </Primary>
+      )}
+      <Primary
+        disabled={blocked || (onSave !== undefined && !s.saved)}
+        onClick={onConfirm}
+        data-testid="fees-go"
+      >
+        Fund fees
+      </Primary>
+    </Actions>
   );
 }

@@ -58,3 +58,25 @@ repo-relative; `src/` means `apps/web-miner/src/`.
 ## Open work
 
 `gh issue list --state open`: #87 only (site, unrelated). Closed known limits searched for `fee`, `sponsor`: none.
+
+## Revision recon (2026-10-30, base `e8b7d06`)
+
+One Sonnet Explore sweep over the capabilities ask27 adds, plus the planner's own reads of `src/fees/`, the FeeJuice
+artifact and the Fee Juice portal's ABI. `src/` is `apps/web-miner/src/`.
+
+| Capability | Found | Verdict |
+|---|---|---|
+| The injected Ethereum connection | `src/bridge/eth.ts:33-41` `wagmiConfigFor` (one chain, `injected()` + EIP-6963, http transport to the page's RPC); `features/BridgeProviders.tsx` (null without a bridge session); `features/dialogs/Wallet.tsx` `ConnectWallet` (114-180), `WalletChip`, `useWalletChain` | reuse as is; a flagged stand-in config through the same `wagmiConfigFor` when no bridge session is open |
+| L1 token balances | none: searched `balanceOf`, `multicall`, `multicall3`, `getBalance` over `apps`, `packages` (ts, tsx). Only ETH (`bridge/eth-balance.ts:228-238`) and YACA (`useYacaBalance`) | build new, mocked (`FundingReads.balances`); the real path is V2 |
+| A recovery file | `packages/bridge/src/recovery.ts` (shape, `parseRecoveryFile` 151-184, 8 MiB cap), `secrets.ts` (HKDF labels from the master), `features/recovery.ts` (Blob download), `ActivityList.tsx:112-160` (file input) | mirror the shape (D7); extract the download into `src/lib/download.ts`; own parser for the fees record |
+| The master | `src/session.ts:179` (private, the tab's life), `masterFromPrf` / `masterFromMnemonic` (`miner-core/src/keys/derive.ts`) | not read by the flow under the flag (D11) |
+| Sponsor signal, Aztec fee estimate | none: searched `sponsor`, `estimateGas`, `gasSettings`, `GasFees`, `maxFeesPerGas`, `getCurrentMinFees`, `feePerL2Gas`. `claimGasLimits(node)` sets a claim's gas limits (`wallet.ts:154`) | mocked (A4, A5); the flip lane builds the real reads |
+| A private Fee Juice balance | none in 6.0.0: FeeJuice's functions are `claim`, `claim_and_end_setup` (private), `balance_of_public`, `check_balance`, `_increase_public_balance`, `public_dispatch`; the portal has `depositToAztecPublic`, `distributeFees` and views; `PrivateFeePaymentMethod` is deprecated, "not supported on mainnet" | mocked; the real path is the provider's private payment contract (V3) |
+| A browser wallet in the replay lane | `e2e/helpers/l1-wallet.ts` `installL1Wallet`: EIP-1193 answered from Node, EIP-6963 announced, the permission methods, a lazily built client for anything else (so an unreachable RPC URL works without anvil); used by the bridge lanes only. The sweep's "needs anvil" did not hold (Opus) | reuse, plus an `asked()` list of every method |
+| Download and upload in tests | `bridge.e2e.ts:185-190` (`waitForEvent('download')`, `saveAs`), `:218, 245` (`setInputFiles`); CDP sessions in `e2e/helpers.ts:66` | reuse the patterns |
+| Signed in | `bootAtom.phase === 'ready'` (`src/state.ts:67`) | reuse |
+
+Collisions: the slots in `BalanceCard` and `Settings` go with A and C; Mine's row count must follow the card's own
+visibility once P3-04 can hide it (`routes/Mine.tsx:86-89`); the bridge's file name carries the account, so the fees
+file must not reuse it. Open issues: none in the area (`gh issue list --state all --search "fee juice OR fees OR
+recovery file"`: none); closed known limits for `fee`: none.

@@ -1,37 +1,38 @@
 import { useAtomValue } from 'jotai';
-import { useEffect } from 'react';
-import { type FeesPlacement, feesOption, feesSearch, PLACEMENT } from '../fees-gate';
+import { feesOption, feesSearch } from '../fees-gate';
 import { bootAtom } from '../state';
-import { mockProvider, scriptFrom } from './mock';
-import { OptionA } from './options/A';
-import { OptionB } from './options/B';
-import { OptionC } from './options/C';
+import { standsIn } from './entry';
+import { MOCK_CHAINS, mockFunding, scriptFrom } from './mock';
+import { OptionD } from './options/D';
+import { OptionE } from './options/E';
+import { OptionF } from './options/F';
 import { FundingRun, type OptionProps } from './run';
+import { FeesWallet } from './wallet';
 
-/** Signed out, the flow quotes for this fixed account, so every state is reachable without a node. */
-const STAND_IN = `0x${'0'.repeat(60)}fee5`;
+let shared: Omit<OptionProps, 'signedIn'> | undefined;
 
-const OPTIONS = { a: OptionA, b: OptionB, c: OptionC } as const;
-
-let shared: Omit<OptionProps, 'account'> | undefined;
-
-/** One runner per tab: B's card finds its trade again after a trip to Settings. */
-function funding(): Omit<OptionProps, 'account'> {
+/** One runner per tab: the card finds its trade again after a trip to Settings. */
+function funding(): Omit<OptionProps, 'signedIn'> {
   if (!shared) {
-    const provider = mockProvider(scriptFrom(feesSearch));
-    shared = { provider, run: new FundingRun(provider) };
+    const { provider, reads } = mockFunding(scriptFrom(feesSearch));
+    const scope = {
+      chainId: import.meta.env.VITE_CHAIN_ID,
+      rollupVersion: import.meta.env.VITE_ROLLUP_VERSION,
+    };
+    shared = { provider, reads, run: new FundingRun(provider, scope) };
   }
   return shared;
 }
 
-export default function Slot({ at }: { at: FeesPlacement }) {
+const OPTIONS = { d: OptionD, e: OptionE, f: OptionF } as const;
+
+export default function Slot() {
   const boot = useAtomValue(bootAtom);
-  const { run, provider } = funding();
-  const account = boot.phase === 'ready' ? boot.account : STAND_IN;
-  useEffect(() => {
-    run.recipient = account;
-  }, [run, account]);
-  if (!feesOption || PLACEMENT[feesOption] !== at) return null;
-  const Option = OPTIONS[feesOption];
-  return <Option run={run} provider={provider} account={account} />;
+  const signedIn = boot.phase === 'ready' || standsIn(feesSearch);
+  const Option = OPTIONS[feesOption ?? 'e'];
+  return (
+    <FeesWallet chainId={MOCK_CHAINS[0]?.id ?? 0}>
+      <Option {...funding()} signedIn={signedIn} />
+    </FeesWallet>
+  );
 }
