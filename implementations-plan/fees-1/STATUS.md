@@ -44,3 +44,7 @@
 - 2026-10-30 a2 P8 green: lint 0, typecheck 0, inventory 8 pass, replay 10 passed in 2.2 min (the scenario 50.7 s;
   49 s alone after the baseline fix), check-chunks 0. Forced breaks recorded in plan §7 (a2 implementation). Codex
   loop next.
+- 2026-10-30 a2 Codex loop converged in two rounds (r1 changes requested + Opus conditional approve, fixed in
+  `4f53201`; r2 approve). Arc gate on `b403343`: lint 0, typecheck 0, `bun test` 727 pass / 44 skip / 0 fail
+  (pinned Aztec bin on PATH), test:components (web-miner 197), replay 10 passed in 2.3 min (the scenario 49.3 s),
+  fund-fees-absent 2 pass, site:build 0, lint:actions 0. Push and PR next.
