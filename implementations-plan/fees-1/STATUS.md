@@ -41,3 +41,6 @@
   SHA-256 of the HKDF secret (pinned by a vector computed outside the code), not Poseidon2: the page has no bb wasm
   here. The runner takes the derivation as an option, since WebCrypto and Blob reads never settle under fake timers.
   The mock's token addresses became real hex (the file's address check refused the old spelling).
+- 2026-10-30 a2 P8 green: lint 0, typecheck 0, inventory 8 pass, replay 10 passed in 2.2 min (the scenario 50.7 s;
+  49 s alone after the baseline fix), check-chunks 0. Forced breaks recorded in plan §7 (a2 implementation). Codex
+  loop next.

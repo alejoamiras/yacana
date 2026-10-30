@@ -281,7 +281,7 @@ visitor will not remember having made. The planner's judgment, not a measurement
 Phases 1–4 (a1) ✓, merged as #93: the flag and its bundle proof; the provider, mock, machine and runner; options A,
 B, C; the replay scenario (10 tests in 2.2 min, the scenario 48 s).
 
-### Phase 5 (a2): B alone, ask25, the entry rule
+### Phase 5 (a2): B alone, ask25, the entry rule ✓
 1. Delete A and C with their slots, cases and `Held`; `?fees=b` until P8.
 2. The interface deltas but `commit` and `resume`: the open-ended list across chains (A1), the quote without the
    account, `claimMin`, the visibility row, no payer note, the claim's fee line.
@@ -295,7 +295,7 @@ B, C; the replay scenario (10 tests in 2.2 min, the scenario 48 s).
   Pass: exit 0. Then break it on purpose: let `entry.ts` ignore the balance, see the
   Dismiss case fail, revert. Layers: lint, typecheck, unit, component, e2e.
 
-### Phase 6 (a2): the wallet and its tokens
+### Phase 6 (a2): the wallet and its tokens ✓
 1. `wallet.tsx` (§4), `FundingReads.balances` in the mock, `Token.balance` gone.
 2. The three orderings as pure functions in `parts/TokenPicker.tsx` with their rendering (held first; by chain;
    the rest under a heading or only by search).
@@ -308,7 +308,7 @@ B, C; the replay scenario (10 tests in 2.2 min, the scenario 48 s).
    then reads the session's account, its own store key untouched.
 - **Gate**: P5's commands. Pass: exit 0.
 
-### Phase 7 (a2): the recovery record and file
+### Phase 7 (a2): the recovery record and file ✓
 1. `recovery.ts`, `src/lib/download.ts` (and `features/recovery.ts` on it), `parts/Restore.tsx`, the reducer's
    `saved` and `restored`, the runner's `restore`, the mock's `commit` and `resume`. Until P8 splits it, B saves on
    confirm (F's beat), so its trade never waits on a save it cannot make.
@@ -322,7 +322,7 @@ B, C; the replay scenario (10 tests in 2.2 min, the scenario 48 s).
    `resume` leaves `idle`.
 - **Gate**: P5's commands. Then break it on purpose: let `next()` ignore `saved`, see its case fail, revert.
 
-### Phase 8 (a2): options D, E, F and the scenario
+### Phase 8 (a2): options D, E, F and the scenario ✓
 1. `options/{D,E,F}.tsx` on B's cards (§4 table); the gate takes `?fees=d|e|f`; `b` goes.
 2. `fees.vitest.tsx`: one case per option, entry → connect → token → quote → save → done; E's confirm disabled
    until saved; D's no `run` until saved; F's one announced wallet asked at once; a refused file leaves the entry.
@@ -459,6 +459,31 @@ over a trade stream; "late" from the provider; the chunk graph over a marker; no
      baseline as a multiset of method, URL and body, node calls only by the baseline's methods, both as forced
      breaks; the residual (a flow repeating a polled node method) is named, and Excellent #5 says what is proven.
 - r3 (resumed) **approve**: "No new material findings. Confidence: high at the plan level."
+
+**a2 implementation** (branch `fees-1-a2`: `origin/main` with the plan commit cherry-picked, not `worktree-fees-1`).
+Deviations, each smaller than the plan or forced by what the code met:
+- The flow's own wagmi config has a transport that refuses every request, not the page's RPC: the flow reads no
+  chain, so a stray read fails in the page. A wagmi `getBalance` therefore leaves no request for the scenario to
+  see (the forced break passed the replay run); it fails `tests/fund-fees-wallet.bun.test.ts` instead, which holds
+  the flow's modules to the names connecting takes (no viem, no wagmi actions), the guarantee that also covers a
+  bridge session's config. A spec shows the refusal reaches no `fetch`.
+- The commitment is SHA-256 of the HKDF secret, pinned by a vector computed outside the code, not the Poseidon2
+  secret hash: that needs bb's wasm in the page. The runner takes the derivation as an option, since WebCrypto and
+  `Blob` reads never settle under Vitest's fake timers.
+- The stand-in has no Aztec account (the options are handed none), so the sentinel is the wallet's address: no
+  request, file or file name carries it, and the page's text never spells it out.
+- The scenario's baseline closes after the public epoch read (its slot fetch otherwise lands in the next window);
+  only the old-tab check's `GET /build.json` that leaves 19 s or more after its navigation is set aside. d and e
+  disconnect on the chip first, so each option's own connect runs; `asked()` allows `wallet_revokePermissions`.
+- Every option's trail opens with a `file` station (`waiting` in D until saved). The mock routes no native ETH, and
+  its token addresses are hex. `QuoteView`'s `block` prop went with B's amount block. The stepper and timeline views
+  went with A and C.
+
+Gates: P5–P7 as `STATUS.md` records. P8: lint 0, typecheck 0, inventory 8 pass, replay 10 passed in 2.2 min (a1's
+2.2 min before; the scenario 50.7 s against an estimate of 50 and a ceiling of 70), check-chunks "first paint: 14
+chunks, no stats module". Forced breaks: a second `GET /build.json` and a `POST` to it fail f's request log; a
+`/build.json?a=<wallet>` fails f's sentinel; a restore that reruns the deposit fails the observer
+(`deposit:signing`, `deposit:running`); `getBalance` as above.
 
 ## 8. Post-implementation
 
