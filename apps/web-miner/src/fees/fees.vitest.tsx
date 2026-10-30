@@ -1,14 +1,13 @@
-import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import type * as React from 'react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { getDefaultStore } from 'jotai';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { MOCK_TIMING, MOCK_TOKENS, mockProvider, scriptFrom } from './mock';
-import { OptionA } from './options/A';
+import { feesCardAtom } from '../fees-gate';
+import { MOCK_TIMING, MOCK_TOKENS, mockFunding, scriptFrom } from './mock';
 import { OptionB } from './options/B';
-import { OptionC } from './options/C';
 import type { FeeFundingProvider, Phase, Quote, Token } from './provider';
-import { FundingRun, type OptionProps } from './run';
+import { FundingRun } from './run';
 
-const USDC = MOCK_TOKENS.find((t) => t.chainId === 8453 && t.symbol === 'USDC') as Token;
+const USDC = MOCK_TOKENS.find((t) => t.chainId === 84532 && t.symbol === 'USDC') as Token;
 
 const quoteFor = (amountIn: bigint): Quote => ({
   id: `q${amountIn}`,
@@ -16,6 +15,7 @@ const quoteFor = (amountIn: bigint): Quote => ({
   amountIn,
   feeJuiceOut: amountIn,
   feeJuiceMin: amountIn,
+  claimMin: 0n,
   costs: [],
   steps: (['swap', 'deposit', 'message', 'claim'] as const).map((phase) => ({
     phase,
@@ -35,7 +35,6 @@ function byHand() {
     quote: (_from, amountIn) => new Promise((answer) => quotes.push({ amountIn, answer })),
     run: (phase, _quote, _on, signal) =>
       new Promise((done) => runs.push({ phase, done: () => done(), signal })),
-    feeJuiceBalance: async () => 0n,
   };
   return { provider, quotes, runs };
 }
@@ -96,14 +95,22 @@ describe('the funding runner', () => {
 const tick = (ms: number) => act(() => vi.advanceTimersByTimeAsync(ms));
 const id = (testId: string) => screen.getByTestId(testId);
 const stateOf = (phase: Phase) => id(`fees-step-${phase}`).getAttribute('data-state');
-/** Base's USDC, 25 of it: a swap route of four steps, about 9.9 s of mock time. */
+const go = () => id('fees-go') as HTMLButtonElement;
+const cardCounted = () => getDefaultStore().get(feesCardAtom);
+/** Sepolia's USDC, 100 of it: a swap route of four steps, about 9.9 s of mock time. */
 const TRADE_MS = 15_000;
 
-/** The option on a fresh mock; `remount` unmounts it and renders it again on the same runner, as a route change does. */
-async function show(Option: (p: OptionProps) => React.ReactNode, search = '') {
-  const provider = mockProvider(scriptFrom(search));
+/** B on a fresh mock; `remount` unmounts it and renders it again on the same runner, as a route change does. */
+async function show(
+  search = '',
+  opts: { signedIn?: boolean; provider?: (p: FeeFundingProvider) => FeeFundingProvider } = {},
+) {
+  const mock = mockFunding(scriptFrom(search));
+  const provider = opts.provider ? opts.provider(mock.provider) : mock.provider;
   const run = new FundingRun(provider);
-  const ui = () => <Option run={run} provider={provider} account={`0x${'0'.repeat(60)}fee5`} />;
+  const ui = () => (
+    <OptionB run={run} provider={provider} reads={mock.reads} signedIn={opts.signedIn ?? true} />
+  );
   let view = render(ui());
   await tick(0);
   const remount = async () => {
@@ -114,104 +121,115 @@ async function show(Option: (p: OptionProps) => React.ReactNode, search = '') {
   return { run, remount };
 }
 
-/** From the open picker: Base, a search for "usd", USDC, 25, and the quote it brings. */
-async function quoteUsdc() {
-  fireEvent.click(screen.getByRole('radio', { name: 'Base' }));
+/** From the open picker: a search for "usd" across chains, a token, an amount, and the quote it brings. */
+async function quote(token: string, amount: string) {
   await tick(0);
   fireEvent.change(id('fees-search'), { target: { value: 'usd' } });
-  expect(screen.queryByTestId('fees-token-ETH')).toBeNull();
-  fireEvent.click(id('fees-token-USDC'));
-  fireEvent.change(id('fees-amount'), { target: { value: '25' } });
-  expect((id('fees-go') as HTMLButtonElement).disabled).toBe(true);
+  expect(screen.getByTestId('fees-token-84532-USDC')).toBeTruthy();
+  fireEvent.click(id(token));
+  fireEvent.change(id('fees-amount'), { target: { value: amount } });
+  expect(go().disabled).toBe(true);
   await tick(300 + MOCK_TIMING.quote);
-  expect(id('fees-quote').textContent).toContain('12.45 Fee Juice');
-  expect(id('fees-quote').textContent).toContain(
-    'Visible on Ethereumyour wallet, the amount and this account',
-  );
 }
 
-describe('the three options on the mock', () => {
-  test('A: the balance line, the dialog, a trade to done, and the line reads the Fee Juice', async () => {
-    await show(OptionA);
-    expect(id('fees-line').textContent).toContain('none Fee Juice');
-    fireEvent.click(id('fees-entry'));
-    await quoteUsdc();
-    fireEvent.click(id('fees-go'));
-    await tick(TRADE_MS);
-    expect(id('fees-done').textContent).toContain('12.45 more Fee Juice');
-    for (const phase of ['swap', 'deposit', 'message', 'claim'] as const) expect(stateOf(phase)).toBe('done');
-    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
-    await tick(0);
-    expect(id('fees-held').textContent).toContain('12.45');
-  });
+const sepoliaUsdc = async () => {
+  await quote('fees-token-11155111-USDC', '100');
+  expect(id('fees-quote').textContent).toContain('49.85 Fee Juice');
+  expect(id('fees-quote').textContent).toContain('Visible on Ethereumyour wallet and the amount');
+  expect(id('fees-claim-min').textContent).toContain('30 Fee Juice');
+  expect(go().disabled).toBe(false);
+};
 
-  test('B: the card before you mine; the dialog picks and quotes, the card carries the trade', async () => {
-    await show(OptionB);
+describe('B on the mock', () => {
+  test('the card before you mine; the dialog picks and quotes, the card carries the trade; dismissed, it goes', async () => {
+    await show();
     expect(id('fees-card').textContent).toContain('Fund fees before you mine.');
+    expect(cardCounted()).toBe(true);
     fireEvent.click(id('fees-entry'));
-    await quoteUsdc();
-    fireEvent.click(id('fees-go'));
+    await sepoliaUsdc();
+    fireEvent.click(go());
     await tick(0);
     expect(screen.queryByTestId('fees-dialog')).toBeNull();
     expect(stateOf('swap')).toBe('signing');
     await tick(TRADE_MS);
-    expect(id('fees-done').textContent).toContain('Fees ready: 12.45 Fee Juice.');
-    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
-    expect(id('fees-entry')).toBeTruthy();
+    expect(id('fees-done').textContent).toContain('Fees ready: 49.85 Fee Juice.');
+    // The account now holds more than a claim costs: the entry rule keeps the card away.
+    fireEvent.click(id('fees-dismiss'));
+    await tick(0);
+    expect(screen.queryByTestId('fees-card')).toBeNull();
+    expect(cardCounted()).toBe(false);
   });
 
-  test('C: the Settings tile; the picker in a popover, the quote inline, the timeline to done', async () => {
-    await show(OptionC);
-    expect(id('fees-held').textContent).toContain('none');
+  test('signed out with no stand-in, there is no card and the cockpit counts none', async () => {
+    await show('', { signedIn: false });
+    expect(screen.queryByTestId('fees-card')).toBeNull();
+    expect(cardCounted()).toBe(false);
+  });
+
+  test('a token the mock never named still lists, quotes and confirms: the views assume no list', async () => {
+    const ZZZ: Token = {
+      chainId: 84532,
+      address: `0x${'7a'.repeat(20)}`,
+      symbol: 'ZZZ',
+      name: 'Zed',
+      decimals: 18,
+      balance: 10n ** 21n,
+    };
+    await show('', { provider: (p) => ({ ...p, tokens: async (s) => [...(await p.tokens(s)), ZZZ] }) });
     fireEvent.click(id('fees-entry'));
-    await quoteUsdc();
-    // Choosing the same token again keeps the amount and its quote.
+    await tick(0);
+    fireEvent.change(id('fees-search'), { target: { value: ZZZ.address } });
+    fireEvent.click(id('fees-token-84532-ZZZ'));
+    fireEvent.change(id('fees-amount'), { target: { value: '500' } });
+    await tick(300 + MOCK_TIMING.quote);
+    expect(id('fees-quote').textContent).toContain('about 124.5 Fee Juice');
+    expect(go().disabled).toBe(false);
+  });
+
+  test('a quote below the claim minimum says so and cannot be confirmed', async () => {
+    await show();
     fireEvent.click(id('fees-entry'));
-    fireEvent.click(screen.getByRole('radio', { name: 'Base' }));
-    await tick(0);
-    fireEvent.click(id('fees-token-USDC'));
-    await tick(0);
-    expect((id('fees-go') as HTMLButtonElement).disabled).toBe(false);
-    fireEvent.click(id('fees-go'));
-    await tick(TRADE_MS);
-    expect(id('fees-done').textContent).toContain('Fees ready: 12.45 Fee Juice.');
-    expect(id('fees-held').textContent).toContain('12.45');
+    await quote('fees-token-11155111-USDC', '25');
+    expect(id('fees-claim-min').className).toContain('text-warn');
+    expect(id('amount-refusal').textContent).toBe('Too little to claim: at least 30 Fee Juice must arrive');
+    expect(go().disabled).toBe(true);
   });
 });
 
-describe('what the options share', () => {
+describe('what the flow keeps across views', () => {
   test('a quote left behind is dropped; one that ran out comes back with every decimal of its amount', async () => {
-    const { run, remount } = await show(OptionC, '?fees-fail=expired');
-    const ethOnBase = async () => {
+    const { run, remount } = await show('?fees-fail=expired');
+    const weth = async () => {
       fireEvent.click(id('fees-entry'));
-      fireEvent.click(screen.getByRole('radio', { name: 'Base' }));
       await tick(0);
-      fireEvent.click(id('fees-token-ETH'));
-      fireEvent.change(id('fees-amount'), { target: { value: '0.0000001' } });
+      fireEvent.change(id('fees-search'), { target: { value: 'weth' } });
+      fireEvent.click(id('fees-token-11155111-WETH'));
+      fireEvent.change(id('fees-amount'), { target: { value: '0.0200001' } });
       await tick(300 + MOCK_TIMING.quote);
       expect(id('fees-quote')).toBeTruthy();
     };
-    await ethOnBase();
+    await weth();
     await remount();
     expect(run.getState()).toEqual({ at: 'idle' });
     expect(screen.queryByTestId('fees-amount')).toBeNull();
-    await ethOnBase();
-    fireEvent.click(id('fees-go'));
+    await weth();
+    fireEvent.click(go());
     await tick(0);
     expect(id('fees-refreshed')).toBeTruthy();
-    expect((id('fees-amount') as HTMLInputElement).value).toBe('0.0000001');
+    expect((id('fees-amount') as HTMLInputElement).value).toBe('0.0200001');
     expect(screen.queryByTestId('amount-refusal')).toBeNull();
     await tick(300 + MOCK_TIMING.quote);
-    expect((id('fees-go') as HTMLButtonElement).disabled).toBe(false);
+    expect(go().disabled).toBe(false);
   });
 
-  test('A refused by the wallet says nothing moved; past the quote, the retry gets a new one and runs to done', async () => {
-    await show(OptionA, '?fees-fail=rejected');
+  test('refused by the wallet says nothing moved; past the quote, the retry gets a new one and runs to done', async () => {
+    await show('?fees-fail=rejected');
     fireEvent.click(id('fees-entry'));
-    await quoteUsdc();
-    fireEvent.click(id('fees-go'));
+    await sepoliaUsdc();
+    fireEvent.click(go());
     await tick(MOCK_TIMING.sign);
-    expect(id('fees-failure').textContent).toContain('Your wallet did not confirm.Nothing has moved.');
+    expect(id('fees-failure').textContent).toContain('Your wallet did not confirm.');
+    expect(id('fees-card').textContent).toContain('Nothing has moved.');
     expect(stateOf('swap')).toBe('failed');
     expect(id('fees-retry').textContent).toBe('Try again');
     // Left past the quote's life, the retry asks for a new quote first, and the button says so.
@@ -220,44 +238,25 @@ describe('what the options share', () => {
     fireEvent.click(id('fees-retry'));
     await tick(300 + MOCK_TIMING.quote);
     expect(id('fees-refreshed')).toBeTruthy();
-    fireEvent.click(id('fees-go'));
+    fireEvent.click(go());
     await tick(TRADE_MS);
     expect(id('fees-done')).toBeTruthy();
   });
 
   test('a quote left to run out is replaced by a fresh one', async () => {
-    const { run } = await show(OptionA);
+    const { run } = await show();
     fireEvent.click(id('fees-entry'));
-    await quoteUsdc();
+    await sepoliaUsdc();
     const first = run.getState();
-    expect(id('fees-countdown').textContent).toContain('new quote in 0:30');
+    expect(id('fees-countdown').textContent).toContain('new quote in 1:00');
     await tick(MOCK_TIMING.life - 1000);
     expect(id('fees-countdown').textContent).toContain('new quote in 0:01');
     await tick(1000);
     expect(screen.queryByTestId('fees-quote')).toBeNull();
-    expect((id('fees-go') as HTMLButtonElement).disabled).toBe(true);
+    expect(go().disabled).toBe(true);
     await tick(300 + MOCK_TIMING.quote);
     const fresh = run.getState();
     expect(fresh.at === 'quote' && first.at === 'quote' && fresh.quote?.id !== first.quote?.id).toBe(true);
-    expect(id('fees-countdown').textContent).toContain('new quote in 0:30');
-  });
-
-  test("A's dialog cannot close while the wallet asks; closed mid-trade and reopened, it shows the same progress", async () => {
-    await show(OptionA);
-    fireEvent.click(id('fees-entry'));
-    await quoteUsdc();
-    fireEvent.click(id('fees-go'));
-    await tick(0);
-    expect(stateOf('swap')).toBe('signing');
-    expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
-    // Swap and deposit land after 5.4 s; the crossing runs to 7.9 s.
-    await tick(6_000);
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
-    await tick(0);
-    expect(screen.queryByTestId('fees-dialog')).toBeNull();
-    expect(id('fees-line').textContent).toContain('crossing to aztec');
-    fireEvent.click(within(id('fees-line')).getByTestId('fees-entry'));
-    expect(id('fees-entry').textContent).toContain('Show');
-    expect([stateOf('swap'), stateOf('deposit'), stateOf('message')]).toEqual(['done', 'done', 'running']);
+    expect(id('fees-countdown').textContent).toContain('new quote in 1:00');
   });
 });

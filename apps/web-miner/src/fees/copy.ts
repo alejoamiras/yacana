@@ -33,7 +33,7 @@ const RUNNING: Readonly<Record<Phase, (step: QuoteStep) => string>> = {
   swap: (step) => `${step.via ?? 'The route'} turns it into ${FEE_JUICE} on Ethereum.`,
   deposit: () => `The portal takes the ${FEE_JUICE} and sends it to Aztec.`,
   message: () => 'Aztec picks the deposit up. This takes a few minutes.',
-  claim: () => `This account claims its ${FEE_JUICE} on Aztec.`,
+  claim: () => `This account claims its ${FEE_JUICE} privately; the claim pays its own fee from it.`,
 };
 
 export function phaseLine(status: StepStatus, step: QuoteStep): string {

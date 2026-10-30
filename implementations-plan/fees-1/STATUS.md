@@ -28,3 +28,6 @@
   all accepted and folded (§7); OA7 added; outline Z's case corrected. Final fresh Codex pass next.
 - 2026-10-30 final fresh Codex pass (new session): r1 conditional approve (4 accepted), r2 conditional approve (2
   accepted), r3 approve. Revised plan committed; stopped at the approval gate.
+- 2026-10-30 a2 on branch `fees-1-a2` (origin/main + the plan commit). P5 gate green: lint 0, typecheck 0,
+  test:components (web-miner 175), `bun test apps/web-miner` 328 pass / 4 skip, replay 10 passed in 1.7 min (the
+  B scenario 18.3 s). Forced break (the entry rule ignoring the balance) failed the Dismiss case; reverted.

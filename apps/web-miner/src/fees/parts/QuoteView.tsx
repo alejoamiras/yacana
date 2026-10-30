@@ -1,4 +1,4 @@
-import { Alert, AlertDescription, AmountBlock, AmountField, Note } from '@yacana/ui';
+import { Alert, AlertDescription, AmountBlock, AmountField, cn, Note } from '@yacana/ui';
 import { useEffect, useState } from 'react';
 import { Actions, AmountBelow, Primary, Row, Rows } from '../../features/dialogs/Frame';
 import { amountRefusal, parseAmount } from '../../features/withdraw-form';
@@ -24,17 +24,8 @@ function Countdown({ expiresAt }: { expiresAt: number }) {
   return <span data-testid="fees-countdown">new quote in {clockMinutes((expiresAt - now) / 1000)}</span>;
 }
 
-/** What funding makes public: the deposit names this account on Ethereum, and a self-paid transaction its payer. */
-function Visible() {
-  return (
-    <>
-      <Row label="Visible on Ethereum">your wallet, the amount and this account</Row>
-      <Note title="When this account pays its own fees, each transaction shows it as the payer.">
-        Today the sponsor still pays every transaction here; funding changes nothing about that yet.
-      </Note>
-    </>
-  );
-}
+/** Short of the claim minimum: the least the route may deliver would not cover a claim on Aztec. */
+const short = (quote: Quote) => quote.feeJuiceMin < quote.claimMin;
 
 function QuoteRows({ quote, block }: { quote: Quote; block: boolean }) {
   return (
@@ -58,10 +49,14 @@ function QuoteRows({ quote, block }: { quote: Quote; block: boolean }) {
             {tokenAmount(c.amount, c.decimals)} {c.symbol}
           </Row>
         ))}
+        <Row label="Claim on Aztec">paid from what arrives</Row>
+        <Row label="Least to claim" className={cn(short(quote) && 'text-warn')} data-testid="fees-claim-min">
+          {fj(quote.claimMin)} {FEE_JUICE}
+        </Row>
         <Row label="Arrives" sub={confirmations(quote)}>
           in about {duration(arrivesIn(quote))}
         </Row>
-        <Visible />
+        <Row label="Visible on Ethereum">your wallet and the amount</Row>
       </Rows>
     </div>
   );
@@ -89,7 +84,11 @@ export function QuoteView({
   // Editable figures keep every decimal: a shortened one would re-parse to another amount than the quoted.
   const exact = (raw: bigint) => amount(raw, token.decimals, token.decimals);
   const [text, setText] = useState(() => (s.amountIn === null ? '' : exact(s.amountIn)));
-  const line = amountRefusal(text, token.balance, token.decimals);
+  const below =
+    s.quote && short(s.quote)
+      ? `Too little to claim: at least ${fj(s.quote.claimMin)} ${FEE_JUICE} must arrive`
+      : null;
+  const line = amountRefusal(text, token.balance, token.decimals) ?? below;
   const edit = (t: string) => {
     setText(t);
     const ok = amountRefusal(t, token.balance, token.decimals) === null;
@@ -125,7 +124,7 @@ export function QuoteView({
         s.amountIn !== null && !s.error && <p className="text-xs text-ink-3">Getting a quote…</p>
       )}
       <Actions below={s.quote ? <Countdown expiresAt={s.quote.expiresAt} /> : undefined}>
-        <Primary disabled={!s.quote} onClick={onConfirm} data-testid="fees-go">
+        <Primary disabled={!s.quote || short(s.quote)} onClick={onConfirm} data-testid="fees-go">
           Fund fees
         </Primary>
       </Actions>

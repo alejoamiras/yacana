@@ -17,7 +17,7 @@ const settings = (page: Page) => page.getByRole('link', { name: 'Settings' }).cl
 
 // The fixture refuses every other origin; this holds the app's own origin to what the page fetches
 // without the flow, so the mock cannot reach the network from the same origin either.
-test('the mocked fee funding runs end to end in every option, through a failed claim and its retry', async ({
+test('the mocked fee funding runs end to end on B, through a failed claim and its retry', async ({
   page,
   replay,
 }) => {
@@ -35,35 +35,32 @@ test('the mocked fee funding runs end to end in every option, through a failed c
   );
   known.add('/build.json');
 
-  for (const fees of ['a', 'b', 'c'] as const) {
-    const seen = fetches(page);
-    await page.goto(replay.url({ fees, 'fees-fail': 'claim' }));
-    await expect(page.getByTestId('cockpit')).toBeVisible({ timeout: BOOT_MS });
-    if (fees === 'c') await settings(page);
-    await page.getByTestId('fees-entry').click();
-    await page.getByRole('radio', { name: 'Base' }).click();
-    await page.getByTestId('fees-search').fill('usd');
-    await page.getByTestId('fees-token-USDC').click();
-    await page.getByTestId('fees-amount').fill('25');
-    await expect(page.getByTestId('fees-quote')).toBeVisible();
-    await page.getByTestId('fees-go').click();
-    if (fees === 'b') {
-      // The card outlives the route: back from Settings it shows the trade, not the entry.
-      await settings(page);
-      await expect(page.getByTestId('fees-card')).toHaveCount(0);
-      await page.getByRole('link', { name: 'Mine', exact: true }).click();
-      await expect(page.getByTestId('fees-card')).toBeVisible();
-      await expect(page.getByTestId('fees-entry')).toHaveCount(0);
-    }
-    await expect(page.getByTestId('fees-failure')).toBeVisible();
-    await expect(page.getByTestId('fees-step-claim')).toHaveAttribute('data-state', 'failed');
-    await page.getByTestId('fees-retry').click();
-    await expect(page.getByTestId('fees-done')).toBeVisible();
-    seen.stop();
-    const stray = seen.urls.filter((u) => {
-      const url = new URL(u);
-      return url.origin !== REPLAY_NODE_ORIGIN && !(url.origin === app && known.has(url.pathname));
-    });
-    expect(stray, `option ${fees}`).toEqual([]);
-  }
+  const seen = fetches(page);
+  await page.goto(replay.url({ fees: 'b', 'fees-session': 'stand-in', 'fees-fail': 'claim' }));
+  await expect(page.getByTestId('cockpit')).toBeVisible({ timeout: BOOT_MS });
+  await page.getByTestId('fees-entry').click();
+  await page.getByTestId('fees-search').fill('usd');
+  await page.getByTestId('fees-token-11155111-USDC').click();
+  await page.getByTestId('fees-amount').fill('100');
+  await expect(page.getByTestId('fees-quote')).toBeVisible();
+  await page.getByTestId('fees-go').click();
+  // The card outlives the route: back from Settings it shows the trade, not the entry.
+  await settings(page);
+  await expect(page.getByTestId('fees-card')).toHaveCount(0);
+  await page.getByRole('link', { name: 'Mine', exact: true }).click();
+  await expect(page.getByTestId('fees-card')).toBeVisible();
+  await expect(page.getByTestId('fees-entry')).toHaveCount(0);
+  await expect(page.getByTestId('fees-failure')).toBeVisible();
+  await expect(page.getByTestId('fees-step-claim')).toHaveAttribute('data-state', 'failed');
+  await page.getByTestId('fees-retry').click();
+  await expect(page.getByTestId('fees-done')).toBeVisible();
+  // Funded past a claim's cost, the account no longer gets the entry.
+  await page.getByTestId('fees-dismiss').click();
+  await expect(page.getByTestId('fees-card')).toHaveCount(0);
+  seen.stop();
+  const stray = seen.urls.filter((u) => {
+    const url = new URL(u);
+    return url.origin !== REPLAY_NODE_ORIGIN && !(url.origin === app && known.has(url.pathname));
+  });
+  expect(stray).toEqual([]);
 });

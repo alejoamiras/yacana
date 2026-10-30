@@ -42,6 +42,8 @@ export interface Quote {
   /** Fee Juice, 18 decimals: what the route expects to deliver, and the least it may deliver. */
   readonly feeJuiceOut: bigint;
   readonly feeJuiceMin: bigint;
+  /** The least Fee Juice a claim on Aztec takes: a route that may deliver less must not be confirmed. */
+  readonly claimMin: bigint;
   readonly costs: readonly Cost[];
   /** In the order they run; a deposit of Fee Juice itself has no swap. */
   readonly steps: readonly QuoteStep[];
@@ -65,11 +67,26 @@ export class FundingError extends Error {
 
 export interface FeeFundingProvider {
   chains(signal: AbortSignal): Promise<readonly Chain[]>;
-  tokens(chainId: number, signal: AbortSignal): Promise<readonly Token[]>;
-  quote(from: Token, amountIn: bigint, recipient: string, signal: AbortSignal): Promise<Quote>;
+  /** Every token it turns into Fee Juice, on every chain: no size or set may be assumed. */
+  tokens(signal: AbortSignal): Promise<readonly Token[]>;
+  /** The Aztec account is never sent: nothing the provider sees names it. */
+  quote(from: Token, amountIn: bigint, signal: AbortSignal): Promise<Quote>;
   /** Resolves when the step is done; rejects with a FundingError. Running a failed step again is the retry. */
   run(phase: Phase, quote: Quote, on: (e: PhaseEvent) => void, signal: AbortSignal): Promise<void>;
-  feeJuiceBalance(account: string, signal: AbortSignal): Promise<bigint>;
+}
+
+/** Fee Juice figures, 18 decimals, and whether the network pays every fee itself. */
+export interface Standing {
+  readonly sponsored: boolean;
+  /** The account's private Fee Juice: what its own claims pay from. */
+  readonly privateFeeJuice: bigint;
+  /** One win claim's fee. */
+  readonly claimCost: bigint;
+}
+
+/** What the page reads for itself, never through the provider. */
+export interface FundingReads {
+  standing(signal: AbortSignal): Promise<Standing>;
 }
 
 /** Fee Juice's decimals on both sides of the portal. */

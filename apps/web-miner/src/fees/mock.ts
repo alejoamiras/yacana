@@ -7,6 +7,7 @@ import {
   FEE_JUICE_DECIMALS,
   type FeeFundingProvider,
   FundingError,
+  type FundingReads,
   type Phase,
   type PhaseEvent,
   type Quote,
@@ -41,7 +42,7 @@ export function scriptFrom(search: string): MockScript {
 /** Milliseconds the mock takes; the quote's ETAs are the realistic ones the visitor reads. */
 export const MOCK_TIMING = {
   quote: 700,
-  life: 30_000,
+  life: 60_000,
   sign: 1200,
   swap: 1500,
   deposit: 1500,
@@ -53,17 +54,17 @@ export const MOCK_TIMING = {
 };
 export type MockTiming = typeof MOCK_TIMING;
 
-const ETHEREUM = 1;
+const SEPOLIA = 11155111;
+const BASE_SEPOLIA = 84532;
 export const MOCK_CHAINS: readonly Chain[] = [
-  { id: ETHEREUM, name: 'Ethereum' },
-  { id: 8453, name: 'Base' },
-  { id: 42161, name: 'Arbitrum' },
+  { id: SEPOLIA, name: 'Sepolia' },
+  { id: BASE_SEPOLIA, name: 'Base Sepolia' },
 ];
 
 const unit = (decimals: number) => 10n ** BigInt(decimals);
-const token = (chainId: number, symbol: string, name: string, decimals: number, whole: number): Token => ({
+const token = (chainId: number, symbol: string, name: string, decimals: number, whole = 0): Token => ({
   chainId,
-  address: `0x${chainId.toString(16).padStart(4, '0')}${symbol.toLowerCase().padEnd(36, '0').slice(0, 36)}`,
+  address: `0x${chainId.toString(16).padStart(6, '0')}${symbol.toLowerCase().padEnd(34, '0').slice(0, 34)}`,
   symbol,
   name,
   decimals,
@@ -72,22 +73,109 @@ const token = (chainId: number, symbol: string, name: string, decimals: number, 
 
 export const FEE_JUICE_SYMBOL = 'FJ';
 
+/** What the stand-in wallet holds, in whole tokens, by chain and symbol. */
+const HELD: Readonly<Record<string, number>> = {
+  [`${SEPOLIA}:USDC`]: 180,
+  [`${SEPOLIA}:${FEE_JUICE_SYMBOL}`]: 40,
+  [`${SEPOLIA}:WETH`]: 0.42,
+  [`${SEPOLIA}:DAI`]: 25,
+  [`${SEPOLIA}:LINK`]: 12,
+  [`${BASE_SEPOLIA}:USDC`]: 64.5,
+};
+
+/** Symbol, name and decimals of the tokens the mock routes on Sepolia, after Fee Juice: a token list, not a pick. */
+const SEPOLIA_LIST: readonly (readonly [string, string, number])[] = [
+  ['USDC', 'USD Coin', 6],
+  ['USDT', 'Tether USD', 6],
+  ['DAI', 'Dai Stablecoin', 18],
+  ['WETH', 'Wrapped Ether', 18],
+  ['WBTC', 'Wrapped BTC', 8],
+  ['LINK', 'ChainLink Token', 18],
+  ['UNI', 'Uniswap', 18],
+  ['AAVE', 'Aave', 18],
+  ['COMP', 'Compound', 18],
+  ['MKR', 'Maker', 18],
+  ['SNX', 'Synthetix Network Token', 18],
+  ['CRV', 'Curve DAO Token', 18],
+  ['LDO', 'Lido DAO Token', 18],
+  ['ENS', 'Ethereum Name Service', 18],
+  ['GRT', 'The Graph', 18],
+  ['BAL', 'Balancer', 18],
+  ['SUSHI', 'SushiSwap', 18],
+  ['YFI', 'yearn.finance', 18],
+  ['1INCH', '1inch', 18],
+  ['ZRX', '0x Protocol Token', 18],
+  ['BAT', 'Basic Attention Token', 18],
+  ['MANA', 'Decentraland', 18],
+  ['SAND', 'The Sandbox', 18],
+  ['APE', 'ApeCoin', 18],
+  ['SHIB', 'Shiba Inu', 18],
+  ['PEPE', 'Pepe', 18],
+  ['MATIC', 'Polygon', 18],
+  ['ARB', 'Arbitrum', 18],
+  ['OP', 'Optimism', 18],
+  ['RPL', 'Rocket Pool', 18],
+  ['RETH', 'Rocket Pool ETH', 18],
+  ['STETH', 'Lido Staked Ether', 18],
+  ['CBETH', 'Coinbase Wrapped Staked ETH', 18],
+  ['FRAX', 'Frax', 18],
+  ['LUSD', 'Liquity USD', 18],
+  ['GNO', 'Gnosis', 18],
+  ['BNT', 'Bancor Network Token', 18],
+  ['KNC', 'Kyber Network Crystal', 18],
+  ['LRC', 'Loopring', 18],
+  ['STORJ', 'Storj', 8],
+  ['UMA', 'UMA', 18],
+  ['NMR', 'Numeraire', 18],
+  ['OXT', 'Orchid', 18],
+  ['REN', 'Republic Token', 18],
+  ['ANKR', 'Ankr', 18],
+  ['CHZ', 'Chiliz', 18],
+  ['ENJ', 'Enjin Coin', 18],
+  ['IMX', 'Immutable X', 18],
+  ['INJ', 'Injective', 18],
+  ['LPT', 'Livepeer', 18],
+  ['QNT', 'Quant', 18],
+  ['RNDR', 'Render Token', 18],
+  ['AMP', 'Amp', 18],
+  ['AXS', 'Axie Infinity', 18],
+  ['CVC', 'Civic', 8],
+  ['DYDX', 'dYdX', 18],
+  ['FET', 'Fetch.ai', 18],
+  ['PAXG', 'Paxos Gold', 18],
+];
+
+const held = (chainId: number, symbol: string) => HELD[`${chainId}:${symbol}`] ?? 0;
+
 export const MOCK_TOKENS: readonly Token[] = [
-  token(ETHEREUM, 'ETH', 'Ether', 18, 0.42),
-  token(ETHEREUM, 'USDC', 'USD Coin', 6, 180),
-  token(ETHEREUM, FEE_JUICE_SYMBOL, 'Fee Juice', FEE_JUICE_DECIMALS, 40),
-  token(8453, 'ETH', 'Ether', 18, 0.15),
-  token(8453, 'USDC', 'USD Coin', 6, 64.5),
-  token(42161, 'ETH', 'Ether', 18, 0.08),
-  token(42161, 'USDC', 'USD Coin', 6, 25),
+  token(SEPOLIA, FEE_JUICE_SYMBOL, 'Fee Juice', FEE_JUICE_DECIMALS, held(SEPOLIA, FEE_JUICE_SYMBOL)),
+  ...SEPOLIA_LIST.map(([symbol, name, decimals]) =>
+    token(SEPOLIA, symbol, name, decimals, held(SEPOLIA, symbol)),
+  ),
+  token(BASE_SEPOLIA, 'USDC', 'USD Coin', 6, held(BASE_SEPOLIA, 'USDC')),
 ];
 
 /** Fee Juice per whole token, in thousandths: the mock's rates, not prices. */
 const RATE_MILLI: Readonly<Record<string, bigint>> = {
-  ETH: 1_600_000n,
+  WETH: 1_600_000n,
+  STETH: 1_600_000n,
+  RETH: 1_700_000n,
+  CBETH: 1_650_000n,
+  WBTC: 30_000_000n,
   USDC: 500n,
+  USDT: 500n,
+  DAI: 500n,
+  FRAX: 500n,
+  LUSD: 500n,
   [FEE_JUICE_SYMBOL]: 1000n,
 };
+/** Every other routed token buys at this rate. */
+const RATE_ELSE = 250n;
+
+/** The least Fee Juice a claim on Aztec takes, as on the real provider's testnet. */
+export const CLAIM_MIN = 30n * unit(FEE_JUICE_DECIMALS);
+/** One win claim's fee, what the entry rule compares the private balance against. */
+export const CLAIM_COST = 18n * unit(FEE_JUICE_DECIMALS - 1);
 
 const stepsFor = (from: Token): QuoteStep[] => {
   const deposit: QuoteStep[] = [
@@ -97,7 +185,7 @@ const stepsFor = (from: Token): QuoteStep[] => {
   ];
   if (from.symbol === FEE_JUICE_SYMBOL) return deposit;
   const swap: QuoteStep =
-    from.chainId === ETHEREUM
+    from.chainId === SEPOLIA
       ? { phase: 'swap', etaSeconds: 30, signs: true, via: 'Uniswap' }
       : { phase: 'swap', etaSeconds: 120, signs: true, via: 'Across' };
   return [swap, ...deposit];
@@ -107,9 +195,9 @@ const stepsFor = (from: Token): QuoteStep[] => {
 const costsFor = (from: Token, amountIn: bigint): Cost[] => {
   const costs: Cost[] = [];
   if (from.symbol !== FEE_JUICE_SYMBOL) {
-    const bps = from.chainId === ETHEREUM ? 30n : 40n;
+    const bps = from.chainId === SEPOLIA ? 30n : 40n;
     costs.push({
-      label: from.chainId === ETHEREUM ? 'Swap' : 'Bridge and swap',
+      label: from.chainId === SEPOLIA ? 'Swap' : 'Bridge and swap',
       amount: (amountIn * bps) / 10_000n,
       symbol: from.symbol,
       decimals: from.decimals,
@@ -139,10 +227,36 @@ const never = (signal: AbortSignal): Promise<never> =>
     signal.addEventListener('abort', () => reject(abortError()));
   });
 
+/** The quote the mock gives for a token and an amount. */
+function priced(from: Token, amountIn: bigint, id: string, expiresAt: number): Quote {
+  const costs = costsFor(from, amountIn);
+  const kept = amountIn - (costs[0]?.symbol === from.symbol ? (costs[0]?.amount ?? 0n) : 0n);
+  const out =
+    (kept * (RATE_MILLI[from.symbol] ?? RATE_ELSE) * unit(FEE_JUICE_DECIMALS)) /
+    (1000n * unit(from.decimals));
+  return {
+    id,
+    from,
+    amountIn,
+    feeJuiceOut: out,
+    feeJuiceMin: (out * 99n) / 100n,
+    claimMin: CLAIM_MIN,
+    costs,
+    steps: stepsFor(from),
+    expiresAt,
+  };
+}
+
 const mockTx = (phase: Phase, n: number) =>
   `0x${phase.length.toString(16)}${n.toString(16).padStart(3, '0')}${'7e'.repeat(30)}`;
 
-export function mockProvider(script: MockScript, timing: MockTiming = MOCK_TIMING): FeeFundingProvider {
+export interface MockFunding {
+  provider: FeeFundingProvider;
+  reads: FundingReads;
+}
+
+/** The provider and the page's own reads, sharing one pretend chain: a finished claim raises the private balance. */
+export function mockFunding(script: MockScript, timing: MockTiming = MOCK_TIMING): MockFunding {
   const spent = new Set<MockFailure>();
   let quotes = 0;
   let sends = 0;
@@ -174,25 +288,12 @@ export function mockProvider(script: MockScript, timing: MockTiming = MOCK_TIMIN
     await wait(timing.lateDone - timing.late, signal);
   };
 
-  return {
+  const provider: FeeFundingProvider = {
     chains: async () => MOCK_CHAINS,
-    tokens: async (chainId) => MOCK_TOKENS.filter((t) => t.chainId === chainId),
-    async quote(from, amountIn, _recipient, signal) {
+    tokens: async () => MOCK_TOKENS,
+    async quote(from, amountIn, signal) {
       await wait(timing.quote, signal);
-      const costs = costsFor(from, amountIn);
-      const kept = amountIn - (costs[0]?.symbol === from.symbol ? (costs[0]?.amount ?? 0n) : 0n);
-      const out =
-        (kept * (RATE_MILLI[from.symbol] ?? 0n) * unit(FEE_JUICE_DECIMALS)) / (1000n * unit(from.decimals));
-      return {
-        id: `q${++quotes}`,
-        from,
-        amountIn,
-        feeJuiceOut: out,
-        feeJuiceMin: (out * 99n) / 100n,
-        costs,
-        steps: stepsFor(from),
-        expiresAt: Date.now() + timing.life,
-      };
+      return priced(from, amountIn, `q${++quotes}`, Date.now() + timing.life);
     },
     async run(phase, quote, on, signal) {
       if (once('expired', phase === quote.steps[0]?.phase))
@@ -206,6 +307,9 @@ export function mockProvider(script: MockScript, timing: MockTiming = MOCK_TIMIN
       if (once('claim', true)) throw new FundingError('failed', 'The claim did not go through.');
       received += quote.feeJuiceOut;
     },
-    feeJuiceBalance: async () => received,
   };
+  const reads: FundingReads = {
+    standing: async () => ({ sponsored: false, privateFeeJuice: received, claimCost: CLAIM_COST }),
+  };
+  return { provider, reads };
 }

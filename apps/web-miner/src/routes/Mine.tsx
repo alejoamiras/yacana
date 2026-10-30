@@ -14,7 +14,7 @@ import { NoticeCard } from '../features/NoticeCard';
 import { OldApp } from '../features/OldApp';
 import { RailTile } from '../features/RailTile';
 import { usePresto } from '../features/use-presto';
-import { FeesSlot, feesOption } from '../fees-gate';
+import { FeesSlot, feesCardAtom } from '../fees-gate';
 import { introAtom } from '../intro';
 import { useTileLog } from '../lib/tile-log';
 import type { Session } from '../session';
@@ -80,13 +80,14 @@ export function Mine({
   // The upgrade card mounts under the bridge's providers and draws nothing while the upgrade is quiet.
   const upgradeShown = useMigrationShown();
   const bridgeOpen = useAtomValue(bridgeSessionAtom) !== null;
+  const feesCard = useAtomValue(feesCardAtom);
   // The versioned origin is one page: nothing is mined there, so no cockpit.
   if (isOldRole()) return <OldApp session={session} />;
   const above =
     (intro ? 1 : 0) +
     (notice ? 1 : 0) +
     (upgradeShown && bridgeOpen && session && ready ? 1 : 0) +
-    (feesOption === 'b' ? 1 : 0);
+    (feesCard ? 1 : 0);
   const start = onStart ?? (() => controller()?.start());
   return (
     <div
@@ -105,7 +106,7 @@ export function Mine({
       )}
       {FeesSlot && (
         <Suspense fallback={null}>
-          <FeesSlot at="cockpit" />
+          <FeesSlot />
         </Suspense>
       )}
       {session && ready && <GuidedPath session={session} />}

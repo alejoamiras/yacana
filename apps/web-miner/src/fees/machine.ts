@@ -151,7 +151,8 @@ function inQuote(s: Extract<Funding, { at: 'quote' }>, e: FundingEvent): Funding
     case 'back':
       return { at: 'pick' };
     case 'confirm':
-      if (!s.quote) return s;
+      // A route that may deliver less than a claim takes would strand the Fee Juice on its way in.
+      if (!s.quote || s.quote.feeJuiceMin < s.quote.claimMin) return s;
       if (e.now >= s.quote.expiresAt) return requote(s.quote, true);
       return {
         at: 'trade',

@@ -6,11 +6,12 @@ import { type ReactNode, useState } from 'react';
 import { TxDialog, useElapsed } from '../../features/dialogs/Frame';
 import { duration } from '../../lib/format';
 import { FEE_JUICE, failureCopy, fj, PICK_BODY, phaseLine, phaseName, retryLabel, tradeLine } from '../copy';
+import { entryShows } from '../entry';
 import type { Shown } from '../machine';
 import { Choose } from '../parts/Choose';
 import { useChains } from '../parts/TokenPicker';
 import { type FundingRun, type OptionProps, useFunding } from '../run';
-import { flight, trailItems, useRequotes } from '../views';
+import { flight, trailItems, useCardCounted, useRequotes, useStanding } from '../views';
 
 const CARD = 'md:col-span-2 xl:col-span-4';
 
@@ -86,7 +87,7 @@ function Trade({ s, run }: { s: Shown; run: FundingRun }) {
             {retryLabel(requotes)}
           </Button>
         ) : s.at === 'done' ? (
-          <Button variant="ghost" onClick={() => run.dispatch({ type: 'reset' })}>
+          <Button variant="ghost" onClick={() => run.dispatch({ type: 'reset' })} data-testid="fees-dismiss">
             Dismiss
           </Button>
         ) : undefined
@@ -118,21 +119,21 @@ const HOW: Parameters<typeof Stepper>[0]['steps'] = [
     id: 'claim',
     label: 'Claim on Aztec',
     state: 'pending',
-    detail: `This account takes its ${FEE_JUICE}; from then on it can pay its own fees.`,
+    detail: `This account claims its ${FEE_JUICE} privately, and the claim pays its own fee from it.`,
   },
 ];
 
-export function OptionB({ run, provider }: OptionProps) {
+export function OptionB({ run, provider, reads, signedIn }: OptionProps) {
   const s = useFunding(run);
   const chains = useChains(provider);
+  const standing = useStanding(reads, s.at);
   const [how, setHow] = useState(false);
+  const trading = s.at === 'trade' || s.at === 'done';
+  const entry = !trading && standing !== undefined && entryShows(signedIn, standing);
+  useCardCounted(trading || entry);
   return (
     <>
-      {s.at === 'trade' || s.at === 'done' ? (
-        <Trade s={s} run={run} />
-      ) : (
-        <Entry run={run} onHow={() => setHow(true)} />
-      )}
+      {trading ? <Trade s={s} run={run} /> : entry && <Entry run={run} onHow={() => setHow(true)} />}
       <TxDialog
         open={s.at === 'pick' || s.at === 'quote'}
         onOpenChange={(o) => !o && run.dispatch({ type: 'reset' })}

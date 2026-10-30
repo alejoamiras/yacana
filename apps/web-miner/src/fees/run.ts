@@ -5,7 +5,7 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import { firstLine } from '../features/dialogs/Frame';
 import { type Funding, type FundingEvent, next, reduce } from './machine';
-import { type FeeFundingProvider, FundingError } from './provider';
+import { type FeeFundingProvider, FundingError, type FundingReads } from './provider';
 
 const QUOTE_DEBOUNCE_MS = 300;
 
@@ -18,8 +18,6 @@ export class FundingRun {
   private quoting: AbortController | null = null;
   private quoteTimer: ReturnType<typeof setTimeout> | undefined;
   private lapseTimer: ReturnType<typeof setTimeout> | undefined;
-  /** The Aztec account the Fee Juice is for: the open account, or a flagged build's stand-in. */
-  recipient = '';
 
   constructor(
     private readonly provider: FeeFundingProvider,
@@ -84,7 +82,7 @@ export class FundingRun {
     this.quoteTimer = setTimeout(() => {
       const ctl = new AbortController();
       this.quoting = ctl;
-      this.provider.quote(token, amountIn, this.recipient, ctl.signal).then(
+      this.provider.quote(token, amountIn, ctl.signal).then(
         (quote) => this.quoting === ctl && this.settleQuote({ type: 'quoted', quote }),
         (e) =>
           this.quoting === ctl &&
@@ -128,8 +126,9 @@ export class FundingRun {
 export interface OptionProps {
   run: FundingRun;
   provider: FeeFundingProvider;
-  /** The Aztec account the Fee Juice is for. */
-  account: string;
+  reads: FundingReads;
+  /** The page is signed in, or a flagged build stands in an account. */
+  signedIn: boolean;
 }
 
 /** The runner's state for a view. A pick or a quote the view leaves is dropped, so nothing re-quotes off screen. */

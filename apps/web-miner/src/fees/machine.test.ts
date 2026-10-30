@@ -8,8 +8,8 @@ const byName = (chainId: number, symbol: string): Token => {
   if (!t) throw new Error(`no mock ${symbol} on ${chainId}`);
   return t;
 };
-const USDC = byName(8453, 'USDC');
-const FJ = byName(1, FEE_JUICE_SYMBOL);
+const USDC = byName(84532, 'USDC');
+const FJ = byName(11155111, FEE_JUICE_SYMBOL);
 const T0 = 1_000_000;
 
 const quoteOf = (from: Token, phases: Phase[]): Quote => ({
@@ -18,6 +18,7 @@ const quoteOf = (from: Token, phases: Phase[]): Quote => ({
   amountIn: 25n,
   feeJuiceOut: 12n,
   feeJuiceMin: 11n,
+  claimMin: 10n,
   costs: [],
   steps: phases.map((phase) => ({ phase, etaSeconds: 30, signs: phase === 'swap' || phase === 'deposit' })),
   expiresAt: T0 + 30_000,
@@ -118,6 +119,22 @@ describe('the fee-funding machine', () => {
     // A quote for an amount since changed is not shown.
     const changed = reduce(late, { type: 'amount', amountIn: 30n });
     expect(reduce(changed, { type: 'quoted', quote: SWAP })).toBe(changed);
+  });
+
+  test('a quote that may deliver less than a claim takes cannot be confirmed', () => {
+    const quoted = (q: Quote) =>
+      run([
+        { type: 'open' },
+        { type: 'choose', token: q.from },
+        { type: 'amount', amountIn: q.amountIn },
+        { type: 'quoted', quote: q },
+      ]);
+    const short = quoted({ ...SWAP, claimMin: SWAP.feeJuiceMin + 1n });
+    expect(reduce(short, { type: 'confirm', now: T0 })).toBe(short);
+    expect(next(short)).toBeNull();
+    // At exactly the minimum it goes.
+    const enough = quoted({ ...SWAP, claimMin: SWAP.feeJuiceMin });
+    expect(reduce(enough, { type: 'confirm', now: T0 }).at).toBe('trade');
   });
 
   test('a late step shows late, then done', () => {

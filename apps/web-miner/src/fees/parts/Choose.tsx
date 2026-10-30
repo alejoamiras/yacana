@@ -10,7 +10,7 @@ export function Choose({
   provider,
   chains,
   s,
-}: Omit<OptionProps, 'account'> & {
+}: Pick<OptionProps, 'run' | 'provider'> & {
   chains: readonly Chain[];
   s: Extract<Funding, { at: 'pick' | 'quote' }>;
 }) {

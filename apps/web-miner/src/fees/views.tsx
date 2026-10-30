@@ -2,12 +2,14 @@
 // status, so one scenario and one set of captures drive all three options.
 
 import type { Step, TimelineItem, TrailItem } from '@yacana/ui';
+import { useSetAtom } from 'jotai';
 import type * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
+import { feesCardAtom } from '../fees-gate';
 import { duration } from '../lib/format';
 import { phaseLine, phaseName, STATION } from './copy';
 import { type Funding, IN_FLIGHT, landed, type Shown, type StepState, type StepStatus } from './machine';
-import type { QuoteStep } from './provider';
+import type { FundingReads, QuoteStep, Standing } from './provider';
 
 const STEPPER: Readonly<Record<StepStatus, Step['state']>> = {
   todo: 'pending',
@@ -107,4 +109,28 @@ export function useRequotes(s: Funding): boolean {
     return () => clearTimeout(id);
   }, [waiting, expiresAt]);
   return waiting && now >= expiresAt;
+}
+
+/** The account's standing, read when the flow comes to rest (idle or done); undefined until the first answer. */
+export function useStanding(reads: FundingReads, at: Funding['at']): Standing | undefined {
+  const [standing, setStanding] = useState<Standing>();
+  useEffect(() => {
+    if (at !== 'idle' && at !== 'done') return;
+    const ctl = new AbortController();
+    reads.standing(ctl.signal).then(
+      (x) => !ctl.signal.aborted && setStanding(x),
+      () => {},
+    );
+    return () => ctl.abort();
+  }, [reads, at]);
+  return standing;
+}
+
+/** Tells the cockpit whether the flow's card is drawn, before paint, so its rows never count an absent card. */
+export function useCardCounted(drawn: boolean): void {
+  const set = useSetAtom(feesCardAtom);
+  useLayoutEffect(() => {
+    set(drawn);
+    return () => set(false);
+  }, [set, drawn]);
 }
