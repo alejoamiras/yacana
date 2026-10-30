@@ -55,19 +55,38 @@ test('the account screens and their notes fit the dialog at 720 px tall', async 
 });
 
 /**
- * The fee dialog over a list longer than the window: its box inside the window and not scrolled itself,
- * its head (title, wallet chip, search) and its foot (the file link, where the option has one) in view,
- * and the list scrolling inside down to its last row with the head and foot still in view.
+ * The search's and the chain tabs' heights, measured again with the list out of the layout: a flex
+ * column under a height cap squeezes every child that may shrink, not only the list.
  */
+async function controlsWhole(page: Page) {
+  const picker = page.getByTestId('fees-picker');
+  const controls = picker.locator('[data-testid=fees-search], [aria-label=Chain]');
+  const heights = () => controls.evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height));
+  const pressed = await heights();
+  const list = picker.getByTestId('fees-token-list');
+  await list.evaluate((l) => {
+    l.style.display = 'none';
+  });
+  expect(await heights()).toEqual(pressed);
+  await list.evaluate((l) => {
+    l.style.display = '';
+  });
+}
+
+/** The fee dialog's box and how far it scrolls itself. */
+const feeDialogBox = (page: Page) =>
+  page.getByTestId('fees-dialog').evaluate((d) => {
+    const r = d.getBoundingClientRect();
+    return { top: r.top, bottom: r.bottom, scrolls: d.scrollHeight - d.clientHeight };
+  });
+
+// The dialog itself must not scroll: scrolled as a whole, it carries its head and foot away with the list.
 async function feeDialogFits(page: Page, foot: boolean) {
   const dialog = page.getByTestId('fees-dialog');
   const list = dialog.getByTestId('fees-token-list');
   const rows = list.locator('[data-testid^=fees-token-]');
   await expect(rows.first()).toBeVisible();
-  const box = await dialog.evaluate((d) => {
-    const r = d.getBoundingClientRect();
-    return { top: r.top, bottom: r.bottom, scrolls: d.scrollHeight - d.clientHeight };
-  });
+  const box = await feeDialogBox(page);
   expect(box.top).toBeGreaterThanOrEqual(0);
   expect(box.bottom).toBeLessThanOrEqual(720);
   expect(box.scrolls).toBeLessThanOrEqual(0);
@@ -82,9 +101,10 @@ async function feeDialogFits(page: Page, foot: boolean) {
   await rows.last().scrollIntoViewIfNeeded();
   await expect(rows.last()).toBeInViewport();
   for (const part of ends) await expect(part).toBeInViewport();
+  await controlsWhole(page);
 }
 
-test('the fee dialog stays inside the window at 720 px tall, its token list scrolling between the search and the file link', async ({
+test('the fee dialog stays inside the window, its token list scrolling between the search and the file link', async ({
   page,
   replay,
 }) => {
@@ -108,10 +128,29 @@ test('the fee dialog stays inside the window at 720 px tall, its token list scro
   await expect(page.getByTestId('cockpit')).toBeVisible({ timeout: BOOT_MS });
   await page.getByTestId('fees-entry').click();
   await feeDialogFits(page, true);
+  // A list too short for the floor is not padded to it.
+  await page.getByTestId('fees-search').fill('no such token');
+  await expect(page.getByText('No token that buys Fee Juice matches')).toBeVisible();
+  const picker = page.getByTestId('fees-picker');
+  const pad = await picker.evaluate(
+    (p) =>
+      p.getBoundingClientRect().bottom - (p.lastElementChild as HTMLElement).getBoundingClientRect().bottom,
+  );
+  expect(pad).toBeLessThanOrEqual(0);
   // D and F list the held tokens alone; a broad search lists most of them.
   for (const option of ['d', 'f']) {
     await open(option);
     await page.getByTestId('fees-search').fill('a');
     await feeDialogFits(page, false);
   }
+  // Under the picker's floor the dialog scrolls as a whole, still inside the window, its tabs whole.
+  // Viewport units keep the height the page loaded at, so the short window comes before the load.
+  await page.setViewportSize({ width: 900, height: 480 });
+  await open('f');
+  await expect(page.getByRole('radiogroup', { name: 'Chain' })).toBeVisible();
+  const box = await feeDialogBox(page);
+  expect(box.top).toBeGreaterThanOrEqual(0);
+  expect(box.bottom).toBeLessThanOrEqual(480);
+  expect(box.scrolls).toBeGreaterThan(0);
+  await controlsWhole(page);
 });

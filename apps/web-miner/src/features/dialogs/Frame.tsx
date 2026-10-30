@@ -4,11 +4,7 @@ import { Button, cn, Dialog, DialogContent, DialogDescription, DialogTitle } fro
 import type * as React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-/**
- * A dialog that can outgrow the window: anchored a fifth of the way down (24 to 180 px), never closer
- * than 24 px to the bottom, scrolling inside past that. Centred and uncapped, its title and its action
- * would leave the window.
- */
+/** For content that can outgrow the window: centred and uncapped, its title and its action would leave it. */
 export const FITS_WINDOW =
   'top-[clamp(24px,20vh,180px)] max-h-[calc(100vh_-_clamp(24px,20vh,180px)_-_24px)] translate-y-0 overflow-y-auto';
 

@@ -173,6 +173,7 @@ export function TokenPicker({
   const tab = picked !== undefined && tabs.some((c) => c.id === picked) ? picked : tabs[0]?.id;
   const { held, rest } = arranged(chains, hs, layout, tab);
   const found = searching ? searched(chains, hs, query) : [];
+  const rows = searching ? found.length : held.length + rest.length;
   const row = (h: Holding) => (
     <Row
       key={`${h.token.chainId}:${h.token.address}`}
@@ -182,10 +183,10 @@ export function TokenPicker({
     />
   );
   return (
-    // Inside a dialog capped to the window the lists scroll on their own, so the search above and what
-    // follows the picker stay in view; it never shrinks below the search and two rows, and past that the
-    // dialog itself scrolls.
-    <div className={cn('flex min-h-40 flex-col gap-3', className)} data-testid="fees-picker">
+    // Inside a dialog capped to the window only the lists give way, scrolling on their own, so the controls
+    // above stay whole and what follows the picker stays in view. Two rows or more keep a floor (fewer are
+    // under it already, and a floor would only pad them); under it the dialog itself scrolls.
+    <div className={cn('flex flex-col gap-3', rows > 1 && 'min-h-40', className)} data-testid="fees-picker">
       <Input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
@@ -194,6 +195,7 @@ export function TokenPicker({
         autoComplete="off"
         spellCheck={false}
         data-testid="fees-search"
+        className="shrink-0"
       />
       {holdings === undefined && <p className="text-xs text-ink-3">Reading what your wallet holds…</p>}
       {holdings !== undefined && !searching && hs.every((h) => !isHeld(h)) && (
@@ -208,7 +210,7 @@ export function TokenPicker({
           value={String(tab)}
           onChange={(v) => setPicked(Number(v))}
           options={tabs.map((c) => ({ value: String(c.id), label: c.name }))}
-          className="self-start"
+          className="shrink-0 self-start"
         />
       )}
       <div className="flex min-h-0 flex-col gap-3 overflow-y-auto" data-testid="fees-token-list">

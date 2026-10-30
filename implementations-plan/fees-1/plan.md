@@ -386,12 +386,15 @@ Added after a2's captures. At 900 × 720, E's dialog listed every supported toke
 wallet reconnects on its own. D and F fit until a broad search ("a": 35 rows, 2,310 px). Demonstrated by a probe.
 1. The account dialog's window-fit rule (anchored a fifth of the way down, capped 24 px above the bottom, scrolling
    inside) moves into `features/dialogs/Frame.tsx` as `FITS_WINDOW`: the account dialog uses it unchanged,
-   `TxDialog` takes it as `fitsWindow`, the fee dialog opts in and the other money dialogs do not. The picker's lists
-   scroll in their own region between the search and what follows; below the search and two rows the dialog scrolls.
-2. `dialog-geometry.replay.ts`: "the fee dialog stays inside the window at 720 px tall, its token list scrolling
-   between the search and the file link": E connected, E after a reload, D and F searched for "a"; the box inside the
-   window and unscrolled, title, chip, search and file link in view, the list scrolling to its last row with them
-   still in view. Vitest cannot: jsdom has no layout. Measured 9.6 s.
+   `TxDialog` takes it as `fitsWindow`, the fee dialog opts in and the other money dialogs do not. Only the picker's
+   lists give way, scrolling in their own region between the search and what follows; the search and the chain tabs
+   keep their height. Two rows or more keep a 160 px floor, under which the dialog scrolls; fewer are not padded.
+2. `dialog-geometry.replay.ts`: "the fee dialog stays inside the window, its token list scrolling between the search
+   and the file link": E connected, E after a reload, D and F searched for "a"; the box inside the window and
+   unscrolled, title, chip, search and file link in view, the list scrolling to its last row with them still in view,
+   the search and tabs as tall as with the list out of the layout; E's no-match line unpadded; F unsearched in a
+   480 px window, under the floor, scrolling as a whole inside it with its tabs whole. Vitest cannot: jsdom has no
+   layout. Measured 12.6 s.
 - **Gate**: lint, typecheck, `bun test` (the pinned Aztec bin first on PATH), test:components, the replay lane,
   fund-fees-absent, at retry 0. Then break it on purpose: drop `fitsWindow`, then the list's own scroll.
 
@@ -537,6 +540,17 @@ Gate on `079ce64`: the case green in 9.6 s; dropping `fitsWindow` fails it with 
 and dropping the list's own scroll fails it with the dialog scrolling 3,221 px itself. Phase gate green at retry 0:
 lint, typecheck, `bun test` 727 pass / 44 skip, test:components, replay 11 passed in 2.3 min (2.3 before),
 fund-fees-absent.
+
+**a3 fix loop, round 1** (Codex changes requested; Opus conditional approve beside it). Both found the column
+squeezing the controls with the list: the search 38 → 19 px at 720, F's tabs (`overflow-hidden`, so a zero minimum)
+down to about 11 px at 480. Fixed with `shrink-0` on both; the case now measures them again with the list out of the
+layout (a mid-page resize cannot do it: Chromium keeps viewport units at the height the page loaded at) and loads F
+at 480 px. Opus: the 160 px floor padded the short screens (no match, reading, an empty wallet) by about 80 px; the
+floor now applies from two rows. The two comments that restated the classes or promised two rows that the floor does
+not keep were rewritten, and the case lost "at 720 px tall" from its title. Not taken: the close button scrolling
+away under the floor (below about 490 px; Escape and outside still close), a frame matter for every fitting dialog.
+Forced breaks, each caught: the search shrinking (19 against 38), the tabs shrinking (11.2 against 32.8), the floor
+unconditional (80.5 px of padding).
 
 ## 8. Post-implementation
 

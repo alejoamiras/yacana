@@ -56,3 +56,5 @@
 - 2026-10-30 a3 gate green at retry 0: lint 0, typecheck 0, `bun test` 727 pass / 44 skip / 0 fail (pinned Aztec bin
   first on PATH), test:components (web-miner 197), replay 11 passed in 2.3 min (2.3 before; the new case 9.9 s),
   fund-fees-absent 2 pass. Codex loop next.
+- 2026-10-30 a3 Codex r1 changes requested, Opus conditional approve: the controls squeezed with the list, the floor
+  padding short screens, two comments. Fixed with the case extended; three forced breaks caught. Codex r2 next.
