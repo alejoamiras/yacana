@@ -9,429 +9,465 @@ explainer: off
 eli5_mode: skipped (orchestrator-owned)
 quality_bar: production
 hardening: not scheduled
-budget: "recon: 2 Sonnet sweeps; codex gpt-6.1-sol at high; code-review off"
-status: drafted 2026-10-27; final Codex pass approve; awaiting the orchestrator's approval
+budget: "recon: 2 Sonnet sweeps (a1) + 1 (revision); codex gpt-6.1-sol at high; code-review off"
+status: a1 merged (#93, e8b7d06); revised 2026-10-30 for a2, the shots and a3; final fresh Codex pass approve (r3); awaiting the orchestrator's approval
 created: 2026-10-27
+revised: 2026-10-30
 ---
 
-# fees-1: the web miner's "Fund fees" flow, three options behind a development flag
+# fees-1: the web miner's "Fund fees" flow, behind a development flag
 
-Over the 350-line target: the options table, the capture matrix and the two-reviewer ledger (§7) are evidence the
-owner's pick and the audits rest on.
+Over the 350-line target (about 510 lines): the ask27 options table, the capture matrix and three audit rounds
+carry the owner's next pick and the audits. a1's full plan and ledger are this file at `52bec6b`.
 
-On the live network the sponsored fee payment contract pays every page transaction. A visitor holds no Fee Juice,
-and every Aztec transaction needs some. This lane designs the flow that gets an account Fee Juice: pick a token on a
-chain, read a quote, watch the trade's phases until the Fee Juice arrives. The design comes before the SDK behind it
-exists. a1 builds three options in the real product, behind a flag production never carries, on a mocked provider.
-A shots lead captures them light and dark, and the owner picks one on a decision page. a2 keeps the pick, still
-mocked and still behind the flag.
+On a network with no sponsor every Aztec transaction needs Fee Juice, and a visitor holds none. This lane designs
+the flow that funds an account: in the real product, behind a flag production never carries, on a mocked provider,
+before the SDK behind it exists. a1 (merged) built three placements and the owner picked B. This revision plans the
+rest: a2 keeps B, builds ask25 and the entry rule, and adds ask27's options D, E and F on top of B; a shots lead
+captures them; the owner picks; a3 keeps the pick, still mocked and flagged, and closes the plan.
 
 ## 1. Scope
 
-- **Issues**: none. **Asks**: ask18 → a2 (a1 delivers no ask). **Owner decisions recorded**: none.
-- **UI impact (a1)**: no recorded decision applies, and nothing reaches a visitor. The flow exists only when
-  `VITE_DEV_FUND_FEES` resolves, which `loadSiteConfig` never does in production. `apps/web-miner/tests/fund-fees-absent.bun.test.ts`
-  proves it: a production build with the flag in its env has no `apps/web-miner/src/fees/` module in any chunk.
-- **UI impact (a2)**: the owner's pick on the lane's decision page, quoted by id and text in the a2 prompt; still
-  behind the flag, so still nothing a visitor sees.
-- **Owner asks** (`OWNER-ASKS.md`): OA1, what the flow says becomes public; OA2, what the visitor asks for and what
-  Fee Juice buys; OA3, when the entry shows. Each ships now in the form written there, and none blocks a1.
-- **Out**: the real provider and its SDK, any network call, LI.FI code, mainnet, persistence (a reload forgets a
-  mocked trade), the sponsored fee payer and every real transaction path, Presto, the bridge dialogs' behaviour, the
-  claim path's failure handling, the flag flip.
+- **Issues**: none. **Asks**: ask18 → a3; ask25 → a3; ask27 → a3. a2 delivers none.
+- **Owner decisions recorded** (2026-10-30), the form a2 and a3 build on:
+  - P3-01 = B: "Before you mine: a card over the cockpit; on confirm it carries the trade as a trail and stays through a trip to Settings."
+  - P3-03 = S: "As it ships: spend an amount of a token, read the Fee Juice it buys."
+  - P3-04 = I: "Only signed in, only on a network with no sponsor, and only while the account's Fee Juice is below what a claim costs."
+- **UI impact (a2)**: P3-01 B, P3-03 S and P3-04 I as quoted; ask25 as its line says ("the token picker offers every
+  token the provider can route to Fee Juice, searchable across chains, never a hand-picked list; the flow funds
+  private Fee Juice: the Aztec account is never shown or named (not on Ethereum, not in the quote), no public
+  balance and no payer note, and the claim that mints pays from the private balance"); ask27's options D, E and F
+  (§4) for the owner's next decision page. All behind the flag, so nothing reaches a visitor. Anything else visible
+  ships in the "what ships now" form of `OWNER-ASKS.md` OA4–OA7.
+- **UI impact (a3)**: the ask27 pick from the next decision page, quoted by id and text, and OA4–OA7 as answered;
+  still behind the flag.
+- **Out**: the real provider and its SDK (nothing imports it); any network call from the flow (no live quote, no
+  L1 transaction or balance read, no portal call); a chain switch (the mock's signatures never reach the wallet);
+  mainnet; the sponsored fee payer and the wallet's fee path; Presto; the bridge's behaviour (its connect screen and
+  download are reused as they are); the flag flip.
 
 ## 2. Outcome & Quality Bar
 
-- **For whom**: first the owner, who picks from screenshots and one line per option. Later a miner on a network
-  with no sponsor, who must hold Fee Juice before a win can be claimed.
+- **For whom**: the owner, picking from captures and one line per option; later a signed-in miner on a network
+  with no sponsor, whose wins need Fee Juice to claim.
 - **Excellent**:
-  1. Each option reaches every state through a URL and a click recipe (§6, Shots), in both themes: entry, picker,
-     quote with its countdown, the wallet's ask, each phase running or late, each failure, and done.
-  2. A failure says what happened, what was not lost, and the one thing to do. A retry reruns only the failed
-     phase, and a finished phase never runs twice. The machine's specs prove both.
-  3. A production build carries none of it (the bundle test). From navigation to done, the flow adds no fetch to
-     what the same page fetches without it (the scenario's request log).
-  4. The three options share one provider, one machine and one set of test ids. So a2 is a deletion plus polish,
-     and the scenario survives it but for its loop and title.
-- **Good enough**: mock data is static and plausible, not priced. Copy follows the dialogs' tone, and a2 polishes
-  the picked option's copy. No persistence, no real L1 wallet.
+  1. Every state of every option is reachable by a URL and a click recipe in both themes (§6, Shots), connect, an
+     empty wallet, the save and the restore with its refusals included.
+  2. The money-shaped rules live in the reducer and are tested: no step runs before the visitor started the
+     recovery file's download; a restored funding never reruns a landed step; nothing below the claim minimum can
+     be confirmed; a retry reruns only the failed step.
+  3. The account stays unnamed: no quote call, file, file name or screen carries it.
+  4. The recovery file round-trips in a real browser: save, clear the site data, load it, finish the claim.
+  5. No production build carries the flow (the bundle test); from navigation to done the flow adds no same-origin
+     request and no node method the page does not already call, and the wallet is asked only the account, chain and
+     permission methods.
+- **Good enough**: mock data is plausible, not priced; a3 polishes the copy of the pick only.
 
 ## 3. Assumptions
 
-**Facts** (sources in `recon.md`):
-- F1 The sponsored FPC pays every transaction (`src/wallet.ts:147-160`, `src/feePayer.ts`). Nothing reads a Fee Juice
-  balance. Copy promises "no fee" (R1).
-- F2 SDK 6.0.0's real path: approve, then `depositToAztecPublic(to, amount, secretHash)` on L1, then the L1→L2 message,
-  then a claim on Aztec inside the first transaction it pays for (`FeeJuicePaymentMethodWithClaim`). The phases
-  follow it: swap or bridge, deposit, message, claim.
-- F3 A win mints only while its epoch is open (`claim-check.ts:73-88`). An epoch closes on its fourth claim, or by a
-  roll once it has been open for `T_MAX` (`main.nr:231-253`); difficulty targets 300 s epochs (`params.nr:2-3`). A
-  claim's transaction expires 600 s after its anchor, and a new attempt re-anchors (`controller.ts:1051-1063`). A
-  crossing takes "a few minutes" (`FromEthereum.tsx:187`). So the epoch of a win found without fees may close
-  before Fee Juice arrives.
-- F4 Funding one's own fees makes three things public: the deposit names the Aztec account on Ethereum, the Fee
-  Juice balance is public, and each self-paid transaction names the account as fee payer (R4).
-- F5 Signed out, Mine (with the balance card) and Settings render, and Wallet redirects to Mine (R5).
-- F6 The cockpit's `ROWS` covers zero to three cards above it (R6).
-- F7 The production-only config and the define follow `VITE_E2E_PROVERLESS` (`config.ts:184,210`, `config.test.ts:68`).
-  Vite puts every `VITE_*` process variable into `import.meta.env` unless a define overrides it, so the define is
-  the guard that carries weight.
-- F8 A miner build takes about 2 s in CI (`proverless-marker.bun.test.ts`, run 40585067152). The replay lane ran 9 tests
-  in 1.2 min, and its job took 2 min.
-- F9 A new replay-only test needs only its `REPLAYED` entry. The "original nineteen" sum is untouched (R8).
-- F10 The replay fixture aborts and records any request off the app origin and the recording, and any worker or
-  websocket (`fixtures.ts:56-73`). It passes same-origin requests.
-- F11 Vite 8.2.2 drops a define-guarded `import()` when the comparison and the `import()` sit in one module, inline or
-  through a module-level const. An `import()` guarded by a const imported from another module leaves an orphan
-  chunk. Toy builds in the lane's scratch folder showed both, and Codex reproduced the second.
+**Facts** (sources in `recon.md`). a1's F1–F11 hold (`52bec6b` §3): the sponsored FPC pays every page transaction
+(F1); a win mints only while its epoch is open (F3); the flag resolves only off production and the define is the
+guard (F7); the replay fixture refuses every other origin, websocket and worker (F10); a define-guarded `import()`
+folds only beside its comparison (F11). F4 is superseded by ask25's design. New:
+- F12 The installed FeeJuice (`@aztec-labs/protocol-contracts` artifact) has `claim` and `claim_and_end_setup`
+  (private), `balance_of_public`, `check_balance`, `_increase_public_balance`, `public_dispatch` (public): no private
+  balance. The Fee Juice portal has `depositToAztecPublic` (it names `to`), `distributeFees` and views. aztec.js
+  6.0.0's `PrivateFeePaymentMethod` is `@deprecated Is not supported on mainnet`.
+- F13 The real provider's testnet behaviour (data, not requirements): it connects its own Aztec wallet
+  (wallet-sdk); it has no holdings query and reads balances through its own RPCs for the rows on screen; private gas
+  goes to a private fee-payment contract with the Aztec recipient zeroed in the calldata, while the deposit's
+  sender, token and amount are public; its backup is a JSON file whose record is sealed under a key from an Ethereum
+  signature; it keeps its record in local storage from before the first signature; quotes last 60 s; a claim needs
+  about 30 Fee Juice; from Sepolia it takes the fee asset 1:1, test tokens, Uniswap's default list or a pasted
+  ERC-20, from Base Sepolia USDC only; a cross-chain quote needs both wallets connected; end to end takes 2–4 min.
+- F14 The miner's injected connection is `wagmiConfigFor` (`src/bridge/eth.ts:33-41`): one chain, the generic
+  `injected()` plus EIP-6963 discovery, an http transport to the page's RPC. Connect and reconnect talk only to the
+  injected provider (connect also asks `wallet_requestPermissions` and swallows a refusal,
+  `@wagmi/core/src/connectors/injected.ts:115-139`); reads hit the RPC. wagmi builds each EIP-6963 announcement into an
+  `injected()` connector whose id is the wallet's rdns (`@wagmi/core/src/createConfig.ts:121-124`) and keeps the
+  generic one (id `injected`) beside it, so one installed wallet makes two connectors. `BridgeProviders` renders
+  nothing without a bridge session (signed in, with a bridge record), and an e2e build carries no bridge record
+  unless its run hands one (`packages/web-kit/src/config.ts:236`). The Slot mounts outside it (`routes/Mine.tsx:106`).
+- F15 Nothing reads an ERC-20 balance or batches reads; the chain definition names no `multicall3`; the fetch guard
+  admits only the Ethereum RPC in use (`web-kit/src/browser/node-guard.ts`); `QUIET` keeps optional reads out of RPC
+  health.
+- F16 The bridge's recovery file (`packages/bridge/src/recovery.ts:10-30`) holds no secret: secrets re-derive from
+  the account's master by HKDF labels (`secrets.ts:38-77`); the master (passkey PRF or mnemonic) lives in memory for
+  the tab (`src/session.ts:179`). The file names the account, and its file name carries the account's first ten
+  characters (`features/recovery.ts:12`). Load is a hidden file input (`ActivityList.tsx:151`); the bridge e2e saves
+  with `waitForEvent('download')` and loads with `setInputFiles` (`bridge.e2e.ts:185-245`).
+- F17 Nothing says whether a network has a sponsor, and no Aztec fee is estimated; a claim's gas limits come from
+  `claimGasLimits(node)` (`src/wallet.ts:154`).
+- F18 Signed in is `bootAtom.phase === 'ready'` (`src/state.ts:67`); the replay lane is signed out with no node.
+  `e2e/helpers/l1-wallet.ts` injects an EIP-1193 wallet answered from Node, announced by EIP-6963, with the
+  permission methods; anything else it proxies to its RPC through a lazily built client, so an unreachable RPC URL
+  makes it usable in the replay lane. e2e specs already open CDP sessions (`e2e/helpers.ts:66`).
+- F19 The cockpit sizes its rows by the cards above it (`routes/Mine.tsx:51-56`, `:86-89`); a card counted but not
+  drawn leaves an empty row and its gap at `xl`.
 
-**Inferences** (I1 became F11):
-- I2 One scenario that loops the three options takes about 65 s: about 12.6 s of mock time per option, plus boots,
-  typing, the Settings hop and one baseline load. Measured in P4 against a 70 s ceiling.
-- I3 The views survive a real provider, because they read phase events. The interface itself is provisional: its
-  retry guarantee is the mock's. A real provider needs five things: receipts and reconciliation (a `run()` that
-  broadcast and lost track would deposit twice); the deposit's outputs (claim secret, message hash, leaf index),
-  journaled before the L1 transaction; the claim as the page wallet's own transaction; the source wallet's address;
-  and two signatures for approve and deposit. That is separate approved work, listed in the close-out's issue.
+**Verify first for the new proposals, settled**:
+- V1 Aztec wallet. The provider connects its own Aztec wallet; the miner pays from its embedded account. The mock
+  funds the miner's own account and never receives it. The real provider must offer an embedded mode: a quote and a
+  deposit with no Aztec wallet, the claim as a call the miner's own wallet sends, and its private payment method
+  usable by an account it never connected.
+- V2 Holdings. The mock reads balances for the provider's list through a page-side reader (§4). The real path reads
+  them through the page's RPC (`getBalance`, `balanceOf`, batched through multicall3 once the chain definition names
+  it, `QUIET`); a second chain needs its RPC admitted by the guard.
+- V3 Private gas. Aztec 6.0.0 has no private Fee Juice balance (F12), so the mock models one, and the real path waits
+  on a contract, not a release: the provider's private fee-payment contract, whose payment method the miner's wallet
+  would use; its transactions then name that contract as fee payer, never the account. No Aztec release known to
+  the planner adds a private FeeJuice balance (confidence: unknown beyond 6.0.0).
+- V4 Recovery shape: the bridge's, mirrored (D7). Secrets re-derive from the account's master; the file holds no
+  secret and names no account. The real provider must take a caller-supplied secret hash for the deposit and look a
+  deposit up by it, returning the claim's inputs (the amount delivered, the message's leaf index) and its status:
+  that lookup is what finishes a claim after a swap whose output was unknown at save time. If it cannot take the
+  hash, the file seals the provider's secret under a key derived from the same master, never from an Ethereum
+  signature.
+- V5 Claim minimum. The quote carries it (mock 30 Fee Juice, as on the real provider's testnet) and states it, and
+  the reducer refuses to confirm a quote whose least delivery is below it.
 
-**Asks** (no owner to ask, so each runs on its working assumption):
-- A1 Mock chains and tokens. Assumed: Ethereum (ETH, USDC, Fee Juice), Base (ETH, USDC), Arbitrum (ETH, USDC), with
-  fixed balances and rates.
-- A2 (moved to OA2: what the visitor types shapes every quote screen.)
-- A3 Signed out, the flagged build uses a fixed stand-in account, so the flow is reachable without a node. The
-  decision page says the captures are signed out with a stand-in.
+**Asks** (no owner to ask; each runs on its working assumption):
+- A1 (revised) The mock's chains mirror the real provider's testnet: Sepolia (the fee asset 1:1 and a generated
+  list of about sixty tokens) and Base Sepolia (USDC only). The stand-in wallet holds a few of them.
+- A3 (revised) A signed-out flagged page stands in a signed-in account only under `fees-session=stand-in`, so
+  P3-04's "only signed in" is exercised; the decision page says the captures use the stand-in.
+- A4 "What a claim costs" (P3-04) is one win claim's fee: the mock's 1.8 Fee Juice; for real, `claimGasLimits`
+  times the node's current minimum fees.
+- A5 Under the flag the network has no sponsor (the flow's premise); the real signal is the flip lane's.
 
 ## 4. Architecture & Implementation
 
-**Shape.** All flow code lives in `apps/web-miner/src/fees/`, reached only through one gate file. Three production
-files mount a slot each, and in production every slot is `null`.
+**What stays from a1**: the gate (`src/fees-gate.ts`), `Slot.tsx`, the reducer (`machine.ts`), the tab-wide
+`FundingRun`, the mock's delays and its `fees-fail` and `fees-hold` switches, the phase marks in `views.tsx`,
+`copy.ts`, `QuoteView`, B's entry and trade cards, the bundle test. a2 deletes options A and C, their slots in
+`BalanceCard` and `Settings`, their cases and `Held`.
+
+**Interface deltas (`provider.ts`, still provisional):**
 
 ```ts
-// src/fees/provider.ts: provisional (I3); a1 and a2 ship only `mock.ts` behind it
-export type Phase = 'swap' | 'deposit' | 'message' | 'claim';
-export interface Chain { readonly id: number; readonly name: string }
 export interface Token { readonly chainId: number; readonly address: string; readonly symbol: string;
-  readonly name: string; readonly decimals: number; readonly balance: bigint }
-export interface Cost { readonly label: string; readonly amount: bigint; readonly symbol: string; readonly decimals: number }
-export interface QuoteStep { readonly phase: Phase; readonly etaSeconds: number; readonly signs: boolean; readonly via?: string }
-export interface Quote { readonly id: string; readonly from: Token; readonly amountIn: bigint;
-  readonly feeJuiceOut: bigint; readonly feeJuiceMin: bigint; // 18 decimals
-  readonly costs: readonly Cost[]; readonly steps: readonly QuoteStep[]; readonly expiresAt: number } // unix ms
-export type PhaseEvent = { kind: 'signing' } | { kind: 'sent'; tx: string } | { kind: 'late' };
-export type FailureReason = 'rejected' | 'expired' | 'failed';
-export class FundingError extends Error { constructor(readonly reason: FailureReason, message: string) }
+  readonly name: string; readonly decimals: number }               // no balance: balances are the wallet's
+export interface Quote { /* a1's fields */ readonly claimMin: bigint } // least Fee Juice a claim takes, 18 decimals
+export interface FundingHint { readonly token: Token; readonly amountIn: bigint } // display only
 export interface FeeFundingProvider {
   chains(signal: AbortSignal): Promise<readonly Chain[]>;
-  tokens(chainId: number, signal: AbortSignal): Promise<readonly Token[]>;
-  quote(from: Token, amountIn: bigint, recipient: string, signal: AbortSignal): Promise<Quote>;
-  /** Resolves when the step is done; rejects with FundingError. Running a failed step again is the retry. */
-  run(phase: Phase, quote: Quote, on: (e: PhaseEvent) => void, signal: AbortSignal): Promise<void>;
-  feeJuiceBalance(account: string, signal: AbortSignal): Promise<bigint>;
+  /** Every token it turns into Fee Juice, on every chain: no size or set may be assumed. */
+  tokens(signal: AbortSignal): Promise<readonly Token[]>;
+  /** `payer` is the Ethereum wallet; the Aztec account is never sent. */
+  quote(from: Token, amountIn: bigint, payer: string, signal: AbortSignal): Promise<Quote>;
+  /** `commit`: the secret hash the deposit commits to, derived from the funding's index. */
+  run(phase: Phase, quote: Quote, commit: string, on: (e: PhaseEvent) => void, signal: AbortSignal): Promise<void>;
+  /** The funding a commitment names, as the chain has it; null when no deposit carries it. `hint` is the file's
+   *  display hint: a real provider ignores it, the mock (no chain) rebuilds the funding from it. */
+  resume(saved: { commit: string; hint: FundingHint }, signal: AbortSignal): Promise<{ quote: Quote; landed: readonly Phase[] } | null>;
+}
+/** What the page reads for itself, never through the provider. */
+export interface FundingReads {
+  balances(owner: string, tokens: readonly Token[], signal: AbortSignal): Promise<readonly bigint[]>;
+  standing(signal: AbortSignal): Promise<{ sponsored: boolean; privateFeeJuice: bigint; claimCost: bigint }>;
 }
 ```
 
-- **`mock.ts`**: `mockProvider(script, timing)`, importing only `provider.ts`. A quote takes 0.7 s and lives 30 s. A
-  wallet ask takes 1.2 s. Swap and deposit take 1.5 s each, the message 2.5 s, the claim 2 s. The quoted ETAs read
-  like real ones (about 6 min in all). The Fee Juice token on Ethereum has no swap step. `scriptFrom(search)` reads
-  two switches with closed vocabularies, and anything else reads as none:
-  - `fees-fail`, each injected once: `expired` (the first step refuses the quote); `rejected` (the first wallet ask
-    is refused: the swap's on a swap route, the deposit's when the token is Fee Juice); `late` (the message reports
-    late at 1.5 s and finishes at 5 s); `claim` (the claim fails).
-  - `fees-hold`: `sign` (the first wallet ask never answers), or a phase name (that phase never finishes after its
-    signature). A hold ends only on abort. With `fees-fail=late`, the held message still reports late first.
-- **`machine.ts`**: a pure reducer with no clock of its own (`now` rides in events).
-  - States: `idle | pick | quote{token, amountIn, quote|null, refreshed, error} | trade{quote, steps: StepState[] (the quote's order), failure|null} | done{quote, received}`.
-    `StepState.status` is `todo | signing | running | late | done | failed`. Nothing is named `Step`, which ui exports.
-  - Events: `open, choose, amount, quoted, quoteFailed, lapse, back, confirm, started, step, stepDone, stepFailed, retry, reset`.
-  - `next(state)` names the phase the runner must start: the quote's first step not done, with none in flight and
-    no failure.
-  - `confirm` on an expired quote returns to `quote` with no quote. `stepFailed(expired)` before any step is done
-    returns to `quote` with `refreshed`: the quote ran out, which is not a failure. `refreshed` stays until the next
-    confirm or input, so its note holds still for a capture.
-  - `retry` resets only the failed step to `todo`. When nothing has landed and the quote has expired, it returns to
-    `quote` instead. `late` holds until the step is done.
-  - Invariants: a done step never leaves `done`; at most one step is in flight; `done` follows the last step.
-- **`run.ts`**: `FundingRun`, one per tab, created by `Slot.tsx` on first use. It holds the state for
-  `useSyncExternalStore`, starts `provider.run` for `next(state)` with an `AbortController`, and dispatches the
-  outcome. It re-quotes on the amount (debounced 300 ms) and when a shown quote expires. `reset()` aborts what is in
-  flight. An outcome counts only while its controller is current, and a quote only while its token and amount match
-  the state's. Recon's verdict was an atom; a tab singleton is needed because B's card must outlive a route change.
-- **Shared views**:
-  - `parts/TokenPicker.tsx`: a chain `Segmented`, a search `Input`, token rows with balances.
-  - `parts/QuoteView.tsx`: `AmountField` + `AmountBelow`, checked by `amountRefusal`/`parseAmount` from
-    `features/withdraw-form.ts`. Then `Row`s: you get (about, at least), costs, arrives in, "new quote in 0:24".
-  - `parts/Choose.tsx`: the picker-then-quote screens A's and B's dialogs share, and `Held`, the account's Fee
-    Juice, remounted when a trade lands.
-  - `views.tsx` maps state to `Stepper` steps, `Trail` items or `Timeline` items; each phase's name is a span
-    carrying the test id and the machine's status.
-  - `copy.ts` holds phase labels and failure lines, with no ✦ (nothing proves).
-  - Test ids every option shares: `fees-entry`, `fees-search`, `fees-token-<symbol>`, `fees-amount`,
-    `fees-quote`, `fees-countdown`, `fees-go`, `fees-step-<phase>` (`data-state`: the machine's status),
-    `fees-refreshed`, `fees-failure`, `fees-retry`, `fees-done`; `fees-held` in A and C, which show the figure. A chain is the `Segmented`'s radio by
-    its name ("Base"): `Segmented` takes no per-option test id, and ui stays untouched.
-- **The gate** `src/fees-gate.ts` is the only production-reachable file. One expression holds the define comparison,
-  the query and the `import()` (F11):
-  `FeesSlot = import.meta.env.VITE_DEV_FUND_FEES === '1' && option ? lazy(() => import('./fees/Slot')) : null`.
-  `feesOption` is `?fees=a|b|c`, read once at load and null otherwise. Read once, it survives in-app navigation.
-  With the flag on and no `?fees=`, nothing loads, so the other replay tests are unchanged. If a real build ever
-  keeps the chunk, the named fallback is a production-only `resolve.alias` of the Slot to an empty module, as
-  `vite-base.ts:206-216` stubs the provers.
+- **The mock** (`mock.ts`): A1's tokens; the stand-in wallet's balances by its address; quotes that live 60 s;
+  `claimMin` 30; the claim's own fee among the costs, paid from what arrives. It has no chain to outlive a cleared
+  site, so its `resume` rebuilds the funding from the hint it is handed (below) with the deposit landed and the
+  message in flight; the real `resume` reads what the commitment names and ignores the hint. Its standing: no
+  sponsor, a private balance of zero that a finished claim raises, a claim cost of 1.8. New switches, closed
+  vocabularies: `fees-session=stand-in`, `fees-wallet=empty`, `fees-resume=missing|claimed`.
+- **The entry rule** (`entry.ts`, pure): `shows = signedIn && !sponsored && privateFeeJuice < claimCost`, where
+  `signedIn` is the session's, or the stand-in's under its switch. It governs the entry only: a trade's card stays
+  until Dismiss. Mine counts the card through `feesCardAtom`, a jotai atom in `fees-gate.ts` the Slot sets in a
+  layout effect while it draws a card; production never sets it (F19).
+- **ask25 in the shared parts**: the visibility row reads "Visible on Ethereum: your wallet and the amount"; the
+  payer note and every public balance go; `run.recipient` goes; the claim's line says it pays its fee from the Fee
+  Juice it claims. Search matches symbol, name or address, so a pasted address finds a supported token; an
+  arbitrary ERC-20 at a provider-set rate is the real lane's.
+- **The wallet** (`wallet.tsx`): one wagmi config owns the flow at a time, under the flow's own `WagmiProvider` and
+  `QueryClientProvider` (the Slot sits outside `BridgeProviders`, F14). With a bridge session open, the session's
+  config: the bridge and the flow share one connection, so the chip's × disconnects the page's one Ethereum
+  connection, as in Wallet (ask27: "on the miner's existing injected-wallet connection"). With none (signed out
+  under the flag, or a network with no bridge record), a config the flow builds once per tab from `bridgeChain` (the
+  page's RPC, the provider's first chain), `injected()` with discovery, and its own storage key
+  (`yacana.fees.wagmi`), so its persisted store and disconnect marker never mix with the bridge's; once a sign-in
+  opens a bridge session the flow moves to the session's and its own stays idle. The flow uses `useAccount`,
+  `useConnectors`, `ConnectWallet` and `WalletChip`: no read hook, transport, signature or write. "One installed
+  wallet" counts the announced connectors, every one but the generic `injected` (F14). The guarantee is about the
+  page's own traffic: what an extension does on its side is out of the page's sight.
+- **The funding's identity and its file** (`recovery.ts`, pure but for the download): a random 48-bit `index` (no
+  journal under the flag; never a scan bound) and its commitment `commit`, the secret hash of HKDF(master,
+  `yacana.fees.v1:<chainId>:<rollupVersion>:<index>`), derived as the bridge derives its crossings'
+  (`secrets.ts:50-66`). The deposit commits to `commit` and `resume(commit)` finds it, so the file needs no secret,
+  amount or leaf index. Under the flag the master is a fixed, public stand-in: the flow never reads the session's.
+  The file, `yacana-fees-<chainId>-<index>.json`, is `{ v: 1, kind: 'yacana-fee-funding', chainId, rollupVersion,
+  index, createdAt, hint: { token, amountIn } }`: no account, no secret; `hint` is display only, for a mock with no
+  chain. `parseRecord` refuses above 64 KiB, non-JSON, another `v` or `kind`, another chain or rollup version, and
+  any field off its shape; another account's file derives a commitment no deposit carries. The download is
+  `saveJson(name, value)`, moved from `features/recovery.ts` into `src/lib/download.ts` (two callers, same behaviour).
+- **Saved, defined**: `saved` means the visitor's click started the download; no browser tells a page whether the
+  file was kept, so the trade card offers "Save the file again" until the claim lands. A save binds to the funding's
+  token and amount: another token or amount clears it; a refreshed quote for the same pair keeps it.
+- **Machine and runner deltas**: the quote and trade states gain `saved: FundingRecord | null`; new events `saved`
+  and `restored`. `next()` names no step while `saved` is null; `choose` and `amount` clear `saved`; `confirm` is
+  refused while `feeJuiceMin < claimMin`; `restored` (from `idle` or `pick`) enters `trade` with the landed steps
+  `done`, or `done` when every step landed. The runner's `restore(file)` parses, derives `commit`, asks `resume`
+  with it and the file's hint under an `AbortController` that `cancel()` aborts, and dispatches `restored` or a
+  refusal line only while current.
 
-**The options.** They differ in where the flow lives and how the phases show. All three share the machine, the
-picker and the quote.
+**ask27's options.** All three are form B: the entry card over the cockpit, picking and quoting in the 440 px
+dialog, the trade on the card's trail after confirm. They share the provider, the reads, the reducer, the record and
+the test ids, and differ on the three axes the ask names.
 
-| | Where it lives | Phases shown as | Failure and late | Reuses |
-|---|---|---|---|---|
-| **A · the wallet's dialog** | A "fees" line under the cockpit's balance (`BalanceCard`): "fees · none · Fund fees". Then the 440 px `TxDialog`: picker, quote, progress. Reopening from the line shows the progress; with the dialog closed, the line names the running phase. | The vertical `Stepper` (the bridge dialogs' grammar): elapsed time on the right, the active step's line, a `Foot` "You can close this". `locked` while the wallet is asked. | The failed step in red, an `Alert` with what happened and what was kept, `Primary` "Try again" (or "Get a new quote"). Late: the step in `warn`. | `TxDialog`, `Row(s)`, `Actions`, `Foot`, `Primary`, `Quiet`, `Back`, `AmountField`, `Stepper`, `Alert`, `Note` |
-| **B · before you mine** | A `HeroCard` above the cockpit, where the upgrade card sits: "Fund fees before you mine". One line says why (a win counts only while its epoch is open, and the epoch may close before Fee Juice could arrive). Actions: "Fund fees" and "How it works". Picker and quote open in the 440 px dialog; on confirm the dialog closes and the card carries the trade. | The card's `Trail` of stations (swap › deposit › crossing › claim › ready), one status line under it, the elapsed time. | Tone `bad`, the title says what failed, the action is "Try again". Late: tone `warn`. Done: tone `ok`, "Fees ready: 12.4 Fee Juice", and Dismiss returns the card to its entry. | `HeroCard`, `Trail` (the upgrade card's grammar), A's dialog screens for picking and quoting |
-| **C · a fees tile in Settings** | A full-width "fees" tile under the network tile: a `Kpi` of Fee Juice, then the form inline (a picker in a `Popover` with search, `AmountField`, the quote as an `AmountBlock`). After confirming, the form gives way to the progress. | A horizontal `Timeline` (the stats bridge page's grammar), each phase's line under its dot. | The dot goes `bad`, and a `Note tone="bad"` holds the action. Late: the phase's line says so (`Timeline` has no warn). Done: the `Kpi` updates. | `Tile`, `Kpi`, `AmountBlock`, `Timeline`, `Note`, `Popover`, `Input` |
+| | D · wallet on the card | E · all in the dialog | F · one tap |
+|---|---|---|---|
+| **Connects** | On the card, before the dialog: the entry's primary is "Connect wallet" until a wallet is connected (several wallets: the dialog opens on their list); then the card shows the chip and "Fund fees". | In the dialog, first screen: `ConnectWallet`, as FromEthereum's; the chip in the dialog after. | On "Fund fees": one announced wallet is asked at once and the dialog opens on the picker; several open the dialog's wallet list. |
+| **Tokens offered** | The wallet's own supported tokens, one list across chains, each with its chain and balance; the rest only as search results. | The wallet's supported tokens first, with balances, then every other supported token under "Not in this wallet". | The wallet's supported tokens under chain tabs, its current chain first; the rest only as search results. |
+| **Saves the file** | A "file" station opens the trail: after confirm the card asks "Save your recovery file", and no wallet ask starts until it is saved. | Two beats on the quote: "Save recovery file", then "Fund fees" enables; the trail's "file" station starts done. | "Fund fees" saves the file and starts the trade in one click; the "file" station starts done. |
+| **Restores** | "Resume from a file" on the entry card. | "Resuming a funding? Load its file" under the dialog's connect screen and its picker. | As D. |
+| **Empty wallet** | The dialog says the wallet holds nothing that buys Fee Juice. | The held list is empty; the rest still shows what would buy it. | As D. |
 
-**Recommendation: B.** The stop that costs a miner is a win's claim. A win counts only while its epoch is open,
-epochs target 5 minutes, and a crossing takes minutes (F3). So the flow belongs before Start, on the page a
-miner watches, and B is the one option that stands before Start. That placement is the planner's judgment, not a
-measurement. B's progress stays in view while mining runs, in the upgrade card's grammar. A is the cheapest to keep,
-being the bridge dialogs' own grammar, but its entry is one line of the balance card. C suits a later network where
-a sponsor and own fees coexist and fees become a setting, but Settings is off the miner's path.
+In every option the search spans every supported token on every chain, and a token the wallet does not hold shows
+as "not in this wallet" and cannot be chosen (ask25). Restored, every option resumes its card's trail at the first
+step not landed; a refused file shows a `Note tone="bad"` with the reason and nothing changes. Test ids a2 adds:
+`fees-connect`, `fees-picker-empty`, `fees-token-<chainId>-<symbol>`, `fees-claim-min`, `fees-save`,
+`fees-step-file`, `fees-restore` (the file input), `fees-restore-error`, `fees-dismiss`.
 
-**File map.**
-- New: `src/fees-gate.ts`, `src/fees/{provider,mock,machine,run,copy}.ts`, `src/fees/{Slot,views}.tsx`,
-  `src/fees/parts/{TokenPicker,QuoteView,Choose}.tsx`, `src/fees/options/{A,B,C}.tsx`, `src/fees/machine.test.ts`,
-  `src/fees/fees.vitest.tsx`, `tests/fund-fees-absent.bun.test.ts`, `e2e/replay/fund-fees.replay.ts`.
-- Modified: `packages/web-kit/src/config.ts` (`devFundFees`, the define), `config.test.ts`, `browser/vite-env.d.ts`;
-  `src/components/BalanceCard.tsx` (slot `balance`); `src/routes/Mine.tsx` (slot `cockpit`, a fifth `ROWS` entry,
-  the count); `src/routes/Settings.tsx` (slot `settings`); `e2e/replay/setup.ts` (`VITE_DEV_FUND_FEES: '1'`);
-  `e2e/proof-inventory.ts` (`REPLAYED`).
-- a2 deletes the two options not picked, their slots and spec cases, and updates the `apps/web-miner` row of
-  `CLAUDE.md`.
+**Recommendation: E.** It connects in the place and grammar visitors already meet in the bridge's money dialogs, so
+nothing new is taught. The file is saved where the quote is read, before any money moves, as a step the visitor
+sees and cannot skip, and the card stays a pure progress trail. Its list shows the wallet's own tokens first and
+every other supported token below, so an empty wallet still learns what to get. D is the most explicit but adds a
+stop on the card while the quote's minute runs. F is the fastest, but a save folded into the confirm is the one a
+visitor will not remember having made. The planner's judgment, not a measurement.
 
-**Trade-offs not taken**: outline Y (D1); a trade stream instead of `run(phase)` (D2); a clock-driven "late" in the
-machine (D3); a string marker scanned in the artifact (D4); a visual gate with baselines (D5); the artifact config
-refusal (D6).
+**File map (a2).**
+- New: `src/fees/{entry,recovery}.ts`, `src/fees/wallet.tsx`, `src/fees/options/{D,E,F}.tsx`,
+  `src/fees/parts/Restore.tsx`, `src/fees/{entry,recovery}.test.ts`, `src/lib/download.ts` and its spec.
+- Modified: `src/fees-gate.ts` (`d|e|f`, `feesCardAtom`), `Slot.tsx`, `provider.ts`, `mock.ts`, `machine.ts`,
+  `run.ts`, `copy.ts`, `views.tsx`, `parts/{TokenPicker,QuoteView,Choose}.tsx`, `options/B.tsx` (its cards become
+  the shared card the options compose), `machine.test.ts`, `fees.vitest.tsx`, `routes/Mine.tsx`,
+  `features/recovery.ts`, `e2e/helpers/l1-wallet.ts` (an `asked()` list of every method, beside `calls`),
+  `e2e/replay/fund-fees.replay.ts`, `e2e/proof-inventory.ts`.
+- Deleted: `options/{A,C}.tsx`, `parts/Held.tsx`, the slots in `components/BalanceCard.tsx` and `routes/Settings.tsx`.
+- a3 deletes the two options not picked and updates the `apps/web-miner` row of `CLAUDE.md`.
 
 ## 5. Security & Adversarial Considerations
 
-- **Threat model**: the mock leaking to production. A visitor would see a "trade" that moves nothing. No funds are
-  at risk, because nothing asks a wallet, but the screen would mislead. Visitor safety does not hang on the chunk's
-  absence: in production the gate is `null` at runtime either way. The absence is the ask's own check.
-  - Production config takes no env, so `devFundFees` is false there, and the define writes `""` over any env value.
-  - The define folds the gate to `null`, and the `import()` goes with it (F11).
-  - The bundle test is the evidence. It reads every chunk report a production build writes (the page's and the
-    Worker's), and no `apps/web-miner/src/fees/` id may appear in any chunk.
-- **Input at a trust boundary**: `fees`, `fees-fail` and `fees-hold` are query input read only in flagged builds,
-  against closed vocabularies; anything else is off. React escapes every string the mock returns.
-- **No network, no wallet**: `src/fees/` imports no networked module: no wagmi, no viem transport, no node client,
-  no wallet, no direct `fetch`. Pure helpers such as `withdraw-form`'s amount parsing are fine. The replay fixture
-  fails the scenario on any request off the app origin, any worker or any websocket (F10). The page fetches
-  same-origin files by itself at boot (the pinned CRS, the miner artifact, the slot table, `/build.json`). So the
-  scenario first loads the page without `?fees=` and keeps the same-origin paths it fetched. Then, from navigation
-  to done, every fetch or XHR must go to the recording's node, to one of those paths, or to `/build.json`.
-- **Least privilege, supply chain, cryptography**: no new dependency, secret, workflow or permission. No
-  cryptography: mock hashes are fixed strings.
-- **Domain risks the real lane inherits** (recorded in the close-out's issue, not built):
-  - Privacy (F4): funding one's own fees links the L1 wallet to the account, and makes the account's transactions,
-    private claims included, attributable to it as fee payer (OA1).
-  - Loss: a real deposit's claim secret must be journaled before the L1 transaction, as the bridge does
-    (`FromEthereum.tsx:147`), or the Fee Juice cannot be claimed. A lost receipt must not deposit twice (I3).
-  - Swaps: slippage (`feeJuiceMin` is in the interface for it), approval scope, a front-run route.
+- **The mock leaking to production**: as a1. Production config takes no env, the define folds the gate, and the
+  bundle test reads every chunk of a production build with the flag in its env.
+- **The wallet connection** is the only real I/O the flow gains: connect, the address and the chain, and nothing
+  else. A wallet that refuses methods proves nothing (wagmi swallows a refused permission request), so the scenario
+  uses the existing `installL1Wallet` with an unreachable RPC URL, reads its `asked()` list, and requires it to hold
+  only `eth_requestAccounts`, `eth_accounts`, `eth_chainId` and the permission methods, cold and after a reload; the
+  request log fails any page request off the baseline. A malicious injected wallet learns only that a site asked
+  to connect.
+- **The recovery file is input at a trust boundary**: a 64 KiB cap before reading, a closed shape, scope checks,
+  React escaping. It carries an index (a forger's choice derives a commitment no deposit carries for this account)
+  and display hints (a forged hint changes what the mock shows, never what the real path reads). Nothing in it
+  authenticates, and nothing needs to.
+- **Privacy (ask25)**: no quote, file, file name or screen carries the account. Ethereum sees the wallet, the
+  token, the amount and the commitment, a hash of a secret only the master derives, which links to nothing; the
+  visibility row names the wallet and the amount. Paid through the provider's private contract, transactions name
+  that contract as fee payer (V3).
+- **Loss**: after cleared site data the file is the only way back, as with the real provider; with no page record
+  under the flag a reload also needs it (OA5).
+- **Domain risks the real lane inherits** (the close-out issue): the commitment's secret derived before the L1
+  transaction, a lost receipt that must not deposit twice, slippage (`feeJuiceMin`), approval scope (the provider's
+  unlimited Permit2 approval), the private contract as custodian until the claim, a cross-chain relay with no
+  automatic refund on testnet, chain switching, the random index ruling out the bridge's scan by index.
+- **Least privilege, supply chain, cryptography**: no new dependency, secret, workflow or permission; the
+  commitment uses miner-core's `hkdf` and stdlib's `computeSecretHash`.
 
 ## 6. Phases
 
-### Phase 1 (a1): the flag and its proof ✓
-1. Add `devFundFees: mode !== 'production' && env.VITE_DEV_FUND_FEES === '1'` to `SiteConfig`. Add its define and its
-   env type. Add one `config.test.ts` case: production ignores it, and dev and e2e honour it.
-2. Write `src/fees-gate.ts`, and a `src/fees/Slot.tsx` that renders nothing yet. Mount the slot in `BalanceCard`,
-   `Mine` and `Settings`, each as `{FeesSlot && <Suspense fallback={null}><FeesSlot at="…" /></Suspense>}`, so a
-   flagged build reaches it.
-3. Write `tests/fund-fees-absent.bun.test.ts`. It runs two builds with `YACANA_MODULE_REPORT` set to a temporary
-   folder, and reads every `*.chunks.json` there:
-   - an e2e build with the flag: some chunk carries `apps/web-miner/src/fees/Slot.tsx` (the success control);
-   - a production build with `VITE_DEV_FUND_FEES=1` in the env: no chunk carries any `apps/web-miner/src/fees/` id.
-- **Validation gate**: `bun run lint && bun run typecheck && bun test packages/web-kit apps/web-miner/tests/fund-fees-absent.bun.test.ts`.
-  Pass: exit 0, both new cases green. Then break it on purpose: make the gate's condition `true`, see the
-  production case fail, and revert. Layers: lint, typecheck, unit, build.
+Phases 1–4 (a1) ✓, merged as #93: the flag and its bundle proof; the provider, mock, machine and runner; options A,
+B, C; the replay scenario (10 tests in 2.2 min, the scenario 48 s).
 
-### Phase 2 (a1): the provider, the mock, the machine, the runner ✓
-1. Write `provider.ts`, `mock.ts`, `machine.ts` and `run.ts` as in §4.
-2. Write `machine.test.ts` (Vitest, pure, also run by `bun test`). It holds five cases, each with a success control:
-   - a swap route and a direct route run every step in order to `done`;
-   - a failed claim retries only the claim, and no done step reruns;
-   - `expired` before any step lands returns to a fresh quote, and after the swap lands a retry continues;
-   - `late` shows, then clears on done;
-   - `scriptFrom` maps hostile and unknown values to none.
-3. Write the runner's case in `fees.vitest.tsx`, on fake timers. `reset` aborts the step in flight, and at most one
-   `run` is pending. A completion or a quote that arrives after `reset`, or for an amount since changed, changes
-   nothing.
-- **Validation gate**: `bun run lint && bun run typecheck && bun run --cwd apps/web-miner test:components && bun test apps/web-miner/src/fees`.
-  Pass: exit 0, the six new cases green. Layers: lint, typecheck, unit.
+### Phase 5 (a2): B alone, ask25, the entry rule
+1. Delete A and C with their slots, cases and `Held`; `?fees=b` until P8.
+2. The interface deltas but `commit` and `resume`: the open-ended list across chains (A1), the quote without the
+   account, `claimMin`, the visibility row, no payer note, the claim's fee line.
+3. `entry.ts`, `FundingReads.standing`, `fees-session=stand-in`, `feesCardAtom` and Mine's count.
+4. Specs: `entry.test.ts` (one table: each input false in turn hides the entry, all true shows it);
+   `machine.test.ts` adds "confirm below `claimMin` is refused" with its success control; `fees.vitest.tsx` keeps
+   B's end-to-end case, adds a token the mock's list never named reaching a quote, "signed out without the
+   stand-in: no card", and done → Dismiss → no card.
+5. The scenario follows: B only, `fees-session=stand-in`, Sepolia USDC 100 (the new chains and minimum).
+- **Gate**: `bun run lint && bun run typecheck && bun run test:components && bun test apps/web-miner && bun run --cwd apps/web-miner test:replay`.
+  Pass: exit 0. Then break it on purpose: let `entry.ts` ignore the balance, see the
+  Dismiss case fail, revert. Layers: lint, typecheck, unit, component, e2e.
 
-### Phase 3 (a1): the three options ✓
-1. Write `parts/`, `views.tsx`, `copy.ts`, `options/A.tsx`, `B.tsx` and `C.tsx`, and route the slots in `Slot.tsx`
-   (a → `balance`, b → `cockpit`, c → `settings`).
-2. In `Mine`, count B's card in `above` through the gate's `feesOption`, and add the fifth `ROWS` entry.
-3. Add six cases to `fees.vitest.tsx`, on the mock with fake timers:
-   - one per option: entry → picker (search "usd") → quote → confirm → done;
-   - A through `fees-fail=rejected`, then Try again;
-   - the quote's countdown refreshes the quote;
-   - A's dialog closed and reopened mid-trade shows the same progress.
-- **Validation gate**: `bun run lint && bun run typecheck && bun run test:components && bun test apps/web-miner &&
-  YACANA_MODULE_REPORT=apps/web-miner/e2e/replay/.modules bun run --cwd apps/web-miner build && bun apps/web-miner/scripts/check-chunks.ts apps/web-miner/e2e/replay/.modules`.
-  Pass: exit 0. `cockpit.vitest.tsx` and `settings.vitest.tsx` pass unchanged. The bundle test is still green with
-  the real modules. check-chunks prints the same first paint. Layers: lint, typecheck, unit, component, build.
+### Phase 6 (a2): the wallet and its tokens
+1. `wallet.tsx` (§4), `FundingReads.balances` in the mock, `Token.balance` gone.
+2. The three orderings as pure functions in `parts/TokenPicker.tsx` with their rendering (held first; by chain;
+   the rest under a heading or only by search).
+3. Until P8 splits it, B connects as E does (the dialog's first screen). `asked()` in `e2e/helpers/l1-wallet.ts`;
+   the scenario installs `installL1Wallet` (RPC `http://127.0.0.1:1`) and connects.
+4. Specs in `fees.vitest.tsx`, with the config passed as a prop under wagmi 3.7.7's `mock` connector, as
+   `src/bridge-features.vitest.tsx:97-105` does: each ordering lists the held supported tokens, and search reaches a
+   supported unheld one as not choosable (a held unsupported token is the never-happens control);
+   `fees-wallet=empty` says so; the flow moves from its own config to a bridge session's with a wallet connected,
+   then reads the session's account, its own store key untouched.
+- **Gate**: P5's commands. Pass: exit 0.
 
-### Phase 4 (a1): the browser scenario ✓
-1. Set `VITE_DEV_FUND_FEES: '1'` in `replayEnv`.
-2. Write `e2e/replay/fund-fees.replay.ts`, one test: "the mocked fee funding runs end to end in every option,
-   through a failed claim and its retry".
-   - For a, b and c it opens `replay.url({ fees, 'fees-fail': 'claim' })`, for c going through the gear to
-     Settings. It picks Base and USDC by search, types 25, waits for the quote, and confirms.
-   - In b, it goes to Settings by the gear and back while the trade runs. The card must show the trade, not the
-     entry.
-   - It waits for the claim to fail, retries, and waits for `fees-done`.
-   - Before the options, it loads the page once without `?fees=` and keeps the same-origin paths it fetched. From
-     each option's navigation to done, every fetch or XHR must go to the recording's node, to one of those paths, or
-     to `/build.json` (§5).
-   - Failure mode it proves: the flow wired into the real page (gate, slots, lazy chunk, the runner across a route
-     change) completes, and asks nothing of the network, same origin included.
-   - Why not cheaper: Vitest renders in jsdom, without the built gate, the lazy chunk or the fixture's accounting.
-   - Runtime: estimate about 65 s (I2), ceiling 70 s. Over it, run the failure and retry in one option only: the
-     machine's specs already prove a per-phase retry.
-3. Add its `REPLAYED` entry.
-- **Validation gate**: `bun run lint && bun run typecheck && bun test apps/web-miner/tests/e2e-inventory.bun.test.ts &&
-  YACANA_MODULE_REPORT=apps/web-miner/e2e/replay/.modules bun run --cwd apps/web-miner test:replay && bun apps/web-miner/scripts/check-chunks.ts apps/web-miner/e2e/replay/.modules`,
-  at retry 0. Pass: 10 passed; the lane's wall-clock before (1.2 min, 9 tests) and after is recorded. Then break it
-  on purpose: add a same-origin `fetch` to the mock's `quote()`, see the scenario fail, and revert. Layers: lint,
-  typecheck, unit, e2e.
-- **a1 arc gate** (on the arc's head, after its Codex loop): `bun run lint && bun run typecheck && bun test && bun run test:components &&
-  bun run --cwd apps/web-miner test:replay && bun run site:build`. Pass: exit 0. `site:build` runs the production
-  assembly and its artifact checks.
+### Phase 7 (a2): the recovery record and file
+1. `recovery.ts`, `src/lib/download.ts` (and `features/recovery.ts` on it), `parts/Restore.tsx`, the reducer's
+   `saved` and `restored`, the runner's `restore`, the mock's `commit` and `resume`. Until P8 splits it, B saves on
+   confirm (F's beat), so its trade never waits on a save it cannot make.
+2. Specs: `recovery.test.ts` (a record round-trips through its file to the same commitment, and another index or
+   master gives another; each refusal of §4 is refused, a well-formed file the success control; two files with different tokens and
+   amounts resume as their own funding against fresh mocks); the download's
+   spec (the file name, the JSON, the anchor clicked, the URL revoked); `machine.test.ts` adds "no step starts
+   before `saved`", "another token or amount clears `saved`, a refreshed quote keeps it", "a restore with the deposit
+   landed starts at the message" and "a restore with every step landed is `done`"; the runner case asserts the
+   provider's `run` history after a restore holds no swap and no deposit, and that `reset` during a pending
+   `resume` leaves `idle`.
+- **Gate**: P5's commands. Then break it on purpose: let `next()` ignore `saved`, see its case fail, revert.
 
-### Shots (orchestrator, between a1 and a2; no phase here)
-The shots lead captures through the replay lane's Playwright fixture, never a bare browser. The served build points
-its node at `127.0.0.1:1`, and only `e2e/replay/fixtures.ts` answers it, so a plain browser on `setup.ts serve` gets
-the boot error. Concretely: an uncommitted spec in `e2e/replay/`, run with `-c playwright.replay.config.ts`, using
-`replay.url(...)` and the fixture's service-worker blocking and teardown, as `signed-out.replay.ts`' `render()` does.
-It sets `localStorage['yacana.theme']` (`dark` or `light`) before load, at 1280 and 1440 wide. Each state is a URL
-plus a click recipe; the test ids are shared by the three options. For c, start at the gear. These captures are
-signed out with a stand-in account, and the decision page says so. A signed-in shot of each entry in place needs
-the live lane (`bun run e2e:agent`, with the e2e helpers' passkey sign-in); that is the orchestrator's call.
+### Phase 8 (a2): options D, E, F and the scenario
+1. `options/{D,E,F}.tsx` on B's cards (§4 table); the gate takes `?fees=d|e|f`; `b` goes.
+2. `fees.vitest.tsx`: one case per option, entry → connect → token → quote → save → done; E's confirm disabled
+   until saved; D's no `run` until saved; F's one announced wallet asked at once; a refused file leaves the entry.
+3. The scenario: "the mocked fee funding runs end to end in every ask27 option, and its recovery file finishes the
+   claim after the site data is cleared". The baseline load as a1. Then, with `installL1Wallet` (RPC
+   `http://127.0.0.1:1`) and `fees-session=stand-in`, for f, d and e (in that order): `?fees=<o>`, connect,
+   Sepolia USDC by search, 100 (about 50 Fee Juice at the mock's rate, over the minimum of 30), the quote, the save (a `download` event),
+   confirm, done, Dismiss, no card. In d: a trip to Settings and back mid-trade. In e, with `fees-fail=claim`: at
+   `fees-step-message` running, CDP `Storage.clearDataForOrigin` (all types), reload, open the entry, load the
+   saved file at `fees-restore`; from then on a test-side `MutationObserver` sees `fees-step-swap` and
+   `fees-step-deposit` only as `done`; the claim fails, retry, done. Once: `?fees=e` without the stand-in shows no
+   card. f runs first, in the test's fresh context with a wallet never asked: disconnected before the click, then
+   `fees-entry` adds an `eth_requestAccounts` to `asked()` and shows the chip with no wallet row chosen (the one-tap
+   path through real discovery, which wagmi's `mock` connector cannot show). Throughout: from each navigation to
+   done, the same-origin requests equal the baseline load's as a multiset of method, full URL (query included) and
+   body, and node calls use only methods the baseline used (a flow repeating a polled node method stays
+   indistinguishable from the poll: the flow imports no node client); the stand-in account's address appears
+   in no request URL or body, in neither the downloaded file nor its name, and nowhere in the page's text; and
+   `asked()` stays within the expected set.
+   - Failure modes it proves: the options wired into the real page reach done; the connection asks the wallet
+     nothing more, and the flow adds no request and leaks no account; a file saved before the deposit survives cleared storage and
+     finishes the claim without rerunning a landed step.
+   - Why not cheaper: jsdom has no built gate, lazy chunk, download, file chooser, storage clearing or request log.
+   - Runtime: estimate 50 s (the mock's timings give 10–18 s per option), ceiling 70 s; over it, d and f stop at
+     their first running step and e alone runs to done.
+4. The `REPLAYED` title follows.
+- **Gate**: `bun run lint && bun run typecheck && bun test apps/web-miner/tests/e2e-inventory.bun.test.ts &&
+  YACANA_MODULE_REPORT=apps/web-miner/e2e/replay/.modules bun run --cwd apps/web-miner test:replay && bun apps/web-miner/scripts/check-chunks.ts apps/web-miner/e2e/replay/.modules`
+  at retry 0. Pass: 10 passed, the lane's wall-clock before (2.2 min) and after recorded. Then break it on purpose:
+  a wagmi `getBalance` in D's picker fails the request log, as do a second `GET /build.json` and a `POST` to it from
+  the mock; a `/build.json?a=<account>` fetch fails the sentinel; a restore that reruns the deposit fails the observer.
+- **a2 arc gate** (the arc's head, after its Codex loop): `bun run lint && bun run typecheck && bun test && bun run test:components &&
+  bun run --cwd apps/web-miner test:replay && bun test apps/web-miner/tests/fund-fees-absent.bun.test.ts && bun run site:build`,
+  with the pinned Aztec bin first on PATH (`lessons.md`). Pass: exit 0.
 
-| State | Query after `?presto=off&fees=<a\|b\|c>` | Recipe, then capture when |
+### Shots (orchestrator, between a2 and a3)
+As a1's: an uncommitted spec in `e2e/replay/` run with `-c playwright.replay.config.ts`, `replay.url(...)`, the
+fixture's teardown, `localStorage['yacana.theme']` set before load, 1280 and 1440 wide, both themes,
+`installL1Wallet` with an unreachable RPC unless the row says otherwise. Captures are signed out with the stand-in
+account and wallet, and the decision page says so. Each row, for each of d, e and f, after
+`?presto=off&fees-session=stand-in&fees=<o>`:
+
+| State | Extra query | Recipe, capture when |
 |---|---|---|
-| entry | none | load; `fees-entry` visible |
-| picker | none | click `fees-entry`, the radio named "Base", type "usd" in `fees-search` |
-| quote | none | then `fees-token-USDC`, type 25 in `fees-amount`; `fees-quote` visible |
-| wallet ask | `&fees-hold=sign` | then `fees-go`; `fees-step-swap` is `signing` |
-| each phase running | `&fees-hold=swap`, `&fees-hold=deposit`, `&fees-hold=message`, `&fees-hold=claim` | then `fees-go`; `fees-step-<phase>` has `data-state="running"` |
-| late | `&fees-fail=late&fees-hold=message` (reports late at 1.5 s, then holds) | then `fees-go`; `fees-step-message` has `data-state="late"` |
-| quote ran out | `&fees-fail=expired` | then `fees-go`; the refreshed quote's note visible |
-| wallet refused | `&fees-fail=rejected` (USDC: the swap's ask; Fee Juice on Ethereum: the deposit's) | then `fees-go`; `fees-failure` visible |
-| claim failed | `&fees-fail=claim` | then `fees-go`; `fees-failure` visible |
-| done | none | then `fees-go`; `fees-done` visible |
+| entry, no wallet | none; no wallet installed | load; `fees-entry` visible (d: "Connect wallet"); e: then `fees-entry`, the connect screen |
+| connected | none | d: `fees-connect`; e: `fees-entry`, `wallet-option`; f: `fees-entry`; the chip visible |
+| picker, search | none | connected; `fees-picker` visible; then "usd" in `fees-search` |
+| empty wallet | `&fees-wallet=empty` | connected; `fees-picker-empty` visible |
+| quote, below the minimum | none | `fees-token-11155111-USDC`, 100 in `fees-amount`, `fees-quote`; then 1, `fees-claim-min` and the disabled `fees-go` |
+| save | none | d: `fees-go`, then `fees-step-file` waiting; e: `fees-save` visible; f: none |
+| phases, wallet ask, late, refusals | a1's `fees-hold` and `fees-fail` values | after the save, `fees-go`; as a1's matrix (`52bec6b` §6) |
+| done, dismissed | none | `fees-done`; then `fees-dismiss`, no `fees-card` |
+| restore: resumed, claimed, refused, missing | `&fees-resume=claimed`, `&fees-resume=missing` | `fees-restore` with a saved file (another `chainId` for refused); the resumed trail, `fees-done`, or `fees-restore-error` |
 
-### Phase 5 (a2): the pick
-1. Keep the picked option. Delete the other two, their slots and their spec cases. `?fees` becomes a presence
-   switch.
-2. Give the scenario one option, and update its title and its `REPLAYED` entry.
-3. Polish the copy to the owner's decision text, and apply OA1, OA2 and OA3 as answered.
-4. Update the `apps/web-miner` row of `CLAUDE.md`.
-- **Validation gate**: the a1 arc gate's commands. Pass: exit 0, the scenario green at retry 0, its runtime
-  recorded. Layers: lint, typecheck, unit, component, e2e, build.
+### Phase 9 (a3): the pick
+1. Keep the picked option; delete the other two and their cases; `?fees` becomes a presence switch.
+2. Apply the pick's text and OA4–OA7 as answered; polish its copy; update the `apps/web-miner` row of `CLAUDE.md`.
+3. The scenario keeps one option with the Settings trip (P3-01), the round trip, the claim failure, the Dismiss and
+   the no-stand-in check; its title and `REPLAYED` entry follow.
+- **Gate**: the a2 arc gate's commands. Pass: exit 0, the scenario green at retry 0, its runtime recorded.
 
 ## 7. Audit log and decision ledger
 
-**Verdicts**:
-- Codex r1 (`gpt-6.1-sol`, high): conditional approve. Its conditions were the network proof, the epoch premise,
-  the phase gates, and the capture and test gaps.
-- Opus (Plan agent): conditional approve. Its conditions were the Phase 1 order, a named fallback for I1, the URL
-  claim, two asks to the owner, I3, and a scenario ceiling.
-- Final fresh Codex pass (`gpt-6.1-sol`, high, a new session): r1 conditional approve (request accounting through
-  quoting, fixture-backed captures, the swap and deposit recipes, F3's wording); r2 conditional approve (boot's own
-  fetches, one leftover "often"); r3 **approve**: "Both conditions are resolved … No remaining findings or new
-  contradictions identified."
+**a1** (`52bec6b` §7): Codex r1 and Opus conditional approve; final fresh Codex pass approve at r3. Fix loop: Codex
+round 1 changes requested, Opus beside it, round 2 clean. D1–D6: in place over a dev page (outline Y); `run(phase)`
+over a trade stream; "late" from the provider; the chunk graph over a marker; no visual gate; no artifact refusal.
 
-**Accepted** (both reviewers unless marked):
-- Phase 1's success control was unreachable until slots mounted. The slots now mount in P1.
-- The win's deadline is its epoch, not the 600 s TTL (Codex). F3 and B's copy say so.
-- I1 needed the orphan-chunk case (Codex reproduced it; so did the planner). It is now F11, and the gate keeps the
-  comparison, the query and the `import()` in one expression. The fallback alias is named (Opus).
-- F10 did not prove "no request": same-origin passes. The scenario logs requests from confirm to done (Codex).
-- I3 overpromised. The interface is provisional, and its five gaps go to the close-out issue.
-- Stale outcomes after `reset` or a changed amount are ignored, and the runner case tests it (Codex).
-- Captures: a URL plus a click recipe, a stable expired note, and the decision page saying "signed out".
-- Flag on with no `?fees=` still loaded the Slot chunk. The option now sits in the gate's expression (Opus).
-- B's Dismiss returns the card to its entry, so no empty row is left (Opus).
-- The runner's fake-timer case moved to `fees.vitest.tsx`, since `src/**/*.test.ts` also runs under bun (Opus).
-- The component list showed five cases: the sixth is A's close and reopen. The scenario now hops route in b.
-- Amounts reuse `withdraw-form`'s `amountRefusal`/`parseAmount` (Codex).
-- OA1's note no longer implies funding switches the payer (Codex). A2 moved to OA2, and OA3 (when the entry shows)
-  was added (Opus).
-- The scenario has a 70 s ceiling with a named cut (Opus). Line drift was fixed in `recon.md` and F7 (Opus).
-- Final pass:
-  - The request log starts at navigation, not at confirm, and a forced same-origin `fetch` must fail it. The
-    resumed check found that boot fetches the CRS and the artifact itself. So the log allows a baseline load's
-    same-origin paths, rather than a hand-kept list that would break when boot changes.
-  - The shots go through the replay fixture, because the served build's node answers only there.
-  - The matrix gains the swap and deposit holds, and the late-then-hold rule.
-  - F3 says epochs target 300 s and close on the fourth claim or a roll, so "may" replaces "likely".
+**Revision decisions**:
+- D7 The recovery shape mirrors the bridge's, not the provider's. The miner already derives every bridge secret
+  from its master; a file with no secret and no account can leak without linking or losing anything. The provider's
+  sealed record costs an Ethereum signature per save and per restore and binds recovery to the Ethereum wallet, not
+  to the account the Fee Juice is for.
+- D8 Three bundled options over per-axis switches (outline Z, `plan-outline-z.md`, local). The axes are independent
+  (every variant connects before the picker and confirms in the dialog), but bundles mean what the owner picks is
+  exactly what was captured and tested end to end, and the page asks one question as P3 did; a mixed pick stays
+  open to the owner's note.
+- D9 A real connection over one modelled in the provider: ask27 names the miner's existing injected connection,
+  and connecting sends no page request (F14). Reads and signatures stay mocked.
+- D10 Balances as the page's own reads, not the provider's: it has no holdings query (F13); the real reads go
+  through the page's RPC (V2).
+- D11 A public stand-in master under the flag: the flow never reads the session's secret; the real lane derives
+  through the bridge session's master.
+- D12 A random index rather than a journal's reserved one: no persistence until OA5 is answered.
+- D13 No regrouping: a2 stays one PR; the shots need all three options from one build, and a split adds a review
+  loop without moving anything earlier.
 
-**Decisions** (D1–D6, both views where they differed):
-- D1 X over Y. Both reviewers agree: the brief asks for the real product, and Y would defer integration until after
-  the pick. Y's dev route would also need an entry in `apps/site`'s `MINER_LINKS` (Opus).
-- D2 `run(phase)` over a trade stream. A stream hides which phase a retry restarts. Codex adds that neither shape
-  solves an uncertain broadcast, so that problem goes to I3's issue.
-- D3 "late" comes from the provider, not a clock in the machine. The machine stays pure, and the mock shows it in
-  seconds.
-- D4 The chunk graph over a string marker. A marker proves one module absent; the graph proves every one.
-- D5 No visual gate. The options are proposals that a2 deletes or rewrites, and the captures are evidence.
-- D6 No artifact refusal for `devFundFees`.
-  - Codex would keep it, relabelled, as config redundancy. Opus would drop it, because it reads nothing from the
-    artifact and `devFundFees` is false in production by construction.
-  - Dropped. `config.test.ts` asserts the same fact, and the bundle test is the evidence.
-- Rejected:
-  - Folding the bundle check into `proverless-marker.bun.test.ts`'s builds (Opus, optional). It mixes two concerns
-    to save about 4 s.
-  - Extracting `withdraw-form`'s amount helpers (Codex, conditional). The module's one SDK import is a pure address
-    parser, and it is already in the first paint.
+**Dual audit** (both conditional approve; every finding accepted, the path and fix in one line each):
+- Codex r1 (`gpt-6.1-sol`, high, session `01a18d72-2748-7f40-b367-3a98e13a9d5f`):
+  1. High: nothing bound the deposit to the saved identity → `run` and `resume` take the commitment; V4 requires a
+     lookup by it that returns the claim's inputs and status.
+  2. Medium: the tag authenticated nothing (a forged amount kept a valid tag; the stand-in master is public) → the
+     tag is gone; the token and amount are display hints.
+  3. Medium, Codex's probe: wagmi asks `wallet_requestPermissions` and swallows a refusal, so a four-method stand-in
+     proved nothing → the wallet answers the permission methods and its full method list is asserted; the claim is
+     scoped to page traffic.
+  4. Medium, plausible: a fallback config beside the bridge's after a sign-in would share wagmi's store → one
+     config owns the flow; the flow's own has its own storage key; a spec covers the move.
+  5. High: D and F searched only holdings, against ask25 → every option searches every supported token.
+  6. High: `saved` was unbound and undefined → it binds to the token and amount and means the download started;
+     "Save the file again" stays until the claim lands.
+  7. Medium: a fully landed restore stalled; "done" did not prove no rerun; 50 USDC bought under the minimum →
+     `restored` goes to `done`; the observer and the call history; 100 USDC.
+- Opus (Plan agent): findings 2, 3 and 9 matched Codex 5, 1–2 and 6. New, all accepted:
+  1. High: P7's `saved` guard stalled B, which had no save until P8 → B saves on confirm in P7.
+  4. Medium: the generic `injected()` has no `rdns`, so one installed wallet makes two connectors and F's "one"
+     never held → F counts announced connectors; D names where its list shows.
+  5. Medium: the planned stand-in wallet duplicated `installL1Wallet`, which works without anvil (its client is
+     lazy; recon's claim did not hold) → reused, with an `asked()` list.
+  6. Low-medium: a rerun deposit would not fail the scenario → the observer.
+  7. Low-medium: a3 dropped P3-01's Settings trip → kept.
+  8. Low: P7 gated an unrelated test file, and nothing gated the download move → that gate line is gone and the
+     download has its spec.
+  10. Low: the stand-in made "signed in" constant → a closed switch and a no-card check.
+  11. Low: the flow needs its own wagmi and query providers, the Vitest config as a prop, and an abortable restore →
+      all three in §4 and P6–P7.
+  12. Visible details the plan had decided → OA7.
 
-**a1 Codex fix loop** (`git diff 8f9d4a2..HEAD`, high, gpt-6.1-sol):
-- Round 1, changes requested:
-  - Medium, demonstrated, fixed. The quote field restored its amount at six decimals: ETH 0.0000001 came back as
-    `0` with confirm still enabled, so the shown and the confirmed amount differed. Editable figures (the restored
-    text, MAX) now keep every decimal. A new case remounts on a 7-decimal ETH amount; reverting the fix fails it.
-  - Low, demonstrated, fixed. The runner's stale-completion check landed in `idle`, where the reducer ignores it
-    anyway, so the identity guard went untested. The case now starts a second trade to the same phase before the
-    old deposit answers; removing the guard fails it.
-  - Comments: six that named their code were deleted, and `Held`'s now states only its remount contract.
-- Opus same-family review, beside round 1:
-  - Medium, demonstrated by trace, fixed. `Slot` read the mock's switches from `location.search` at its first
-    render, and in-app navigation pushes a path with no query. C's switches were saved by a race (the Mine slots
-    loading first); after a2 keeps only C they would read empty. The gate now keeps the query as loaded
-    (`feesSearch`, folded like `feesOption`).
-  - Medium, demonstrated by trace, fixed. No case drove `expired` after a step landed, so `onFailed`'s landed guard
-    could go unnoticed (a re-quote there would swap twice). The machine case now does, and removing the guard fails it.
-  - Low, fixed. Re-picking C's current token dropped the amount with the field still showing it; the same choice
-    now changes nothing, and `QuoteView` is keyed by chain and address.
-  - Low, fixed. A pick or a quote whose view unmounted stayed in the tab's runner and re-quoted at every lapse off
-    screen. `useFunding` drops it on unmount, as A's close already did; a trade still outlives its view.
-  - Low, fixed. A retry past an unused quote re-quotes, but the button said "Try again". It now says "Get a new
-    quote" from the quote's expiry, as §4's table has it (`useRequotes`).
-  - Low, fixed. `OptionProps` moved to `run.ts` and `Held` to its own file, so deleting A and B leaves C whole;
-    `Trade` and `Shown` are declared once in `machine.ts`.
-  - Low, fixed. The late line names the deposit only for the crossing.
-  - Comments: the wrong one on `Visible` (the bridge dialog has only the row), the stale `ROWS` list, the missing
-    `steps[i]` invariant, and four narrating ones.
-  - Every fix has a forced break that failed its case.
-- Round 2 (resumed), clean: both fixes verified, plus StrictMode on the drop-on-unmount, `useRequotes` at and past
-  expiry, and the production fold of `feesSearch`. Two restating comments deleted. Converged in two rounds.
+**Final fresh Codex pass** (`gpt-6.1-sol`, high, new session `01a18d81-d690-7952-b6e2-6ddcf688e0af`):
+- r1 conditional approve, four findings, all accepted:
+  1. High, demonstrated by probe: the accepted connector fix was wrong; wagmi gives a discovered wallet the id of its
+     rdns and no `rdns` property → F counts every connector but the generic `injected`, and the scenario's f proves
+     the one-tap path through real discovery.
+  2. Medium: `resume(commit)` gave the mock nothing to rebuild from → `resume` takes the file's hint beside the
+     commitment (a real provider ignores it); two files resume as their own fundings against fresh mocks.
+  3. Medium: P5's and P6's replay gates could not pass (no stand-in switch, the old Base recipe below the minimum,
+     no wallet before P8) → each phase adapts the scenario for what it introduces; B connects as E in P6.
+  4. Medium, demonstrated by probe: the request log matched paths only, so `/build.json?account=…` passed → full
+     URLs, and a sentinel: the stand-in account's address in no request, file, file name or page text, with that
+     leak as a forced break.
+- r2 (resumed) conditional approve, two findings, accepted:
+  1. Medium, demonstrated: after d and e the wallet stayed authorized and wagmi reconnected, so f's check could pass
+     with the one-tap path broken → f runs first, from a never-asked wallet, and must add an `eth_requestAccounts`.
+  2. Medium, demonstrated: URL membership let a same-URL `POST` or a repeat through → same-origin requests match the
+     baseline as a multiset of method, URL and body, node calls only by the baseline's methods, both as forced
+     breaks; the residual (a flow repeating a polled node method) is named, and Excellent #5 says what is proven.
+- r3 (resumed) **approve**: "No new material findings. Confidence: high at the plan level."
 
 ## 8. Post-implementation
 
-- Write comments to the bar as you code: invariants and whys, no plan, phase or review references. Log attempts in
-  `lessons/phase-N.md`. Run `agent-worktree status fees-1 "<gate>"` at each gate. Stop after 3 failures on one step.
+- Comments to the bar as you code; attempts in `lessons/phase-N.md`; `agent-worktree status fees-1 "<gate>"` at each
+  gate; stop after 3 failures on one step.
 - **Codex fix loop, per arc**, after the arc's phases are green:
-  - Run `~/.claude/skills/codex/scripts/run-codex.sh <prompt> <worktree> high read-only gpt-6.1-sol` on the arc's
-    diff against its base.
-  - Send this plan, the arc map ("a1 of a1 → shots → a2"; a2 deletes the options not picked), the adversarial ask
+  - `~/.claude/skills/codex/scripts/run-codex.sh <prompt> <worktree> high read-only gpt-6.1-sol` on the arc's diff
+    against `origin/main`.
+  - Send this plan, the arc map ("a1 ✓ → a2 → shots → a3; a3 deletes the options not picked"), the adversarial ask
     and these two rules verbatim: *"Report bugs and small, targeted improvements only. Do not propose speculative
     abstractions, extra configuration surface, new layers, or rewrites — the smallest change that fixes each real
     problem. If code works and is clear, leave it alone."* *"Audit the comments for value per character. Flag any
@@ -439,40 +475,37 @@ the live lane (`bun run e2e:agent`, with the e2e helpers' passkey sign-in); that
     / reviews, or spends a paragraph where a sentence works — and flag places where a non-obvious invariant or
     constraint deserves a comment it doesn't have. Comments are permanent context every future reader, human or
     LLM, pays to re-read: they must be few, dense, and exact."*
-  - Every prompt carries: "Never open, read, list, source or print `.env` or `.env.local`." and "Never open, list or
+  - Every prompt carries "Never open, read, list, source or print `.env` or `.env.local`." and "Never open, list or
     search `~/.agents/orchy/` or `~/.config/`."
-  - Resume the same session after each round's fixes. Stop when a round finds nothing material; hard stop at 3,
-    then surface.
-  - A fix that adds state, a lifecycle, a protocol, a recovery policy or a contract is a plan change: stop.
-  - Record each round in §7, and rerun the arc gate on the final head.
-- **Close-out** (a2's final commits):
-  - Run `git merge origin/main`, and read what changed in `index.md` and `lessons.md`.
-  - Write `## Outcome` after the front matter: date, status, shipped, `Known limits:`, `Open items:`, seeds retired.
-  - Promote a lesson only if it generalizes (F11 does). Delete `STATUS.md`.
-  - File the real-provider requirements as one issue (label `enhancement`, a `Record` link): I3's five gaps, the
-    privacy rows (OA1), `feeJuiceMin`, and the flag flip.
-  - In its own commit, run `git mv implementations-plan/fees-1 implementations-plan/archive/fees-1`. Add one line to
-    `archive/index.md`, and no `index.md` row.
-- **Where open work lives**: a gap that outlives the plan is an issue with a `Record` link; a product call is an
-  `owner-decision` issue; a suspected weakness is a private draft advisory; a path needing unsupported conditions is
-  a closed `known-limit` issue; rejected or done is an Outcome line.
+  - Resume the same session after each round's fixes; stop when a round finds nothing material; hard stop at 3. A
+    fix that adds state, a lifecycle, a protocol, a recovery policy or a contract is a plan change: stop. Record each
+    round in §7 and rerun the arc gate on the final head.
+- **Close-out** (a3's final commits): `git merge origin/main` and read what changed in `index.md` and `lessons.md`;
+  `## Outcome` after the front matter (date, status, shipped, `Known limits:`, `Open items:`, seeds retired); promote
+  F11 to `lessons.md` with a pruning pass; file the real-provider requirements as one `enhancement` issue with a
+  `Record` link (a1's I3 gaps, V1–V5, the sponsor signal and a claim's cost, the page record of OA5, the approval
+  scope, chain switching, the flag flip); delete `STATUS.md`; then, in its own commit, `git mv
+  implementations-plan/fees-1 implementations-plan/archive/fees-1` and one line in `archive/index.md`, no `index.md` row.
+- **Where open work lives**: a gap that outlives the plan is an issue with a `Record` link; a product call an
+  `owner-decision` issue; a suspected weakness a private draft advisory; a path needing unsupported conditions a
+  closed `known-limit` issue; rejected or done an Outcome line.
 - **Teardown** follows the orchestrator's last merge: `agent-worktree done fees-1 --merged`, never forced.
 
 ## 9. Delivery
 
 | Arc | Phases | Branch | PR title | Body |
 |---|---|---|---|---|
-| a1 | 1–4 | `worktree-fees-1` (carries this plan) | `feat(web-miner): three fund-fees options behind a development flag` | no issue, no ask; the options by letter with one line each; the flag and the bundle test; replay wall-clock before and after |
-| a2 | 5, close-out | `fees-1-a2`, from `origin/main` after a1 merges | `feat(web-miner): the picked fund-fees flow, still mocked and flagged` | `Delivers ask18`; the owner's pick quoted by id and text |
+| a1 ✓ | 1–4 | `worktree-fees-1` | #93, merged | — |
+| a2 | 5–8 | `worktree-fees-1` (this revision, `origin/main` merged) | `feat(web-miner): fund fees on B, privately, with three wallet-and-file options` | no issue, no ask; P3-01, P3-03 and P3-04 quoted; ask27's options D, E, F with one line each; replay wall-clock before and after |
+| a3 | 9, close-out | `worktree-fees-1`, `origin/main` merged in again | `feat(web-miner): the picked fund-fees flow, still mocked and flagged` | `Delivers ask18`, `Delivers ask25`, `Delivers ask27`; every owner pick quoted by id and text |
 
-- Each PR goes against `main` and opens only after its gate and its Codex loop pass. The orchestrator merges, and
-  spawns the shots lead between the arcs. a2 waits for the owner's pick.
-- No lanes: the phases share the gate and the machine, so they are serial.
+Each PR goes against `main` and opens only after its gate and its Codex loop pass. The orchestrator merges and
+spawns the shots lead between a2 and a3; a3 waits for the owner's pick. Serial: the phases share the reducer.
 
 ## Seeds (not run: the orchestrator owns ELI5 and seeds)
 
-- `/goal` Phases 1–5 ✓ with their gates quoted. Each arc's Codex loop converged (quoted). PRs a1 and a2 are open
-  against `main` (`gh pr view`). a2 says `Delivers ask18`, quotes the pick, and carries the archive move
-  (`git show --stat`).
-- `/loop 15m` Drive `implementations-plan/fees-1`. Reality-check plan.md and the PRs, then take the next step of §6
-  or §8. Decide with Codex at high on `gpt-6.1-sol`. Never merge; never start a2 before the owner's pick.
+- `/goal` Phases 5–9 ✓ with their gates quoted; each arc's Codex loop converged (quoted); a2 and a3 PRs open
+  against `main`; a3 says `Delivers ask18`, `Delivers ask25`, `Delivers ask27`, quotes every pick and carries the
+  archive move.
+- `/loop 15m` Drive `implementations-plan/fees-1`: reality-check plan.md and the PRs, take the next step of §6 or §8,
+  decide with Codex at high on `gpt-6.1-sol`; never merge; never start a3 before the owner's ask27 pick.

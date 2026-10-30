@@ -20,3 +20,11 @@
 - 2026-10-27 a1 Codex round 2 clean (converged in two). Arc gate on the final head: lint 0, typecheck 0, `bun test`
   716 pass / 44 skip / 0 fail (with the pinned Aztec bin on PATH: `vk-pinning.test.ts` shells out to `aztec-nargo`),
   test:components green, replay 10 passed in 2.2 min (scenario 48.1 s), site:build 0 with no flow string in dist.
+- 2026-10-30 a1 merged as #93 (e8b7d06); `origin/main` merged into the branch. Revision started for a2, the shots
+  and a3 under P3-01 B, P3-03 S, P3-04 I, ask25 and ask27.
+- 2026-10-30 revision recon (one Sonnet sweep) and the planner's checks: FeeJuice 6.0.0 has no private balance; the
+  portal deposits only publicly; the bridge's recovery file holds no secret. Drafted the revision and outline Z.
+- 2026-10-30 dual audit: Codex r1 conditional approve (7 findings) and Opus conditional approve (12, five new);
+  all accepted and folded (§7); OA7 added; outline Z's case corrected. Final fresh Codex pass next.
+- 2026-10-30 final fresh Codex pass (new session): r1 conditional approve (4 accepted), r2 conditional approve (2
+  accepted), r3 approve. Revised plan committed; stopped at the approval gate.
