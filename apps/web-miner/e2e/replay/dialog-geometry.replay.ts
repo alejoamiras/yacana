@@ -73,7 +73,6 @@ async function controlsWhole(page: Page) {
   });
 }
 
-/** The fee dialog's box and how far it scrolls itself. */
 const feeDialogBox = (page: Page) =>
   page.getByTestId('fees-dialog').evaluate((d) => {
     const r = d.getBoundingClientRect();
@@ -144,7 +143,6 @@ test('the fee dialog stays inside the window, its token list scrolling between t
     await feeDialogFits(page, false);
   }
   // Under the picker's floor the dialog scrolls as a whole, still inside the window, its tabs whole.
-  // Viewport units keep the height the page loaded at, so the short window comes before the load.
   await page.setViewportSize({ width: 900, height: 480 });
   await open('f');
   await expect(page.getByRole('radiogroup', { name: 'Chain' })).toBeVisible();

@@ -544,13 +544,16 @@ fund-fees-absent.
 **a3 fix loop, round 1** (Codex changes requested; Opus conditional approve beside it). Both found the column
 squeezing the controls with the list: the search 38 → 19 px at 720, F's tabs (`overflow-hidden`, so a zero minimum)
 down to about 11 px at 480. Fixed with `shrink-0` on both; the case now measures them again with the list out of the
-layout (a mid-page resize cannot do it: Chromium keeps viewport units at the height the page loaded at) and loads F
-at 480 px. Opus: the 160 px floor padded the short screens (no match, reading, an empty wallet) by about 80 px; the
+layout and loads F at 480 px. Opus: the 160 px floor padded the short screens (no match, reading, an empty wallet) by about 80 px; the
 floor now applies from two rows. The two comments that restated the classes or promised two rows that the floor does
 not keep were rewritten, and the case lost "at 720 px tall" from its title. Not taken: the close button scrolling
 away under the floor (below about 490 px; Escape and outside still close), a frame matter for every fitting dialog.
 Forced breaks, each caught: the search shrinking (19 against 38), the tabs shrinking (11.2 against 32.8), the floor
 unconditional (80.5 px of padding).
+
+**a3 fix loop, round 2**: Codex approve. Two low comment findings taken: the case's claim that viewport units keep
+the load-time height was wrong (Codex resized 720 → 480 and saw them follow; the 6,000 px probe that suggested it was
+the outlier), so it is gone here and in the case; the line over `feeDialogBox` restated it. Converged in two rounds.
 
 ## 8. Post-implementation
 
