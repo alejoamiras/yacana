@@ -62,6 +62,7 @@ export function QuoteView({
   chains,
   balance,
   onConfirm,
+  onSave,
 }: {
   run: FundingRun;
   s: Quoting;
@@ -69,6 +70,7 @@ export function QuoteView({
   /** What the connected wallet holds of the token. */
   balance: bigint;
   onConfirm: () => void;
+  onSave?: () => void;
 }) {
   const { token } = s;
   // Editable figures keep every decimal: a shortened one would re-parse to another amount than the quoted.
@@ -113,11 +115,33 @@ export function QuoteView({
       ) : (
         s.amountIn !== null && !s.error && <p className="text-xs text-ink-3">Getting a quote…</p>
       )}
-      <Actions below={s.quote ? <Countdown expiresAt={s.quote.expiresAt} /> : undefined}>
-        <Primary disabled={!s.quote || short(s.quote)} onClick={onConfirm} data-testid="fees-go">
-          Fund fees
-        </Primary>
-      </Actions>
+      <Go s={s} onConfirm={onConfirm} onSave={onSave} />
     </>
+  );
+}
+
+/** "Fund fees", after the save's own beat when the option has one; neither goes on a missing or short quote. */
+function Go({ s, onConfirm, onSave }: { s: Quoting; onConfirm: () => void; onSave?: () => void }) {
+  const blocked = !s.quote || short(s.quote);
+  return (
+    <Actions below={s.quote ? <Countdown expiresAt={s.quote.expiresAt} /> : undefined}>
+      {onSave && (
+        <Primary
+          variant={s.saved ? 'ghost' : 'uv'}
+          disabled={blocked}
+          onClick={onSave}
+          data-testid="fees-save"
+        >
+          {s.saved ? 'Save it again' : 'Save recovery file'}
+        </Primary>
+      )}
+      <Primary
+        disabled={blocked || (onSave !== undefined && !s.saved)}
+        onClick={onConfirm}
+        data-testid="fees-go"
+      >
+        Fund fees
+      </Primary>
+    </Actions>
   );
 }

@@ -8,7 +8,17 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAtomValue } from 'jotai';
 import { type ReactNode, useEffect } from 'react';
-import { type Config, createConfig, createStorage, custom, injected, useAccount, WagmiProvider } from 'wagmi';
+import {
+  type Config,
+  createConfig,
+  createStorage,
+  custom,
+  injected,
+  useAccount,
+  useConnect,
+  useConnectors,
+  WagmiProvider,
+} from 'wagmi';
 import { bridgeChain } from '../bridge/eth';
 import { bridgeSessionAtom } from '../state';
 import type { FundingRun } from './run';
@@ -17,7 +27,7 @@ export const OWN_STORAGE_KEY = 'yacana.fees.wagmi';
 
 let own: Config | undefined;
 
-function ownConfig(chainId: number): Config {
+export function ownConfig(chainId: number): Config {
   if (!own) {
     const chain = bridgeChain({ chainId, rpcUrl: '' });
     own = createConfig({
@@ -25,7 +35,10 @@ function ownConfig(chainId: number): Config {
       connectors: [injected()],
       // Connecting asks the wallet alone; a read through this config is a bug, so it fails here rather than reach an RPC.
       transports: {
-        [chain.id]: custom({ request: () => Promise.reject(new Error('the fee flow reads no chain')) }),
+        [chain.id]: custom(
+          { request: () => Promise.reject(new Error('the fee flow reads no chain')) },
+          { retryCount: 0 },
+        ),
       },
       multiInjectedProviderDiscovery: true,
       storage: createStorage({ storage: localStorage, key: OWN_STORAGE_KEY }),
@@ -59,4 +72,19 @@ export function usePayer(run: FundingRun): ReturnType<typeof useAccount> {
     run.payer = account.address ?? '';
   }, [run, account.address]);
   return account;
+}
+
+/**
+ * Connects the one announced wallet without a list; null with none or several, where the dialog's
+ * list is the honest screen. A refusal resolves too: the caller shows the connect screen after it.
+ */
+export function useOneWallet(): (() => Promise<void>) | null {
+  const { connectAsync } = useConnect();
+  const [one, ...more] = announced(useConnectors());
+  if (!one || more.length > 0) return null;
+  return () =>
+    connectAsync({ connector: one }).then(
+      () => {},
+      () => {},
+    );
 }

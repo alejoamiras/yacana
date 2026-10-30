@@ -1,40 +1,21 @@
-// The trade as each option draws it. Every phase's name carries `fees-step-<phase>` and the machine's
-// status, so one scenario and one set of captures drive all three options.
+// The trade as each option draws it. Every station carries `fees-step-<phase>` and the machine's
+// status, so one scenario and one set of captures drive all three options; the recovery file's
+// station, `fees-step-file`, reads `waiting` until the file is saved.
 
-import type { Step, TimelineItem, TrailItem } from '@yacana/ui';
+import type { TrailItem } from '@yacana/ui';
 import { useSetAtom } from 'jotai';
 import type * as React from 'react';
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { feesCardAtom } from '../fees-gate';
-import { duration } from '../lib/format';
-import { phaseLine, phaseName, STATION } from './copy';
+import { STATION } from './copy';
 import { type Funding, IN_FLIGHT, landed, type Shown, type StepState, type StepStatus } from './machine';
-import type { FundingReads, QuoteStep, Standing } from './provider';
-
-const STEPPER: Readonly<Record<StepStatus, Step['state']>> = {
-  todo: 'pending',
-  signing: 'active',
-  running: 'active',
-  late: 'warn',
-  done: 'done',
-  failed: 'failed',
-};
+import type { FundingReads, Standing } from './provider';
 
 const TRAIL: Readonly<Record<StepStatus, TrailItem['state']>> = {
   todo: 'todo',
   signing: 'on',
   running: 'on',
   late: 'warn',
-  done: 'done',
-  failed: 'bad',
-};
-
-// The timeline has no warn: a late phase stays current and its line says so.
-const TIMELINE: Readonly<Record<StepStatus, TimelineItem['state']>> = {
-  todo: 'todo',
-  signing: 'on',
-  running: 'on',
-  late: 'on',
   done: 'done',
   failed: 'bad',
 };
@@ -47,52 +28,32 @@ function Mark({ step, children }: { step: StepState; children: React.ReactNode }
   );
 }
 
-function rows(s: Shown): { step: StepState; plan: QuoteStep }[] {
-  return s.quote.steps.map((plan, i) => ({
-    plan,
-    step: s.at === 'done' ? { phase: plan.phase, status: 'done' } : (s.steps[i] as StepState),
-  }));
-}
+const stepsOf = (s: Shown): StepState[] =>
+  s.at === 'done' ? s.quote.steps.map((x) => ({ phase: x.phase, status: 'done' })) : [...s.steps];
 
 export const flight = (s: Funding): StepState | undefined =>
   s.at === 'trade' ? s.steps.find((x) => IN_FLIGHT.has(x.status)) : undefined;
 
-const about = (seconds: number) => `about ${duration(seconds)}`;
-
-export const stepperSteps = (s: Shown, elapsed: number | undefined): Step[] =>
-  rows(s).map(({ step, plan }) => ({
-    id: step.phase,
-    label: <Mark step={step}>{phaseName(step.phase, s.quote)}</Mark>,
-    state: STEPPER[step.status],
-    ms: IN_FLIGHT.has(step.status) ? elapsed : undefined,
-    right: step.status === 'todo' ? about(plan.etaSeconds) : undefined,
-    detail: step.status === 'done' || step.status === 'failed' ? undefined : phaseLine(step.status, plan),
-  }));
+/** A trade whose recovery file is not saved yet: no step may start. */
+export const unsaved = (s: Funding): boolean => s.at === 'trade' && s.saved === null;
 
 export const trailItems = (s: Shown): TrailItem[] => [
-  ...rows(s).map(({ step }) => ({
+  {
+    id: 'file',
+    label: (
+      <span data-testid="fees-step-file" data-state={unsaved(s) ? 'waiting' : 'done'}>
+        file
+      </span>
+    ),
+    state: unsaved(s) ? 'on' : 'done',
+  },
+  ...stepsOf(s).map((step) => ({
     id: step.phase,
     label: <Mark step={step}>{STATION[step.phase]}</Mark>,
     state: TRAIL[step.status],
   })),
   { id: 'ready', label: 'ready', state: s.at === 'done' ? 'done' : 'todo' },
 ];
-
-function timelineLine(step: StepState, plan: QuoteStep, elapsed: number | undefined): string {
-  if (step.status === 'todo') return about(plan.etaSeconds);
-  if (step.status === 'done') return 'done';
-  if (step.status === 'failed') return 'did not go through';
-  const line = phaseLine(step.status, plan);
-  return elapsed === undefined ? line : `${line} ${duration(elapsed / 1000)}`;
-}
-
-export const timelineItems = (s: Shown, elapsed: number | undefined): TimelineItem[] =>
-  rows(s).map(({ step, plan }) => ({
-    id: step.phase,
-    label: <Mark step={step}>{STATION[step.phase]}</Mark>,
-    detail: timelineLine(step, plan, elapsed),
-    state: TIMELINE[step.status],
-  }));
 
 /**
  * Whether a stopped trade's retry asks for a new quote first: nothing landed and the quote ran out, as the

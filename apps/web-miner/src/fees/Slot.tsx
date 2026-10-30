@@ -1,9 +1,11 @@
 import { useAtomValue } from 'jotai';
-import { feesSearch } from '../fees-gate';
+import { feesOption, feesSearch } from '../fees-gate';
 import { bootAtom } from '../state';
 import { standsIn } from './entry';
 import { MOCK_CHAINS, mockFunding, scriptFrom } from './mock';
-import { OptionB } from './options/B';
+import { OptionD } from './options/D';
+import { OptionE } from './options/E';
+import { OptionF } from './options/F';
 import { FundingRun, type OptionProps } from './run';
 import { FeesWallet } from './wallet';
 
@@ -22,12 +24,15 @@ function funding(): Omit<OptionProps, 'signedIn'> {
   return shared;
 }
 
+const OPTIONS = { d: OptionD, e: OptionE, f: OptionF } as const;
+
 export default function Slot() {
   const boot = useAtomValue(bootAtom);
   const signedIn = boot.phase === 'ready' || standsIn(feesSearch);
+  const Option = OPTIONS[feesOption ?? 'e'];
   return (
     <FeesWallet chainId={MOCK_CHAINS[0]?.id ?? 0}>
-      <OptionB {...funding()} signedIn={signedIn} />
+      <Option {...funding()} signedIn={signedIn} />
     </FeesWallet>
   );
 }

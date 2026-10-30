@@ -1,21 +1,23 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { getDefaultStore } from 'jotai';
-import type { ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import { sepolia } from 'viem/chains';
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
-import { createConfig, http, mock, useAccount, WagmiProvider } from 'wagmi';
-import { connect } from 'wagmi/actions';
+import { type Config, createConfig, http, mock, useAccount, WagmiProvider } from 'wagmi';
+import { connect, getBalance } from 'wagmi/actions';
 import type { BridgeSession } from '../bridge/session';
 import { feesCardAtom } from '../fees-gate';
 import { bridgeSessionAtom } from '../state';
 import { MOCK_CHAINS, MOCK_TIMING, MOCK_TOKENS, type MockFunding, mockFunding, scriptFrom } from './mock';
-import { OptionB } from './options/B';
+import { OptionD } from './options/D';
+import { OptionE } from './options/E';
+import { OptionF } from './options/F';
 import { arranged, chainTabs, type Holding, searched } from './parts/TokenPicker';
 import type { FeeFundingProvider, FundingReads, Phase, Quote, Token } from './provider';
 import { type FundingRecord, newRecord, toFile } from './recovery';
-import { FundingRun, NOT_FOUND } from './run';
-import { FeesWallet, OWN_STORAGE_KEY } from './wallet';
+import { FundingRun, NOT_FOUND, type OptionProps } from './run';
+import { FeesWallet, OWN_STORAGE_KEY, ownConfig } from './wallet';
 
 const SCOPE = { chainId: '11155111', rollupVersion: '7' };
 /** Settles in a microtask: WebCrypto's thread pool never answers under fake timers (recovery.test.ts derives the real one). */
@@ -25,15 +27,18 @@ const runOn = (provider: FeeFundingProvider) => new FundingRun(provider, SCOPE, 
 const fileOf = (json: string) => Object.assign(new File([json], 'funding.json'), { text: async () => json });
 
 const PAYER = '0x90F79bf6EB2c4f870365E785982E1f101E93b906' as const;
-/** wagmi's mock connector with one account, no RPC behind it, connected before the specs run. */
-const connected = createConfig({
-  chains: [sepolia],
-  connectors: [mock({ accounts: [PAYER], features: { reconnect: true } })],
-  transports: { [sepolia.id]: http('http://127.0.0.1:9') },
-});
+/** wagmi's mock connector with one account and no RPC behind it; `connected` is connected before the specs run. */
+const wallet = () =>
+  createConfig({
+    chains: [sepolia],
+    connectors: [mock({ accounts: [PAYER], features: { reconnect: true } })],
+    transports: { [sepolia.id]: http('http://127.0.0.1:9') },
+    storage: null,
+  });
+const connected = wallet();
 const queries = new QueryClient();
-const withWallet = (ui: ReactNode) => (
-  <WagmiProvider config={connected}>
+const withWallet = (ui: ReactNode, config: Config = connected) => (
+  <WagmiProvider config={config}>
     <QueryClientProvider client={queries}>{ui}</QueryClientProvider>
   </WagmiProvider>
 );
@@ -179,21 +184,30 @@ const TRADE_MS = 15_000;
 /** The mock's tokens and the wallet's balances of them are read once the view mounts. */
 const holdingsRead = () => tick(MOCK_TIMING.quote);
 
-/** B on a fresh mock, connected; `remount` unmounts it and renders it again on the same runner, as a route change does. */
+/**
+ * An option (F unless named) on a fresh mock, its wallet connected unless a config is given;
+ * `remount` unmounts it and renders it again on the same runner, as a route change does.
+ */
 async function show(
   search = '',
   opts: {
     signedIn?: boolean;
     provider?: (p: FeeFundingProvider) => FeeFundingProvider;
     reads?: (r: FundingReads) => FundingReads;
+    option?: ComponentType<OptionProps>;
+    config?: Config;
   } = {},
 ) {
   const mock: MockFunding = mockFunding(scriptFrom(search));
   const provider = opts.provider ? opts.provider(mock.provider) : mock.provider;
   const reads = opts.reads ? opts.reads(mock.reads) : mock.reads;
   const run = runOn(provider);
+  const Option = opts.option ?? OptionF;
   const ui = () =>
-    withWallet(<OptionB run={run} provider={provider} reads={reads} signedIn={opts.signedIn ?? true} />);
+    withWallet(
+      <Option run={run} provider={provider} reads={reads} signedIn={opts.signedIn ?? true} />,
+      opts.config,
+    );
   let view = render(ui());
   await holdingsRead();
   const remount = async () => {
@@ -223,7 +237,7 @@ const sepoliaUsdc = async () => {
   expect(go().disabled).toBe(false);
 };
 
-describe('B on the mock', () => {
+describe('the flow on the mock', () => {
   test('the card before you mine; the dialog picks and quotes, the card carries the trade; dismissed, it goes', async () => {
     await show();
     expect(id('fees-card').textContent).toContain('Fund fees before you mine.');
@@ -389,6 +403,7 @@ describe('the wallet and its tokens', () => {
   test('the picker asks the wallet only about routed tokens; an unheld one is found but cannot be chosen', async () => {
     const asked: Token[][] = [];
     await show('', {
+      option: OptionE,
       reads: (r) => ({
         ...r,
         balances: (o, tokens, s) => {
@@ -409,7 +424,7 @@ describe('the wallet and its tokens', () => {
   });
 
   test('a wallet holding none of them says so, and search still shows what would', async () => {
-    await show('?fees-wallet=empty');
+    await show('?fees-wallet=empty', { option: OptionE });
     fireEvent.click(id('fees-entry'));
     await tick(0);
     expect(id('fees-picker-empty').textContent).toBe(
@@ -417,6 +432,14 @@ describe('the wallet and its tokens', () => {
     );
     fireEvent.change(id('fees-search'), { target: { value: 'usdc' } });
     expect((id('fees-token-84532-USDC') as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  test("a read through the flow's own config fails before any RPC", async () => {
+    const fetched = vi.spyOn(globalThis, 'fetch');
+    await expect(getBalance(ownConfig(sepolia.id), { address: PAYER })).rejects.toThrow(
+      'the fee flow reads no chain',
+    );
+    expect(fetched).not.toHaveBeenCalled();
   });
 
   test("the flow moves to a bridge session's config and reads its account; its own store never holds it", async () => {
@@ -450,7 +473,7 @@ async function load(json: string) {
 }
 
 describe('the recovery file', () => {
-  test('B saves it on Fund fees; on a fresh page it resumes at the message and runs to done', async () => {
+  test('F saves it on Fund fees; on a fresh page it resumes at the message and runs to done', async () => {
     await show();
     fireEvent.click(id('fees-entry'));
     await sepoliaUsdc();
@@ -496,5 +519,88 @@ describe('the recovery file', () => {
     await show('?fees-resume=claimed');
     await load(JSON.stringify(toFile(newRecord(SCOPE, { token: USDC, amountIn: 10n ** 8n }, 0, 3))));
     expect(id('fees-done')).toBeTruthy();
+  });
+});
+
+describe('each option, from a wallet not yet connected to done', () => {
+  /** The provider's `run` calls, in order: no step may start before the file is saved. */
+  const ran: Phase[] = [];
+  const counting = (p: FeeFundingProvider): FeeFundingProvider => ({
+    ...p,
+    run: (phase, ...rest) => {
+      ran.push(phase);
+      return p.run(phase, ...rest);
+    },
+  });
+  beforeEach(() => {
+    ran.length = 0;
+  });
+  const usdc100 = async () => {
+    fireEvent.click(id('fees-token-11155111-USDC'));
+    fireEvent.change(id('fees-amount'), { target: { value: '100' } });
+    await tick(300 + MOCK_TIMING.quote);
+    expect(id('fees-quote')).toBeTruthy();
+  };
+  const toDone = async () => {
+    await tick(TRADE_MS);
+    expect(id('fees-done')).toBeTruthy();
+    expect(ran).toEqual(['swap', 'deposit', 'message', 'claim']);
+    expect(downloads).toHaveLength(1);
+  };
+
+  test('D connects on the card, lists the held tokens in one list, and starts nothing until the trail saves', async () => {
+    await show('', { option: OptionD, config: wallet(), provider: counting });
+    expect(screen.queryByTestId('fees-entry')).toBeNull();
+    fireEvent.click(id('fees-connect'));
+    await holdingsRead();
+    expect(id('fees-card').contains(id('eth-account'))).toBe(true);
+    fireEvent.click(id('fees-entry'));
+    await tick(0);
+    expect(id('fees-token-84532-USDC').getAttribute('data-held')).toBe('true');
+    await usdc100();
+    fireEvent.click(go());
+    await tick(5_000);
+    expect(id('fees-step-file').getAttribute('data-state')).toBe('waiting');
+    expect(ran).toEqual([]);
+    fireEvent.click(id('fees-save'));
+    await tick(0);
+    expect(id('fees-step-file').getAttribute('data-state')).toBe('done');
+    await toDone();
+  });
+
+  test('E connects in the dialog, and its Fund fees waits for the save beat on the quote', async () => {
+    await show('', { option: OptionE, config: wallet(), provider: counting });
+    fireEvent.click(id('fees-entry'));
+    await tick(0);
+    expect(id('fees-dialog').contains(id('fees-restore'))).toBe(true);
+    fireEvent.click(id('wallet-option'));
+    await holdingsRead();
+    expect(id('fees-dialog').contains(id('eth-account'))).toBe(true);
+    await usdc100();
+    expect(go().disabled).toBe(true);
+    fireEvent.click(id('fees-save'));
+    await tick(0);
+    expect(downloads).toHaveLength(1);
+    expect(go().disabled).toBe(false);
+    fireEvent.click(go());
+    await tick(0);
+    expect(id('fees-step-file').getAttribute('data-state')).toBe('done');
+    await toDone();
+  });
+
+  test('F asks the one wallet at once and opens on the picker by chain; Fund fees saves and starts', async () => {
+    const config = wallet();
+    await show('', { option: OptionF, config, provider: counting });
+    fireEvent.click(id('fees-entry'));
+    await holdingsRead();
+    expect(config.state.status).toBe('connected');
+    expect(screen.queryByTestId('wallet-picker')).toBeNull();
+    expect(screen.getByRole('radio', { name: 'Sepolia', checked: true })).toBeTruthy();
+    expect(screen.queryByTestId('fees-token-84532-USDC')).toBeNull();
+    await usdc100();
+    fireEvent.click(go());
+    await tick(0);
+    expect(id('fees-step-file').getAttribute('data-state')).toBe('done');
+    await toDone();
   });
 });

@@ -4,17 +4,17 @@
 import { atom } from 'jotai';
 import { lazy } from 'react';
 
-export type FeesOption = 'b';
+export type FeesOption = 'd' | 'e' | 'f';
 
 const optionFrom = (search: string): FeesOption | null => {
   const v = new URLSearchParams(search).get('fees');
-  return v === 'b' ? v : null;
+  return v === 'd' || v === 'e' || v === 'f' ? v : null;
 };
 
 /** The query as the page loaded: in-app navigation drops it, and the flow's switches live in it. */
 export const feesSearch: string = import.meta.env.VITE_DEV_FUND_FEES === '1' ? location.search : '';
 
-/** `?fees=b`; null in a production build. */
+/** `?fees=d|e|f`; null in a production build. */
 export const feesOption: FeesOption | null =
   import.meta.env.VITE_DEV_FUND_FEES === '1' ? optionFrom(feesSearch) : null;
 
