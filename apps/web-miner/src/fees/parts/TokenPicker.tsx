@@ -182,7 +182,10 @@ export function TokenPicker({
     />
   );
   return (
-    <div className={cn('flex flex-col gap-3', className)} data-testid="fees-picker">
+    // Inside a dialog capped to the window the lists scroll on their own, so the search above and what
+    // follows the picker stay in view; it never shrinks below the search and two rows, and past that the
+    // dialog itself scrolls.
+    <div className={cn('flex min-h-40 flex-col gap-3', className)} data-testid="fees-picker">
       <Input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
@@ -208,16 +211,18 @@ export function TokenPicker({
           className="self-start"
         />
       )}
-      <ul className="m-0 flex list-none flex-col p-0">{(searching ? found : held).map(row)}</ul>
-      {!searching && rest.length > 0 && (
-        <>
-          <p className="text-2xs font-medium tracking-wide text-ink-3 uppercase">Not in this wallet</p>
-          <ul className="m-0 flex list-none flex-col p-0">{rest.map(row)}</ul>
-        </>
-      )}
-      {searching && found.length === 0 && (
-        <p className="text-xs text-ink-3">No token that buys Fee Juice matches “{query.trim()}”.</p>
-      )}
+      <div className="flex min-h-0 flex-col gap-3 overflow-y-auto" data-testid="fees-token-list">
+        <ul className="m-0 flex list-none flex-col p-0">{(searching ? found : held).map(row)}</ul>
+        {!searching && rest.length > 0 && (
+          <>
+            <p className="text-2xs font-medium tracking-wide text-ink-3 uppercase">Not in this wallet</p>
+            <ul className="m-0 flex list-none flex-col p-0">{rest.map(row)}</ul>
+          </>
+        )}
+        {searching && found.length === 0 && (
+          <p className="text-xs text-ink-3">No token that buys Fee Juice matches “{query.trim()}”.</p>
+        )}
+      </div>
     </div>
   );
 }

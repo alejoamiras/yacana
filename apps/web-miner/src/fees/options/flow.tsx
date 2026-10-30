@@ -254,6 +254,7 @@ export function FundDialog({
   );
   return (
     <TxDialog
+      fitsWindow
       open={choosing(s)}
       onOpenChange={(o) => !o && reset()}
       eyebrow="fees"
