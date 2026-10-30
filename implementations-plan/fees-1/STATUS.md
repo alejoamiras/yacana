@@ -59,3 +59,5 @@
 - 2026-10-30 a3 Codex r1 changes requested, Opus conditional approve: the controls squeezed with the list, the floor
   padding short screens, two comments. Fixed with the case extended; three forced breaks caught. Codex r2 next.
 - 2026-10-30 a3 Codex r2 approve; its two comment nits taken. Converged in two rounds; final gate next.
+- 2026-10-30 a3 final gate green at retry 0: lint 0, typecheck 0, `bun test` 727 pass / 44 skip / 0 fail, test:components
+  (web-miner 197), replay 11 passed in 2.3 min (the fee case 12.8 s), fund-fees-absent 2 pass. Push and PR next.

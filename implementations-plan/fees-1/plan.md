@@ -554,6 +554,8 @@ unconditional (80.5 px of padding).
 **a3 fix loop, round 2**: Codex approve. Two low comment findings taken: the case's claim that viewport units keep
 the load-time height was wrong (Codex resized 720 → 480 and saw them follow; the 6,000 px probe that suggested it was
 the outlier), so it is gone here and in the case; the line over `feeDialogBox` restated it. Converged in two rounds.
+Final gate green at retry 0: lint 0, typecheck 0, `bun test` 727 pass / 44 skip / 0 fail, test:components (web-miner
+197), replay 11 passed in 2.3 min (the fee case 12.8 s), fund-fees-absent 2 pass.
 
 ## 8. Post-implementation
 
