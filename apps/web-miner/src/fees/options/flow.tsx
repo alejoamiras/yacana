@@ -50,7 +50,7 @@ const HOW: Parameters<typeof Stepper>[0]['steps'] = [
     id: 'file',
     label: 'Save a recovery file',
     state: 'pending',
-    detail: 'It brings this funding back if this browser loses it. It holds no key and names no account.',
+    detail: 'It brings this funding back if this browser loses it. It holds no secret and names no account.',
   },
   {
     id: 'swap',
