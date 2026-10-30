@@ -115,14 +115,27 @@ export function QuoteView({
       ) : (
         s.amountIn !== null && !s.error && <p className="text-xs text-ink-3">Getting a quote…</p>
       )}
-      <Go s={s} onConfirm={onConfirm} onSave={onSave} />
+      <Go s={s} refused={line !== null} onConfirm={onConfirm} onSave={onSave} />
     </>
   );
 }
 
-/** "Fund fees", after the save's own beat when the option has one; neither goes on a missing or short quote. */
-function Go({ s, onConfirm, onSave }: { s: Quoting; onConfirm: () => void; onSave?: () => void }) {
-  const blocked = !s.quote || short(s.quote);
+/**
+ * "Fund fees", after the save's own beat when the option has one. Neither goes on a missing or short
+ * quote, nor on an amount the field refuses: the wallet's balance can change under a shown quote.
+ */
+function Go({
+  s,
+  refused,
+  onConfirm,
+  onSave,
+}: {
+  s: Quoting;
+  refused: boolean;
+  onConfirm: () => void;
+  onSave?: () => void;
+}) {
+  const blocked = !s.quote || short(s.quote) || refused;
   return (
     <Actions below={s.quote ? <Countdown expiresAt={s.quote.expiresAt} /> : undefined}>
       {onSave && (

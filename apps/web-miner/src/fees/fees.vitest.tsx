@@ -16,7 +16,7 @@ import { OptionF } from './options/F';
 import { arranged, chainTabs, type Holding, searched } from './parts/TokenPicker';
 import type { FeeFundingProvider, FundingReads, Phase, Quote, Token } from './provider';
 import { type FundingRecord, newRecord, toFile } from './recovery';
-import { FundingRun, NOT_FOUND, type OptionProps } from './run';
+import { FundingRun, NOT_FOUND, type OptionProps, SET_ASIDE } from './run';
 import { FeesWallet, OWN_STORAGE_KEY, ownConfig } from './wallet';
 
 const SCOPE = { chainId: '11155111', rollupVersion: '7' };
@@ -149,7 +149,79 @@ describe('the funding runner', () => {
     expect(now.at === 'trade' && now.steps.map((x) => x.status)).toEqual(['done', 'running', 'todo', 'todo']);
     expect(runs).toHaveLength(4);
   });
+});
 
+describe('the runner when the visitor moves on', () => {
+  test('two clicks make one record; a save the visitor moved past downloads and confirms nothing', async () => {
+    const { provider, quotes, runs } = byHand();
+    const derived: (() => void)[] = [];
+    const run = new FundingRun(provider, SCOPE, {
+      commit: (r) =>
+        new Promise((done) => derived.push(() => done(`0x${r.index.toString(16).padStart(64, '0')}`))),
+    });
+    const quoted = async () => {
+      run.dispatch({ type: 'open' });
+      run.dispatch({ type: 'choose', token: USDC });
+      run.dispatch({ type: 'amount', amountIn: 30n });
+      await vi.advanceTimersByTimeAsync(300);
+      quotes.at(-1)?.answer(quoteFor(30n));
+      await vi.advanceTimersByTimeAsync(0);
+    };
+    await quoted();
+    const twice = [run.saveAndConfirm(), run.saveAndConfirm()];
+    expect(derived).toHaveLength(1);
+    derived[0]?.();
+    await Promise.all(twice);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(downloads).toHaveLength(1);
+    expect(runs.map((r) => r.phase)).toEqual(['swap']);
+
+    // Reset and the same token and amount again before the old save's commitment lands.
+    run.dispatch({ type: 'reset' });
+    await quoted();
+    const stale = run.saveAndConfirm();
+    run.dispatch({ type: 'reset' });
+    await quoted();
+    derived[1]?.();
+    await stale;
+    expect(downloads).toHaveLength(1);
+    expect(run.getState()).toMatchObject({ at: 'quote', saved: null });
+  });
+
+  test('another wallet under a shown quote goes back to the picker; the first connection does not', async () => {
+    const { provider, quotes } = byHand();
+    const run = runOn(provider);
+    run.dispatch({ type: 'open' });
+    run.setPayer(PAYER);
+    run.dispatch({ type: 'choose', token: USDC });
+    run.dispatch({ type: 'amount', amountIn: 30n });
+    await vi.advanceTimersByTimeAsync(300);
+    quotes[0]?.answer(quoteFor(30n));
+    await vi.advanceTimersByTimeAsync(0);
+    run.setPayer(PAYER);
+    expect(run.getState()).toMatchObject({ at: 'quote' });
+    run.setPayer('');
+    expect(run.getState()).toEqual({ at: 'pick' });
+  });
+
+  test('a restore the visitor moved past while it resolved changes nothing, and says so', async () => {
+    const { provider, runs, resumes } = byHand();
+    const run = runOn(provider);
+    const record = newRecord(SCOPE, { token: USDC, amountIn: 30n }, 0, 7);
+    const pending = run.restore(fileOf(JSON.stringify(toFile(record))));
+    await vi.advanceTimersByTimeAsync(0);
+    run.dispatch({ type: 'open' });
+    run.dispatch({ type: 'choose', token: USDC });
+    run.dispatch({ type: 'back' });
+    resumes[0]?.answer({ quote: quoteFor(30n), landed: ['swap', 'deposit'] });
+    expect(await pending).toBe(SET_ASIDE);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(run.getState()).toEqual({ at: 'pick' });
+    expect(runs).toEqual([]);
+  });
+});
+
+describe('the runner restoring', () => {
   test("a restore runs no landed step, under the file's commitment; a reset while it resolves leaves idle", async () => {
     const { provider, runs, resumes } = byHand();
     const run = runOn(provider);
@@ -428,8 +500,9 @@ describe('the wallet and its tokens', () => {
     fireEvent.click(id('fees-entry'));
     await tick(0);
     expect(id('fees-picker-empty').textContent).toBe(
-      'This wallet holds nothing that buys Fee Juice. Search to see what does.',
+      'This wallet holds nothing that buys Fee Juice. What would is listed below.',
     );
+    expect(screen.getByText('Not in this wallet')).toBeTruthy();
     fireEvent.change(id('fees-search'), { target: { value: 'usdc' } });
     expect((id('fees-token-84532-USDC') as HTMLButtonElement).disabled).toBe(true);
   });

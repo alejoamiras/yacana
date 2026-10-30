@@ -2,7 +2,7 @@
 // network, then resumed from what the provider has for its commitment. A refused file changes nothing.
 
 import { cn, Note } from '@yacana/ui';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useRef, useState } from 'react';
 import type { FundingRun } from '../run';
 
 export function Restore({
@@ -16,14 +16,18 @@ export function Restore({
 }) {
   const [refused, setRefused] = useState<string | null>(null);
   const [reading, setReading] = useState(false);
+  // A second file chosen while the first is read supersedes it: only the latest load's outcome shows.
+  const latest = useRef(0);
   const load = async (input: HTMLInputElement) => {
     const file = input.files?.[0];
     // Cleared at once, so choosing the same file again fires again.
     input.value = '';
     if (!file) return;
+    const n = ++latest.current;
     setReading(true);
     setRefused(null);
     const line = await run.restore(file);
+    if (n !== latest.current) return;
     setReading(false);
     setRefused(line);
   };

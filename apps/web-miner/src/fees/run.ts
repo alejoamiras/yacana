@@ -27,6 +27,7 @@ const QUOTE_DEBOUNCE_MS = 300;
 const aborted = (e: unknown) => e instanceof DOMException && e.name === 'AbortError';
 
 export const NOT_FOUND = 'No deposit carries this file’s funding: nothing was sent for it, or not yet.';
+export const SET_ASIDE = 'The file was set aside: another funding was started while it was read.';
 
 export interface RunOptions {
   readonly now?: () => number;
@@ -40,12 +41,6 @@ function pairOf(s: Funding): FundingHint | null {
   return s.at === 'trade' ? { token: s.quote.from, amountIn: s.quote.amountIn } : null;
 }
 
-const samePair = (a: FundingHint | null, b: FundingHint) =>
-  a !== null &&
-  a.amountIn === b.amountIn &&
-  a.token.chainId === b.token.chainId &&
-  a.token.address === b.token.address;
-
 export class FundingRun {
   private state: Funding = { at: 'idle' };
   private readonly listeners = new Set<() => void>();
@@ -54,10 +49,10 @@ export class FundingRun {
   private quoteTimer: ReturnType<typeof setTimeout> | undefined;
   private lapseTimer: ReturnType<typeof setTimeout> | undefined;
   private restoring: AbortController | null = null;
+  private saving: Promise<boolean> | null = null;
   private readonly now: () => number;
   private readonly commit: (r: FundingRecord) => Promise<string>;
-  /** The connected Ethereum wallet, the one that pays; quotes are asked for it. */
-  payer = '';
+  private payer = '';
 
   constructor(
     private readonly provider: FeeFundingProvider,
@@ -84,43 +79,63 @@ export class FundingRun {
     this.follow(s);
   }
 
+  /**
+   * The connected wallet, the one quotes are asked for. Another wallet under a shown quote takes the
+   * visitor back to the picker: the quote was for the old one, and so were its balances.
+   */
+  setPayer(payer: string): void {
+    const was = this.payer;
+    this.payer = payer;
+    if (was !== '' && was !== payer && this.state.at === 'quote') this.dispatch({ type: 'back' });
+  }
+
   /** Confirm and retry read the clock here, so a view never passes its own. */
   confirm = () => this.dispatch({ type: 'confirm', now: this.now() });
   retry = () => this.dispatch({ type: 'retry', now: this.now() });
 
   /**
-   * Downloads the funding's recovery file and marks it saved. A funding already saved downloads the
-   * same record again; a token or amount changed while its commitment derived downloads nothing.
+   * Downloads the funding's recovery file and marks it saved; true when this call did. A funding already
+   * saved downloads the same record again. Calls while one is out share it, so a second click never
+   * makes a second record.
    */
-  save = async (): Promise<void> => {
+  save = (): Promise<boolean> => {
+    this.saving ??= this.saveOnce().finally(() => {
+      this.saving = null;
+    });
+    return this.saving;
+  };
+
+  private async saveOnce(): Promise<boolean> {
     const s = this.state;
     const pair = pairOf(s);
-    if (!pair) return;
+    if (!pair) return false;
     let saved = (s.at === 'quote' || s.at === 'trade') && s.saved;
     if (!saved) {
       const record = newRecord(this.scope, pair, this.now());
       saved = { record, commit: await this.commit(record) };
-      if (!samePair(pairOf(this.state), pair)) return;
+      // A reset, another amount or a new quote while it derived: the file would name a funding no one sees.
+      if (this.state !== s) return false;
     }
     saveJson(fileName(saved.record), toFile(saved.record));
-    this.dispatch({ type: 'saved', saved });
-  };
+    this.dispatch({ type: 'saved', saved, now: this.now() });
+    return true;
+  }
 
-  /** Saves, then confirms what was saved: one click for both. */
+  /** Saves, then confirms what was saved: one click for both, and nothing confirmed for a save that did not land. */
   saveAndConfirm = async (): Promise<void> => {
-    await this.save();
-    const s = this.state;
-    if (s.at === 'quote' && s.saved) this.confirm();
+    if ((await this.save()) && this.state.at === 'quote') this.confirm();
   };
 
   /**
    * Resumes the funding a recovery file names, from idle or the picker. Resolves to the line saying
-   * why it could not, or null: resumed, or superseded by a reset or another restore.
+   * why it could not, or null: resumed, or superseded by a reset, another restore or anything the
+   * visitor did meanwhile (idle and the picker change only by the visitor's hand).
    */
   restore = async (file: Blob): Promise<string | null> => {
     this.restoring?.abort();
     const ctl = new AbortController();
     this.restoring = ctl;
+    const from = this.state;
     const current = () => this.restoring === ctl;
     try {
       if (file.size > MAX_RECORD_BYTES) throw new RecordRefused(TOO_LARGE);
@@ -131,6 +146,7 @@ export class FundingRun {
         : null;
       if (!current()) return null;
       this.restoring = null;
+      if (this.state !== from) return SET_ASIDE;
       if (!found) return NOT_FOUND;
       this.dispatch({ type: 'restored', quote: found.quote, landed: found.landed, saved });
       return null;

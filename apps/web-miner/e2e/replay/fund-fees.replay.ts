@@ -225,11 +225,7 @@ test('the mocked fee funding runs end to end in every ask27 option, and its reco
   const pre = before.stop();
   everything.push(...pre.all);
   expect(leaks(pre.all), 'e before the reload').toEqual([]);
-  const known = settled(base, app);
-  expect(
-    settled(pre, app).filter((r) => !known.includes(r)),
-    'e before the reload',
-  ).toEqual([]);
+  likeBaseline(pre, base, app, 'e before the reload');
 
   const cdp = await page.context().newCDPSession(page);
   await cdp.send('Storage.clearDataForOrigin', { origin: app, storageTypes: 'all' });

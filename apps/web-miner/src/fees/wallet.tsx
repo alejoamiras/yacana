@@ -68,9 +68,7 @@ export const announced = <C extends { id: string }>(connectors: readonly C[]): C
 /** The connected account; quotes are asked for it as the payer. */
 export function usePayer(run: FundingRun): ReturnType<typeof useAccount> {
   const account = useAccount();
-  useEffect(() => {
-    run.payer = account.address ?? '';
-  }, [run, account.address]);
+  useEffect(() => run.setPayer(account.address ?? ''), [run, account.address]);
   return account;
 }
 

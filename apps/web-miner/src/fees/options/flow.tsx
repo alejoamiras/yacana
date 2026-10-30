@@ -110,7 +110,6 @@ export function EntryCard({ actions, children }: { actions: ReactNode; children?
   );
 }
 
-/** "Fund fees": opens the dialog. */
 export function FundButton({ onClick }: { onClick: () => void }) {
   return (
     <Button variant="uv" onClick={onClick} data-testid="fees-entry">
@@ -163,9 +162,14 @@ function tradeActions(s: Shown, run: FundingRun, requotes: boolean): ReactNode {
     );
   if (unsaved(s))
     return (
-      <Button variant="uv" onClick={() => void run.save()} data-testid="fees-save">
-        Save recovery file
-      </Button>
+      <>
+        <Button variant="uv" onClick={() => void run.save()} data-testid="fees-save">
+          Save recovery file
+        </Button>
+        <Button variant="ghost" onClick={() => run.dispatch({ type: 'reset' })} data-testid="fees-cancel">
+          Cancel
+        </Button>
+      </>
     );
   // No browser tells a page whether a download was kept: until the claim lands, it can be saved again.
   const again = (
@@ -214,7 +218,6 @@ export function TradeCard({ s, run }: { s: Shown; run: FundingRun }) {
   );
 }
 
-/** The card the flow draws now: the trade, the entry, or nothing. */
 export function Card({ flow, run, entry }: { flow: Flow; run: FundingRun; entry: ReactNode }) {
   const { s } = flow;
   if (s.at === 'trade' || s.at === 'done') return <TradeCard s={s} run={run} />;

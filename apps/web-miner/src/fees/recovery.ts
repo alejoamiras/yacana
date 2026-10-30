@@ -1,8 +1,8 @@
 // A funding's identity and the file that brings it back once the site's data is gone. The deposit
 // commits to a hash of a secret the master derives for a random index, so the file needs only the
-// index: no secret, no account, no amount it could be held to. Another account's file derives a
-// commitment no deposit carries; a forged hint changes what the mock rebuilds, never what a real
-// provider reads.
+// index: no secret, no account, no amount it could be held to. Under an account's own master, another
+// account's file derives a commitment no deposit carries (the flag's public stand-in master gives that
+// up); a forged hint changes what the mock rebuilds, never what a real provider reads.
 
 import { hkdf } from '@yacana/miner-core/keys/derive';
 import type { FundingHint, Token } from './provider';

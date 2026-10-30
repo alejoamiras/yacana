@@ -66,7 +66,7 @@ export type FundingEvent =
     }
   | { readonly type: 'retry'; readonly now: number }
   /** The visitor's click started the file's download; no browser says whether it was kept. */
-  | { readonly type: 'saved'; readonly saved: Saved }
+  | { readonly type: 'saved'; readonly saved: Saved; readonly now: number }
   /** A file's funding as the provider found it: `landed` are the steps already done. */
   | {
       readonly type: 'restored';
@@ -153,6 +153,19 @@ function onRetry(s: Trade, now: number): Funding {
   return { ...(again as Trade), failure: null };
 }
 
+function onConfirm(s: Extract<Funding, { at: 'quote' }>, now: number): Funding {
+  // A route that may deliver less than a claim takes would strand the Fee Juice on its way in.
+  if (!s.quote || s.quote.feeJuiceMin < s.quote.claimMin) return s;
+  if (now >= s.quote.expiresAt) return requote(s.quote, true, s.saved);
+  return {
+    at: 'trade',
+    quote: s.quote,
+    steps: s.quote.steps.map((x) => ({ phase: x.phase, status: 'todo' })),
+    failure: null,
+    saved: s.saved,
+  };
+}
+
 function inQuote(s: Extract<Funding, { at: 'quote' }>, e: FundingEvent): Funding {
   switch (e.type) {
     case 'amount':
@@ -170,18 +183,9 @@ function inQuote(s: Extract<Funding, { at: 'quote' }>, e: FundingEvent): Funding
     case 'back':
       return { at: 'pick' };
     case 'saved':
-      return savedFor(e.saved, s.token, s.amountIn) ? { ...s, saved: e.saved } : s;
+      return !s.saved && savedFor(e.saved, s.token, s.amountIn) ? { ...s, saved: e.saved } : s;
     case 'confirm':
-      // A route that may deliver less than a claim takes would strand the Fee Juice on its way in.
-      if (!s.quote || s.quote.feeJuiceMin < s.quote.claimMin) return s;
-      if (e.now >= s.quote.expiresAt) return requote(s.quote, true, s.saved);
-      return {
-        at: 'trade',
-        quote: s.quote,
-        steps: s.quote.steps.map((x) => ({ phase: x.phase, status: 'todo' })),
-        failure: null,
-        saved: s.saved,
-      };
+      return onConfirm(s, e.now);
     default:
       return s;
   }
@@ -202,16 +206,19 @@ function inTrade(s: Trade, e: FundingEvent): Funding {
     case 'retry':
       return onRetry(s, e.now);
     case 'saved':
-      return !s.saved && savedFor(e.saved, s.quote.from, s.quote.amountIn) ? { ...s, saved: e.saved } : s;
+      if (s.saved || !savedFor(e.saved, s.quote.from, s.quote.amountIn)) return s;
+      // Saved after confirm, nothing has moved yet: a quote that ran out meanwhile is asked again first.
+      return e.now >= s.quote.expiresAt ? requote(s.quote, true, e.saved) : { ...s, saved: e.saved };
     default:
       return s;
   }
 }
 
-/** Resumed at the first step not landed, or done when every step landed. */
+/** Resumed after the last step landed (every step before it counts as landed too), or done when the last did. */
 function restored(e: Extract<FundingEvent, { type: 'restored' }>): Funding {
+  const last = e.quote.steps.reduce((at, x, i) => (e.landed.includes(x.phase) ? i : at), -1);
   const steps = e.quote.steps.map(
-    (x): StepState => ({ phase: x.phase, status: e.landed.includes(x.phase) ? 'done' : 'todo' }),
+    (x, i): StepState => ({ phase: x.phase, status: i <= last ? 'done' : 'todo' }),
   );
   if (steps.every((x) => x.status === 'done'))
     return { at: 'done', quote: e.quote, received: e.quote.feeJuiceOut };

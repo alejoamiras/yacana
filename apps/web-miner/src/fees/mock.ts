@@ -236,12 +236,13 @@ const never = (signal: AbortSignal): Promise<never> =>
     signal.addEventListener('abort', () => reject(abortError()));
   });
 
-/** The quote the mock gives for a token and an amount. */
 function priced(from: Token, amountIn: bigint, id: string, expiresAt: number): Quote {
   const costs = costsFor(from, amountIn);
   const kept = amountIn - (costs[0]?.symbol === from.symbol ? (costs[0]?.amount ?? 0n) : 0n);
   const out =
-    (kept * (RATE_MILLI[from.symbol] ?? RATE_ELSE) * unit(FEE_JUICE_DECIMALS)) /
+    (kept *
+      ((Object.hasOwn(RATE_MILLI, from.symbol) ? RATE_MILLI[from.symbol] : undefined) ?? RATE_ELSE) *
+      unit(FEE_JUICE_DECIMALS)) /
     (1000n * unit(from.decimals));
   return {
     id,

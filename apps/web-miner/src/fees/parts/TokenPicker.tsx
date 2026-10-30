@@ -195,7 +195,8 @@ export function TokenPicker({
       {holdings === undefined && <p className="text-xs text-ink-3">Reading what your wallet holds…</p>}
       {holdings !== undefined && !searching && hs.every((h) => !isHeld(h)) && (
         <p className="text-xs text-ink-2" data-testid="fees-picker-empty">
-          This wallet holds nothing that buys Fee Juice. Search to see what does.
+          This wallet holds nothing that buys Fee Juice.{' '}
+          {layout === 'held-first' ? 'What would is listed below.' : 'Search to see what does.'}
         </p>
       )}
       {!searching && tabs.length > 1 && tab !== undefined && (

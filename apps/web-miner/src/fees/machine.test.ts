@@ -42,7 +42,7 @@ const confirmed = (q: Quote): Funding =>
     { type: 'choose', token: q.from },
     { type: 'amount', amountIn: q.amountIn },
     { type: 'quoted', quote: q },
-    { type: 'saved', saved: savedOf(q.from, q.amountIn) },
+    { type: 'saved', saved: savedOf(q.from, q.amountIn), now: T0 },
     { type: 'confirm', now: T0 },
   ]);
 
@@ -169,8 +169,15 @@ describe('the fee-funding machine', () => {
     expect(statuses(unsaved)).toEqual(['swap:todo', 'deposit:todo', 'message:todo', 'claim:todo']);
     expect(next(unsaved)).toBeNull();
     // A save for another amount does not count for this trade.
-    expect(reduce(unsaved, { type: 'saved', saved: savedOf(USDC, 30n) })).toBe(unsaved);
-    expect(next(reduce(unsaved, { type: 'saved', saved: savedOf(USDC, 25n) }))).toBe('swap');
+    expect(reduce(unsaved, { type: 'saved', saved: savedOf(USDC, 30n), now: T0 })).toBe(unsaved);
+    expect(next(reduce(unsaved, { type: 'saved', saved: savedOf(USDC, 25n), now: T0 }))).toBe('swap');
+    // Saved only after the quote ran out: nothing has moved, so it is asked again, the save kept.
+    const saved = savedOf(USDC, 25n);
+    expect(reduce(unsaved, { type: 'saved', saved, now: SWAP.expiresAt })).toMatchObject({
+      at: 'quote',
+      refreshed: true,
+      saved,
+    });
   });
 
   test('another token or amount clears the save; a refreshed quote for the same pair keeps it', () => {
@@ -180,9 +187,11 @@ describe('the fee-funding machine', () => {
       { type: 'choose', token: USDC },
       { type: 'amount', amountIn: 25n },
       { type: 'quoted', quote: SWAP },
-      { type: 'saved', saved },
+      { type: 'saved', saved, now: T0 },
     ]);
     expect(quoted).toMatchObject({ saved });
+    // A funding binds to its first save: another record for the same pair does not replace it.
+    expect(reduce(quoted, { type: 'saved', saved: savedOf(USDC, 25n, 2), now: T0 })).toBe(quoted);
     expect(reduce(quoted, { type: 'lapse', id: SWAP.id })).toMatchObject({ quote: null, saved });
     expect(reduce(quoted, { type: 'confirm', now: SWAP.expiresAt })).toMatchObject({
       refreshed: true,
@@ -202,6 +211,9 @@ describe('the fee-funding machine', () => {
     const [done, ran] = drive(resumed);
     expect(ran).toEqual(['message', 'claim']);
     expect(done.at).toBe('done');
+    // A landed step means every step before it landed too: none of them runs again.
+    const partial = reduce({ at: 'idle' }, { type: 'restored', quote: SWAP, landed: ['deposit'], saved });
+    expect(statuses(partial)).toEqual(['swap:done', 'deposit:done', 'message:todo', 'claim:todo']);
     const claimed = reduce(
       { at: 'pick' },
       { type: 'restored', quote: SWAP, landed: ['swap', 'deposit', 'message', 'claim'], saved },
