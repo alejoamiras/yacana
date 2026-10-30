@@ -187,6 +187,8 @@ test('the mocked fee funding runs end to end in every ask27 option, and its reco
 
   const baseline = watch(page, app);
   await openAt(page, replay.url());
+  // The public epoch read fetches the slot table after the cockpit shows: the window closes after it lands.
+  await expect(page.getByTestId('epoch-claims')).toHaveText(/^\d+ of/);
   await page.waitForLoadState('networkidle');
   const base = baseline.stop();
   everything.push(...base.all);
