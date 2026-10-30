@@ -10,7 +10,7 @@ eli5_mode: skipped (orchestrator-owned)
 quality_bar: production
 hardening: not scheduled
 budget: "recon: 2 Sonnet sweeps (a1) + 1 (revision); codex gpt-6.1-sol at high; code-review off"
-status: a1 merged (#93, e8b7d06); revised 2026-10-30 for a2, the shots and a3; final fresh Codex pass approve (r3); awaiting the orchestrator's approval
+status: a1 merged (#93, e8b7d06); a2 merged (#94, 56f25fa); a3 (the fee dialog within the window) added after a2's captures; a4 the pick
 created: 2026-10-27
 revised: 2026-10-30
 ---
@@ -24,12 +24,13 @@ On a network with no sponsor every Aztec transaction needs Fee Juice, and a visi
 the flow that funds an account: in the real product, behind a flag production never carries, on a mocked provider,
 before the SDK behind it exists. a1 (merged) built three placements and the owner picked B. This revision plans the
 rest: a2 keeps B, builds ask25 and the entry rule, and adds ask27's options D, E and F on top of B; a shots lead
-captures them; the owner picks; a3 keeps the pick, still mocked and flagged, and closes the plan.
+captures them; a3, added after those captures, keeps the fee dialog inside the window; the owner picks; a4 keeps
+the pick, still mocked and flagged, and closes the plan.
 
 ## 1. Scope
 
-- **Issues**: none. **Asks**: ask18 → a3; ask25 → a3; ask27 → a3. a2 delivers none.
-- **Owner decisions recorded** (2026-10-30), the form a2 and a3 build on:
+- **Issues**: none. **Asks**: ask18 → a4; ask25 → a4; ask27 → a4. a2 delivers none.
+- **Owner decisions recorded** (2026-10-30), the form a2 and a4 build on:
   - P3-01 = B: "Before you mine: a card over the cockpit; on confirm it carries the trade as a trail and stays through a trip to Settings."
   - P3-03 = S: "As it ships: spend an amount of a token, read the Fee Juice it buys."
   - P3-04 = I: "Only signed in, only on a network with no sponsor, and only while the account's Fee Juice is below what a claim costs."
@@ -39,7 +40,9 @@ captures them; the owner picks; a3 keeps the pick, still mocked and flagged, and
   balance and no payer note, and the claim that mints pays from the private balance"); ask27's options D, E and F
   (§4) for the owner's next decision page. All behind the flag, so nothing reaches a visitor. Anything else visible
   ships in the "what ships now" form of `OWNER-ASKS.md` OA4–OA7.
-- **UI impact (a3)**: the ask27 pick from the next decision page, quoted by id and text, and OA4–OA7 as answered;
+- **UI impact (a3)**: none in a production build (the flag never resolves there). Behind the flag the fee dialog
+  keeps to the window with its token list scrolling inside, in every option; P3-01 B unchanged.
+- **UI impact (a4)**: the ask27 pick from the next decision page, quoted by id and text, and OA4–OA7 as answered;
   still behind the flag.
 - **Out**: the real provider and its SDK (nothing imports it); any network call from the flow (no live quote, no
   L1 transaction or balance read, no portal call); a chain switch (the mock's signatures never reach the wallet);
@@ -61,7 +64,7 @@ captures them; the owner picks; a3 keeps the pick, still mocked and flagged, and
   5. No production build carries the flow (the bundle test); from navigation to done the flow adds no same-origin
      request and no node method the page does not already call, and the wallet is asked only the account, chain and
      permission methods.
-- **Good enough**: mock data is plausible, not priced; a3 polishes the copy of the pick only.
+- **Good enough**: mock data is plausible, not priced; a4 polishes the copy of the pick only.
 
 ## 3. Assumptions
 
@@ -247,7 +250,7 @@ visitor will not remember having made. The planner's judgment, not a measurement
   `features/recovery.ts`, `e2e/helpers/l1-wallet.ts` (an `asked()` list of every method, beside `calls`),
   `e2e/replay/fund-fees.replay.ts`, `e2e/proof-inventory.ts`.
 - Deleted: `options/{A,C}.tsx`, `parts/Held.tsx`, the slots in `components/BalanceCard.tsx` and `routes/Settings.tsx`.
-- a3 deletes the two options not picked and updates the `apps/web-miner` row of `CLAUDE.md`.
+- a4 deletes the two options not picked and updates the `apps/web-miner` row of `CLAUDE.md`.
 
 ## 5. Security & Adversarial Considerations
 
@@ -358,7 +361,7 @@ B, C; the replay scenario (10 tests in 2.2 min, the scenario 48 s).
   bun run --cwd apps/web-miner test:replay && bun test apps/web-miner/tests/fund-fees-absent.bun.test.ts && bun run site:build`,
   with the pinned Aztec bin first on PATH (`lessons.md`). Pass: exit 0.
 
-### Shots (orchestrator, between a2 and a3)
+### Shots (orchestrator, between a2 and a4; the fee dialog retaken after a3)
 As a1's: an uncommitted spec in `e2e/replay/` run with `-c playwright.replay.config.ts`, `replay.url(...)`, the
 fixture's teardown, `localStorage['yacana.theme']` set before load, 1280 and 1440 wide, both themes,
 `installL1Wallet` with an unreachable RPC unless the row says otherwise. Captures are signed out with the stand-in
@@ -377,7 +380,22 @@ account and wallet, and the decision page says so. Each row, for each of d, e an
 | done, dismissed | none | `fees-done`; then `fees-dismiss`, no `fees-card` |
 | restore: resumed, claimed, refused, missing | `&fees-resume=claimed`, `&fees-resume=missing` | `fees-restore` with a saved file (another `chainId` for refused); the resumed trail, `fees-done`, or `fees-restore-error` |
 
-### Phase 9 (a3): the pick
+### Phase 9 (a3): the fee dialog within the window ✓
+Added after a2's captures. At 900 × 720, E's dialog listed every supported token in a centred, uncapped frame
+3,851 px tall (top at −1,566 px): its title, chip, search and file link out of reach, the same after a reload whose
+wallet reconnects on its own. D and F fit until a broad search ("a": 35 rows, 2,310 px). Demonstrated by a probe.
+1. The account dialog's window-fit rule (anchored a fifth of the way down, capped 24 px above the bottom, scrolling
+   inside) moves into `features/dialogs/Frame.tsx` as `FITS_WINDOW`: the account dialog uses it unchanged,
+   `TxDialog` takes it as `fitsWindow`, the fee dialog opts in and the other money dialogs do not. The picker's lists
+   scroll in their own region between the search and what follows; below the search and two rows the dialog scrolls.
+2. `dialog-geometry.replay.ts`: "the fee dialog stays inside the window at 720 px tall, its token list scrolling
+   between the search and the file link": E connected, E after a reload, D and F searched for "a"; the box inside the
+   window and unscrolled, title, chip, search and file link in view, the list scrolling to its last row with them
+   still in view. Vitest cannot: jsdom has no layout. Measured 9.6 s.
+- **Gate**: lint, typecheck, `bun test` (the pinned Aztec bin first on PATH), test:components, the replay lane,
+  fund-fees-absent, at retry 0. Then break it on purpose: drop `fitsWindow`, then the list's own scroll.
+
+### Phase 10 (a4): the pick
 1. Keep the picked option; delete the other two and their cases; `?fees` becomes a presence switch.
 2. Apply the pick's text and OA4–OA7 as answered; polish its copy; update the `apps/web-miner` row of `CLAUDE.md`.
 3. The scenario keeps one option with the Settings trip (P3-01), the round trip, the claim failure, the Dismiss and
@@ -432,7 +450,7 @@ over a trade stream; "late" from the provider; the chunk graph over a marker; no
   5. Medium: the planned stand-in wallet duplicated `installL1Wallet`, which works without anvil (its client is
      lazy; recon's claim did not hold) → reused, with an `asked()` list.
   6. Low-medium: a rerun deposit would not fail the scenario → the observer.
-  7. Low-medium: a3 dropped P3-01's Settings trip → kept.
+  7. Low-medium: a4 dropped P3-01's Settings trip → kept.
   8. Low: P7 gated an unrelated test file, and nothing gated the download move → that gate line is gone and the
      download has its spec.
   10. Low: the stand-in made "signed in" constant → a closed switch and a no-card check.
@@ -504,10 +522,21 @@ beside round 1):
      steps → every step up to the last landed is done; D's late save ran an expired quote with no way out → the save
      re-quotes, and Cancel; a forged `constructor` symbol hit the rate table's prototype → own keys only; Restore's
      reading state and silent drop → the latest load only, and the set-aside line; E's empty line contradicted its
-     list → copy per layout. Not taken: the test title keeps the plan's wording (a3 retitles); the download after
+     list → copy per layout. Not taken: the test title keeps the plan's wording (a4 retitles); the download after
      an await holds for this derivation, and the real lane's is the real provider's concern.
 - r2 (resumed) **approve**: "No material findings remain. Confidence: high." One low comment correction (the
   restore's return contract), applied. Converged in two rounds.
+
+**Arc a3 added** (2026-10-30, by the orchestrator after a2's captures): E's dialog over the full list left the
+window (Phase 9). It changes nothing a production visitor sees and builds no new owner decision, so it ships
+before the next decision page as its own small arc; the plan's a3 (the pick) becomes a4 for that reason, and every
+"a4" above this entry is the arc earlier revisions called a3. Branch `fees-1-a3` from `origin/main` (`56f25fa`).
+Decision: reuse the account dialog's fit rule rather than a list height of its own (`Wins`' 320 px cap fits 720 px
+but not a shorter window) or a fit for every money dialog (that would move the bridge dialogs in production).
+Gate on `079ce64`: the case green in 9.6 s; dropping `fitsWindow` fails it with the dialog's top at −1,565.6 px,
+and dropping the list's own scroll fails it with the dialog scrolling 3,221 px itself. Phase gate green at retry 0:
+lint, typecheck, `bun test` 727 pass / 44 skip, test:components, replay 11 passed in 2.3 min (2.3 before),
+fund-fees-absent.
 
 ## 8. Post-implementation
 
@@ -516,7 +545,7 @@ beside round 1):
 - **Codex fix loop, per arc**, after the arc's phases are green:
   - `~/.claude/skills/codex/scripts/run-codex.sh <prompt> <worktree> high read-only gpt-6.1-sol` on the arc's diff
     against `origin/main`.
-  - Send this plan, the arc map ("a1 ✓ → a2 → shots → a3; a3 deletes the options not picked"), the adversarial ask
+  - Send this plan, the arc map ("a1 ✓ → a2 → shots → a4; a4 deletes the options not picked"), the adversarial ask
     and these two rules verbatim: *"Report bugs and small, targeted improvements only. Do not propose speculative
     abstractions, extra configuration surface, new layers, or rewrites — the smallest change that fixes each real
     problem. If code works and is clear, leave it alone."* *"Audit the comments for value per character. Flag any
@@ -529,7 +558,7 @@ beside round 1):
   - Resume the same session after each round's fixes; stop when a round finds nothing material; hard stop at 3. A
     fix that adds state, a lifecycle, a protocol, a recovery policy or a contract is a plan change: stop. Record each
     round in §7 and rerun the arc gate on the final head.
-- **Close-out** (a3's final commits): `git merge origin/main` and read what changed in `index.md` and `lessons.md`;
+- **Close-out** (a4's final commits): `git merge origin/main` and read what changed in `index.md` and `lessons.md`;
   `## Outcome` after the front matter (date, status, shipped, `Known limits:`, `Open items:`, seeds retired); promote
   F11 to `lessons.md` with a pruning pass; file the real-provider requirements as one `enhancement` issue with a
   `Record` link (a1's I3 gaps, V1–V5, the sponsor signal and a claim's cost, the page record of OA5, the approval
@@ -546,15 +575,16 @@ beside round 1):
 |---|---|---|---|---|
 | a1 ✓ | 1–4 | `worktree-fees-1` | #93, merged | — |
 | a2 | 5–8 | `worktree-fees-1` (this revision, `origin/main` merged) | `feat(web-miner): fund fees on B, privately, with three wallet-and-file options` | no issue, no ask; P3-01, P3-03 and P3-04 quoted; ask27's options D, E, F with one line each; replay wall-clock before and after |
-| a3 | 9, close-out | `worktree-fees-1`, `origin/main` merged in again | `feat(web-miner): the picked fund-fees flow, still mocked and flagged` | `Delivers ask18`, `Delivers ask25`, `Delivers ask27`; every owner pick quoted by id and text |
+| a3 | 9 | `fees-1-a3` from `origin/main` | `fix(web-miner): the fee dialog stays inside the window, its list scrolling` | no issue, no ask; the defect, the fix, the geometry case and its forced breaks |
+| a4 | 10, close-out | `worktree-fees-1`, `origin/main` merged in again | `feat(web-miner): the picked fund-fees flow, still mocked and flagged` | `Delivers ask18`, `Delivers ask25`, `Delivers ask27`; every owner pick quoted by id and text |
 
 Each PR goes against `main` and opens only after its gate and its Codex loop pass. The orchestrator merges and
-spawns the shots lead between a2 and a3; a3 waits for the owner's pick. Serial: the phases share the reducer.
+spawns the shots lead between a2 and a4; a4 waits for the owner's pick. Serial: the phases share the reducer.
 
 ## Seeds (not run: the orchestrator owns ELI5 and seeds)
 
-- `/goal` Phases 5–9 ✓ with their gates quoted; each arc's Codex loop converged (quoted); a2 and a3 PRs open
-  against `main`; a3 says `Delivers ask18`, `Delivers ask25`, `Delivers ask27`, quotes every pick and carries the
+- `/goal` Phases 5–10 ✓ with their gates quoted; each arc's Codex loop converged (quoted); a2 and a4 PRs open
+  against `main`; a4 says `Delivers ask18`, `Delivers ask25`, `Delivers ask27`, quotes every pick and carries the
   archive move.
 - `/loop 15m` Drive `implementations-plan/fees-1`: reality-check plan.md and the PRs, take the next step of §6 or §8,
-  decide with Codex at high on `gpt-6.1-sol`; never merge; never start a3 before the owner's ask27 pick.
+  decide with Codex at high on `gpt-6.1-sol`; never merge; never start a4 before the owner's ask27 pick.

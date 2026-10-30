@@ -48,3 +48,11 @@
   `4f53201`; r2 approve). Arc gate on `b403343`: lint 0, typecheck 0, `bun test` 727 pass / 44 skip / 0 fail
   (pinned Aztec bin on PATH), test:components (web-miner 197), replay 10 passed in 2.3 min (the scenario 49.3 s),
   fund-fees-absent 2 pass, site:build 0, lint:actions 0. Push and PR next.
+- 2026-10-30 a2 merged as #94 (56f25fa). Arc a3 added by the orchestrator after a2's captures (E's dialog left the
+  window); the plan's a3 is now a4. Branch `fees-1-a3` from `origin/main`.
+- 2026-10-30 a3 probe: at 900 × 720 E's dialog 3,851 px tall (top −1,566), the same after a reconnecting reload;
+  D and F 2,310 px under a broad search. Fix `079ce64`; the geometry case green in 9.6 s; dropping `fitsWindow`
+  failed it (top −1,565.6), dropping the list's scroll failed it (the dialog scrolling 3,221 px).
+- 2026-10-30 a3 gate green at retry 0: lint 0, typecheck 0, `bun test` 727 pass / 44 skip / 0 fail (pinned Aztec bin
+  first on PATH), test:components (web-miner 197), replay 11 passed in 2.3 min (2.3 before; the new case 9.9 s),
+  fund-fees-absent 2 pass. Codex loop next.
