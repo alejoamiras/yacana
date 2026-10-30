@@ -15,6 +15,7 @@ export function Choose({
   holdings,
   layout,
   walletChain,
+  onConfirm,
 }: {
   run: FundingRun;
   s: Extract<Funding, { at: 'pick' | 'quote' }>;
@@ -22,6 +23,8 @@ export function Choose({
   holdings: readonly Holding[] | undefined;
   layout: Layout;
   walletChain?: number;
+  /** The quote's "Fund fees": each option decides what a click does before the trade starts. */
+  onConfirm: () => void;
 }) {
   if (s.at === 'pick')
     return (
@@ -37,7 +40,7 @@ export function Choose({
   return (
     <>
       <Back onBack={() => run.dispatch({ type: 'back' })} />
-      <QuoteView run={run} s={s} chains={chains} balance={balance} onConfirm={run.confirm} />
+      <QuoteView run={run} s={s} chains={chains} balance={balance} onConfirm={onConfirm} />
     </>
   );
 }

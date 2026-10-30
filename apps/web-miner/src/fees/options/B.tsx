@@ -20,6 +20,7 @@ import {
 import { entryShows } from '../entry';
 import type { Shown } from '../machine';
 import { Choose } from '../parts/Choose';
+import { Restore } from '../parts/Restore';
 import { useChains, useHoldings } from '../parts/TokenPicker';
 import { type FundingRun, type OptionProps, useFunding } from '../run';
 import { flight, trailItems, useCardCounted, useRequotes, useStanding } from '../views';
@@ -47,6 +48,7 @@ function Entry({ run, onHow }: { run: FundingRun; onHow: () => void }) {
     >
       A win counts only while its epoch is open, and an epoch can close before {FEE_JUICE} could arrive. Fund
       this account first: it takes a few minutes.
+      <Restore run={run} label="Resume from a file" className="mt-3" />
     </HeroCard>
   );
 }
@@ -81,6 +83,17 @@ function Trade({ s, run }: { s: Shown; run: FundingRun }) {
   const requotes = useRequotes(s);
   const { tone, title, line } = face(s, requotes);
   const stopped = s.at === 'trade' && s.failure !== null;
+  // No browser tells a page whether a download was kept: until the claim lands, it can be saved again.
+  const again = s.at === 'trade' && s.saved !== null && (
+    <Button
+      variant="link"
+      className="text-ink-2"
+      onClick={() => void run.save()}
+      data-testid="fees-save-again"
+    >
+      Save the file again
+    </Button>
+  );
   return (
     <HeroCard
       className={CARD}
@@ -95,14 +108,19 @@ function Trade({ s, run }: { s: Shown; run: FundingRun }) {
       trail={trailItems(s)}
       actions={
         stopped ? (
-          <Button variant="uv" onClick={run.retry} data-testid="fees-retry">
-            {retryLabel(requotes)}
-          </Button>
+          <>
+            <Button variant="uv" onClick={run.retry} data-testid="fees-retry">
+              {retryLabel(requotes)}
+            </Button>
+            {again}
+          </>
         ) : s.at === 'done' ? (
           <Button variant="ghost" onClick={() => run.dispatch({ type: 'reset' })} data-testid="fees-dismiss">
             Dismiss
           </Button>
-        ) : undefined
+        ) : (
+          again || undefined
+        )
       }
       data-testid="fees-card"
     >
@@ -167,6 +185,7 @@ export function OptionB({ run, provider, reads, signedIn }: OptionProps) {
                 holdings={holdings}
                 layout="held-first"
                 walletChain={account.chainId}
+                onConfirm={() => void run.saveAndConfirm()}
               />
             </>
           ) : (

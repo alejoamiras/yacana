@@ -35,3 +35,9 @@
   pass / 4 skip, replay 10 passed in 1.8 min (the B scenario, now connecting the injected test wallet, 18.3 s).
   Forced break (the flow's wallet ignoring a bridge session's config) failed the handover case; reverted. The
   flow's own wagmi config got a refusing transport: it reads no chain, so a stray read fails before any RPC.
+- 2026-10-30 a2 P7 gate green: lint 0, typecheck 0, test:components (web-miner 190), `bun test apps/web-miner` 334
+  pass / 4 skip, replay 10 passed in 1.6 min (the B scenario, now saving its file on Fund fees, 18.3 s). Forced
+  break (`next()` ignoring `saved`) failed "no step starts before the file is saved"; reverted. The commitment is
+  SHA-256 of the HKDF secret (pinned by a vector computed outside the code), not Poseidon2: the page has no bb wasm
+  here. The runner takes the derivation as an option, since WebCrypto and Blob reads never settle under fake timers.
+  The mock's token addresses became real hex (the file's address check refused the old spelling).

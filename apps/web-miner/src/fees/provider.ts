@@ -50,6 +50,12 @@ export interface Quote {
   readonly expiresAt: number;
 }
 
+/** What a recovery file says it funded: display only, since nothing in the file authenticates. */
+export interface FundingHint {
+  readonly token: Token;
+  readonly amountIn: bigint;
+}
+
 export type PhaseEvent = { kind: 'signing' } | { kind: 'sent'; tx: string } | { kind: 'late' };
 
 export type FailureReason = 'rejected' | 'expired' | 'failed';
@@ -70,8 +76,26 @@ export interface FeeFundingProvider {
   tokens(signal: AbortSignal): Promise<readonly Token[]>;
   /** `payer` is the Ethereum wallet. The Aztec account is never sent: nothing the provider sees names it. */
   quote(from: Token, amountIn: bigint, payer: string, signal: AbortSignal): Promise<Quote>;
-  /** Resolves when the step is done; rejects with a FundingError. Running a failed step again is the retry. */
-  run(phase: Phase, quote: Quote, on: (e: PhaseEvent) => void, signal: AbortSignal): Promise<void>;
+  /**
+   * Resolves when the step is done; rejects with a FundingError. Running a failed step again is the
+   * retry. `commit` is what the deposit commits to, so `resume` finds the funding from its file.
+   */
+  run(
+    phase: Phase,
+    quote: Quote,
+    commit: string,
+    on: (e: PhaseEvent) => void,
+    signal: AbortSignal,
+  ): Promise<void>;
+  /**
+   * The funding a commitment names, as the chain has it, with the steps that already landed; null when
+   * no deposit carries it. A real provider reads the commitment and ignores the hint; one with no
+   * chain behind it rebuilds the funding from the hint.
+   */
+  resume(
+    saved: { commit: string; hint: FundingHint },
+    signal: AbortSignal,
+  ): Promise<{ quote: Quote; landed: readonly Phase[] } | null>;
 }
 
 /** Fee Juice figures, 18 decimals, and whether the network pays every fee itself. */

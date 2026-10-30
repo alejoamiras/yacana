@@ -17,6 +17,8 @@ import {
 
 export type MockFailure = 'none' | 'expired' | 'rejected' | 'late' | 'claim';
 export type MockHold = 'sign' | Phase | null;
+/** What a restore finds: the deposit landed and the message on its way, nothing, or every step landed. */
+export type MockResume = 'found' | 'missing' | 'claimed';
 
 export interface MockScript {
   /** Injected once each: a retry after it succeeds. */
@@ -25,20 +27,23 @@ export interface MockScript {
   readonly wallet: 'held' | 'empty';
   /** A step that never finishes until aborted: `sign` holds the first wallet ask, a phase holds after its signature. */
   readonly hold: MockHold;
+  readonly resume: MockResume;
 }
 
 const FAILURES: readonly MockFailure[] = ['expired', 'rejected', 'late', 'claim'];
 const HOLDS: readonly string[] = ['sign', 'swap', 'deposit', 'message', 'claim'];
 
-/** `?fees-fail=`, `?fees-hold=` and `?fees-wallet=` against closed vocabularies; anything else is none. */
+/** `?fees-fail=`, `?fees-hold=`, `?fees-wallet=` and `?fees-resume=` against closed vocabularies; anything else is the default. */
 export function scriptFrom(search: string): MockScript {
   const q = new URLSearchParams(search);
   const fail = q.get('fees-fail') ?? '';
   const hold = q.get('fees-hold') ?? '';
+  const resume = q.get('fees-resume');
   return {
     fail: (FAILURES as readonly string[]).includes(fail) ? (fail as MockFailure) : 'none',
     wallet: q.get('fees-wallet') === 'empty' ? 'empty' : 'held',
     hold: HOLDS.includes(hold) ? (hold as MockHold) : null,
+    resume: resume === 'missing' || resume === 'claimed' ? resume : 'found',
   };
 }
 
@@ -65,9 +70,12 @@ export const MOCK_CHAINS: readonly Chain[] = [
 ];
 
 const unit = (decimals: number) => 10n ** BigInt(decimals);
+const hexOf = (text: string) =>
+  Array.from(new TextEncoder().encode(text), (b) => b.toString(16).padStart(2, '0')).join('');
+/** A real-shaped address, unique per chain and symbol: the chain id, then the symbol's bytes. */
 const token = (chainId: number, symbol: string, name: string, decimals: number): Token => ({
   chainId,
-  address: `0x${chainId.toString(16).padStart(6, '0')}${symbol.toLowerCase().padEnd(34, '0').slice(0, 34)}`,
+  address: `0x${chainId.toString(16).padStart(6, '0')}${hexOf(symbol).padEnd(34, '0').slice(0, 34)}`,
   symbol,
   name,
   decimals,
@@ -248,6 +256,8 @@ function priced(from: Token, amountIn: bigint, id: string, expiresAt: number): Q
   };
 }
 
+const COMMIT = /^0x[0-9a-f]{64}$/;
+
 const mockTx = (phase: Phase, n: number) =>
   `0x${phase.length.toString(16)}${n.toString(16).padStart(3, '0')}${'7e'.repeat(30)}`;
 
@@ -296,7 +306,8 @@ export function mockFunding(script: MockScript, timing: MockTiming = MOCK_TIMING
       await wait(timing.quote, signal);
       return priced(from, amountIn, `q${++quotes}`, Date.now() + timing.life);
     },
-    async run(phase, quote, on, signal) {
+    async run(phase, quote, commit, on, signal) {
+      if (!COMMIT.test(commit)) throw new FundingError('failed', 'No commitment to deposit to.');
       if (once('expired', phase === quote.steps[0]?.phase))
         throw new FundingError('expired', 'The quote ran out before it was used.');
       const step = quote.steps.find((s) => s.phase === phase);
@@ -307,6 +318,15 @@ export function mockFunding(script: MockScript, timing: MockTiming = MOCK_TIMING
       if (phase !== 'claim') return;
       if (once('claim', true)) throw new FundingError('failed', 'The claim did not go through.');
       received += quote.feeJuiceOut;
+    },
+    async resume({ hint }, signal) {
+      await wait(timing.quote, signal);
+      if (script.resume === 'missing') return null;
+      const quote = priced(hint.token, hint.amountIn, `r${++quotes}`, Date.now() + timing.life);
+      const all = script.resume === 'claimed';
+      if (all) received += quote.feeJuiceOut;
+      const landed = quote.steps.map((s) => s.phase).filter((p) => all || p === 'swap' || p === 'deposit');
+      return { quote, landed };
     },
   };
   const reads: FundingReads = {

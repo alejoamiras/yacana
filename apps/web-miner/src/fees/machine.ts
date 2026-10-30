@@ -1,8 +1,10 @@
 // The flow as a pure reducer: no clock of its own (`now` rides in the events that need it), no I/O.
 // Invariants: a done step never leaves `done`; at most one step is in flight; `done` follows the
-// quote's last step.
+// quote's last step; no step starts before the funding's recovery file was saved, and a save binds
+// to one token and amount.
 
 import type { FailureReason, Phase, PhaseEvent, Quote, Token } from './provider';
+import type { Saved } from './recovery';
 
 export type StepStatus = 'todo' | 'signing' | 'running' | 'late' | 'done' | 'failed';
 
@@ -31,6 +33,7 @@ export type Funding =
       /** The last quote ran out before it was used: the next one comes with a note saying so. */
       readonly refreshed: boolean;
       readonly error: string | null;
+      readonly saved: Saved | null;
     }
   | {
       readonly at: 'trade';
@@ -38,6 +41,7 @@ export type Funding =
       /** `steps[i]` is the state of `quote.steps[i]`. */
       readonly steps: readonly StepState[];
       readonly failure: Failure | null;
+      readonly saved: Saved | null;
     }
   | { readonly at: 'done'; readonly quote: Quote; readonly received: bigint };
 
@@ -61,6 +65,15 @@ export type FundingEvent =
       readonly message: string;
     }
   | { readonly type: 'retry'; readonly now: number }
+  /** The visitor's click started the file's download; no browser says whether it was kept. */
+  | { readonly type: 'saved'; readonly saved: Saved }
+  /** A file's funding as the provider found it: `landed` are the steps already done. */
+  | {
+      readonly type: 'restored';
+      readonly quote: Quote;
+      readonly landed: readonly Phase[];
+      readonly saved: Saved;
+    }
   | { readonly type: 'reset' };
 
 export const IN_FLIGHT: ReadonlySet<StepStatus> = new Set(['signing', 'running', 'late']);
@@ -73,20 +86,26 @@ export const landed = (s: Funding): boolean => s.at === 'trade' && s.steps.some(
 
 /** The phase the runner must start now, if any. */
 export function next(s: Funding): Phase | null {
-  if (s.at !== 'trade' || s.failure || inFlight(s)) return null;
+  if (s.at !== 'trade' || !s.saved || s.failure || inFlight(s)) return null;
   return s.steps.find((x) => x.status === 'todo')?.phase ?? null;
 }
 
-const requote = (quote: Quote, refreshed: boolean): Funding => ({
+/** The same token and amount: the save stays bound to it. */
+const requote = (quote: Quote, refreshed: boolean, saved: Saved | null): Funding => ({
   at: 'quote',
   token: quote.from,
   amountIn: quote.amountIn,
   quote: null,
   refreshed,
   error: null,
+  saved,
 });
 
 const sameToken = (a: Token, b: Token) => a.chainId === b.chainId && a.address === b.address;
+
+/** A save names the token and amount it was made for; it counts for no other. */
+const savedFor = (saved: Saved, token: Token, amountIn: bigint | null) =>
+  sameToken(saved.record.hint.token, token) && saved.record.hint.amountIn === amountIn;
 
 export type Trade = Extract<Funding, { at: 'trade' }>;
 
@@ -122,14 +141,14 @@ function onDone(s: Trade, phase: Phase): Funding {
 function onFailed(s: Trade, e: Extract<FundingEvent, { type: 'stepFailed' }>): Funding {
   const step = s.steps.find((x) => x.phase === e.phase);
   if (!step || !IN_FLIGHT.has(step.status)) return s;
-  if (e.reason === 'expired' && !landed(s)) return requote(s.quote, true);
+  if (e.reason === 'expired' && !landed(s)) return requote(s.quote, true, s.saved);
   const failed = withStep(s, e.phase, (x) => ({ ...x, status: 'failed' }));
   return { ...(failed as Trade), failure: { phase: e.phase, reason: e.reason, message: e.message } };
 }
 
 function onRetry(s: Trade, now: number): Funding {
   if (!s.failure) return s;
-  if (!landed(s) && now >= s.quote.expiresAt) return requote(s.quote, true);
+  if (!landed(s) && now >= s.quote.expiresAt) return requote(s.quote, true, s.saved);
   const again = withStep(s, s.failure.phase, (x) => ({ phase: x.phase, status: 'todo' }));
   return { ...(again as Trade), failure: null };
 }
@@ -139,7 +158,7 @@ function inQuote(s: Extract<Funding, { at: 'quote' }>, e: FundingEvent): Funding
     case 'amount':
       return e.amountIn === s.amountIn
         ? s
-        : { ...s, amountIn: e.amountIn, quote: null, refreshed: false, error: null };
+        : { ...s, amountIn: e.amountIn, quote: null, refreshed: false, error: null, saved: null };
     case 'quoted':
       return sameToken(e.quote.from, s.token) && e.quote.amountIn === s.amountIn
         ? { ...s, quote: e.quote, error: null }
@@ -150,15 +169,18 @@ function inQuote(s: Extract<Funding, { at: 'quote' }>, e: FundingEvent): Funding
       return s.quote?.id === e.id ? { ...s, quote: null } : s;
     case 'back':
       return { at: 'pick' };
+    case 'saved':
+      return savedFor(e.saved, s.token, s.amountIn) ? { ...s, saved: e.saved } : s;
     case 'confirm':
       // A route that may deliver less than a claim takes would strand the Fee Juice on its way in.
       if (!s.quote || s.quote.feeJuiceMin < s.quote.claimMin) return s;
-      if (e.now >= s.quote.expiresAt) return requote(s.quote, true);
+      if (e.now >= s.quote.expiresAt) return requote(s.quote, true, s.saved);
       return {
         at: 'trade',
         quote: s.quote,
         steps: s.quote.steps.map((x) => ({ phase: x.phase, status: 'todo' })),
         failure: null,
+        saved: s.saved,
       };
     default:
       return s;
@@ -179,19 +201,40 @@ function inTrade(s: Trade, e: FundingEvent): Funding {
       return onFailed(s, e);
     case 'retry':
       return onRetry(s, e.now);
+    case 'saved':
+      return !s.saved && savedFor(e.saved, s.quote.from, s.quote.amountIn) ? { ...s, saved: e.saved } : s;
     default:
       return s;
   }
 }
 
+/** Resumed at the first step not landed, or done when every step landed. */
+function restored(e: Extract<FundingEvent, { type: 'restored' }>): Funding {
+  const steps = e.quote.steps.map(
+    (x): StepState => ({ phase: x.phase, status: e.landed.includes(x.phase) ? 'done' : 'todo' }),
+  );
+  if (steps.every((x) => x.status === 'done'))
+    return { at: 'done', quote: e.quote, received: e.quote.feeJuiceOut };
+  return { at: 'trade', quote: e.quote, steps, failure: null, saved: e.saved };
+}
+
 export function reduce(s: Funding, e: FundingEvent): Funding {
   if (e.type === 'reset') return { at: 'idle' };
+  if (e.type === 'restored') return s.at === 'idle' || s.at === 'pick' ? restored(e) : s;
   switch (s.at) {
     case 'idle':
       return e.type === 'open' ? { at: 'pick' } : s;
     case 'pick':
       if (e.type === 'choose')
-        return { at: 'quote', token: e.token, amountIn: null, quote: null, refreshed: false, error: null };
+        return {
+          at: 'quote',
+          token: e.token,
+          amountIn: null,
+          quote: null,
+          refreshed: false,
+          error: null,
+          saved: null,
+        };
       return e.type === 'back' ? { at: 'idle' } : s;
     case 'quote':
       return inQuote(s, e);

@@ -13,7 +13,11 @@ let shared: Omit<OptionProps, 'signedIn'> | undefined;
 function funding(): Omit<OptionProps, 'signedIn'> {
   if (!shared) {
     const { provider, reads } = mockFunding(scriptFrom(feesSearch));
-    shared = { provider, reads, run: new FundingRun(provider) };
+    const scope = {
+      chainId: import.meta.env.VITE_CHAIN_ID,
+      rollupVersion: import.meta.env.VITE_ROLLUP_VERSION,
+    };
+    shared = { provider, reads, run: new FundingRun(provider, scope) };
   }
   return shared;
 }

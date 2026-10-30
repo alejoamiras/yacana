@@ -13,8 +13,16 @@ import { MOCK_CHAINS, MOCK_TIMING, MOCK_TOKENS, type MockFunding, mockFunding, s
 import { OptionB } from './options/B';
 import { arranged, chainTabs, type Holding, searched } from './parts/TokenPicker';
 import type { FeeFundingProvider, FundingReads, Phase, Quote, Token } from './provider';
-import { FundingRun } from './run';
+import { type FundingRecord, newRecord, toFile } from './recovery';
+import { FundingRun, NOT_FOUND } from './run';
 import { FeesWallet, OWN_STORAGE_KEY } from './wallet';
+
+const SCOPE = { chainId: '11155111', rollupVersion: '7' };
+/** Settles in a microtask: WebCrypto's thread pool never answers under fake timers (recovery.test.ts derives the real one). */
+const quickCommit = async (r: FundingRecord) => `0x${r.index.toString(16).padStart(64, '0')}`;
+const runOn = (provider: FeeFundingProvider) => new FundingRun(provider, SCOPE, { commit: quickCommit });
+/** A file whose text settles in a microtask: Node reads a Blob on its thread pool, which fake timers never wait for. */
+const fileOf = (json: string) => Object.assign(new File([json], 'funding.json'), { text: async () => json });
 
 const PAYER = '0x90F79bf6EB2c4f870365E785982E1f101E93b906' as const;
 /** wagmi's mock connector with one account, no RPC behind it, connected before the specs run. */
@@ -51,30 +59,50 @@ const quoteFor = (amountIn: bigint): Quote => ({
   expiresAt: Date.now() + 60_000,
 });
 
+type Resumed = Awaited<ReturnType<FeeFundingProvider['resume']>>;
+
 /** A provider whose every answer the test gives by hand. */
 function byHand() {
   const quotes: { amountIn: bigint; answer: (q: Quote) => void }[] = [];
-  const runs: { phase: Phase; done: () => void; signal: AbortSignal }[] = [];
+  const runs: { phase: Phase; commit: string; done: () => void; signal: AbortSignal }[] = [];
+  const resumes: { commit: string; answer: (r: Resumed) => void; signal: AbortSignal }[] = [];
   const provider: FeeFundingProvider = {
     chains: async () => [],
     tokens: async () => [],
     quote: (_from, amountIn) => new Promise((answer) => quotes.push({ amountIn, answer })),
-    run: (phase, _quote, _on, signal) =>
-      new Promise((done) => runs.push({ phase, done: () => done(), signal })),
+    run: (phase, _quote, commit, _on, signal) =>
+      new Promise((done) => runs.push({ phase, commit, done: () => done(), signal })),
+    resume: ({ commit }, signal) => new Promise((answer) => resumes.push({ commit, answer, signal })),
   };
-  return { provider, quotes, runs };
+  return { provider, quotes, runs, resumes };
 }
 
-beforeEach(() => vi.useFakeTimers());
+/** Every file the page downloaded: its name and its blob. */
+const downloads: { name: string; blob: Blob }[] = [];
+beforeEach(() => {
+  vi.useFakeTimers();
+  downloads.length = 0;
+  let last: Blob | undefined;
+  // jsdom has neither blob URLs nor downloads: the anchor's click records what would have been saved.
+  URL.createObjectURL = (b: Blob) => {
+    last = b;
+    return 'blob:fees';
+  };
+  URL.revokeObjectURL = () => {};
+  vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+    if (last) downloads.push({ name: this.download, blob: last });
+  });
+});
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
   vi.useRealTimers();
 });
 
 describe('the funding runner', () => {
   test('one step at a time; an answer for an old amount, or from a trade since reset, changes nothing', async () => {
     const { provider, quotes, runs } = byHand();
-    const run = new FundingRun(provider);
+    const run = runOn(provider);
     run.dispatch({ type: 'open' });
     run.dispatch({ type: 'choose', token: USDC });
     run.dispatch({ type: 'amount', amountIn: 25n });
@@ -89,7 +117,7 @@ describe('the funding runner', () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(run.getState()).toMatchObject({ at: 'quote', quote: { amountIn: 30n } });
 
-    run.confirm();
+    await run.saveAndConfirm();
     await vi.advanceTimersByTimeAsync(5_000);
     expect(runs.map((r) => r.phase)).toEqual(['swap']);
     runs[0]?.done();
@@ -105,7 +133,7 @@ describe('the funding runner', () => {
     await vi.advanceTimersByTimeAsync(300);
     quotes[2]?.answer(quoteFor(30n));
     await vi.advanceTimersByTimeAsync(0);
-    run.confirm();
+    await run.saveAndConfirm();
     await vi.advanceTimersByTimeAsync(0);
     runs[2]?.done();
     await vi.advanceTimersByTimeAsync(0);
@@ -115,6 +143,29 @@ describe('the funding runner', () => {
     const now = run.getState();
     expect(now.at === 'trade' && now.steps.map((x) => x.status)).toEqual(['done', 'running', 'todo', 'todo']);
     expect(runs).toHaveLength(4);
+  });
+
+  test("a restore runs no landed step, under the file's commitment; a reset while it resolves leaves idle", async () => {
+    const { provider, runs, resumes } = byHand();
+    const run = runOn(provider);
+    const record = newRecord(SCOPE, { token: USDC, amountIn: 30n }, 0, 7);
+    const file = () => fileOf(JSON.stringify(toFile(record)));
+    const found = { quote: quoteFor(30n), landed: ['swap', 'deposit'] as Phase[] };
+    const dropped = run.restore(file());
+    await vi.advanceTimersByTimeAsync(0);
+    run.dispatch({ type: 'reset' });
+    expect(resumes[0]?.signal.aborted).toBe(true);
+    resumes[0]?.answer(found);
+    expect(await dropped).toBeNull();
+    expect(run.getState()).toEqual({ at: 'idle' });
+
+    const resumed = run.restore(file());
+    await vi.advanceTimersByTimeAsync(0);
+    resumes[1]?.answer(found);
+    expect(await resumed).toBeNull();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(runs.map((r) => [r.phase, r.commit])).toEqual([['message', await quickCommit(record)]]);
+    expect(resumes[1]?.commit).toBe(await quickCommit(record));
   });
 });
 
@@ -140,7 +191,7 @@ async function show(
   const mock: MockFunding = mockFunding(scriptFrom(search));
   const provider = opts.provider ? opts.provider(mock.provider) : mock.provider;
   const reads = opts.reads ? opts.reads(mock.reads) : mock.reads;
-  const run = new FundingRun(provider);
+  const run = runOn(provider);
   const ui = () =>
     withWallet(<OptionB run={run} provider={provider} reads={reads} signedIn={opts.signedIn ?? true} />);
   let view = render(ui());
@@ -386,5 +437,64 @@ describe('the wallet and its tokens', () => {
     } finally {
       act(() => getDefaultStore().set(bridgeSessionAtom, null));
     }
+  });
+});
+
+/** Loads `json` at the entry's file input and lets the mock's resume answer. */
+async function load(json: string) {
+  const input = id('fees-restore') as HTMLInputElement;
+  Object.defineProperty(input, 'files', { value: [fileOf(json)], configurable: true });
+  fireEvent.change(input);
+  await tick(0);
+  await tick(MOCK_TIMING.quote);
+}
+
+describe('the recovery file', () => {
+  test('B saves it on Fund fees; on a fresh page it resumes at the message and runs to done', async () => {
+    await show();
+    fireEvent.click(id('fees-entry'));
+    await sepoliaUsdc();
+    fireEvent.click(go());
+    await tick(0);
+    expect(stateOf('swap')).toBe('signing');
+    const [first] = downloads;
+    expect(first?.name).toMatch(/^yacana-fees-11155111-\d+\.json$/);
+    const saved = await (first as { blob: Blob }).blob.text();
+    // No account and no secret: the index is all the file binds.
+    expect(Object.keys(JSON.parse(saved)).sort()).toEqual([
+      'chainId',
+      'createdAt',
+      'hint',
+      'index',
+      'kind',
+      'rollupVersion',
+      'v',
+    ]);
+    fireEvent.click(id('fees-save-again'));
+    await tick(0);
+    expect(downloads.map((d) => d.name)).toEqual([first?.name, first?.name]);
+
+    cleanup();
+    await show();
+    await load(saved);
+    expect([stateOf('swap'), stateOf('deposit'), stateOf('message')]).toEqual(['done', 'done', 'running']);
+    await tick(TRADE_MS);
+    expect(id('fees-done').textContent).toContain('Fees ready: 49.85 Fee Juice.');
+  });
+
+  test('a file for another network, or one no deposit carries, says why and leaves the entry', async () => {
+    await show('?fees-resume=missing');
+    const record = toFile(newRecord(SCOPE, { token: USDC, amountIn: 100n * 10n ** 6n }, 0, 3));
+    await load(JSON.stringify({ ...record, chainId: '1' }));
+    expect(id('fees-restore-error').textContent).toContain('The file is for another network.');
+    await load(JSON.stringify(record));
+    expect(id('fees-restore-error').textContent).toContain(NOT_FOUND);
+    expect(id('fees-entry')).toBeTruthy();
+  });
+
+  test('a file whose every step landed is done at once', async () => {
+    await show('?fees-resume=claimed');
+    await load(JSON.stringify(toFile(newRecord(SCOPE, { token: USDC, amountIn: 10n ** 8n }, 0, 3))));
+    expect(id('fees-done')).toBeTruthy();
   });
 });

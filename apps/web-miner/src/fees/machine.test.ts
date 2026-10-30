@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { type Funding, type FundingEvent, next, reduce } from './machine';
 import { FEE_JUICE_SYMBOL, MOCK_TOKENS, scriptFrom } from './mock';
 import type { Phase, Quote, Token } from './provider';
+import { newRecord, type Saved } from './recovery';
 
 const byName = (chainId: number, symbol: string): Token => {
   const t = MOCK_TOKENS.find((x) => x.chainId === chainId && x.symbol === symbol);
@@ -28,13 +29,20 @@ const DIRECT = quoteOf(FJ, ['deposit', 'message', 'claim']);
 
 const run = (events: FundingEvent[], from: Funding = { at: 'idle' }): Funding => events.reduce(reduce, from);
 
-/** Open, pick, quote and confirm before the quote expires: the trade at its first step. */
+const SCOPE = { chainId: '11155111', rollupVersion: '7' };
+const savedOf = (token: Token, amountIn: bigint, index = 1): Saved => ({
+  record: newRecord(SCOPE, { token, amountIn }, T0, index),
+  commit: `0x${index.toString(16).padStart(64, '0')}`,
+});
+
+/** Open, pick, quote, save and confirm before the quote expires: the trade at its first step. */
 const confirmed = (q: Quote): Funding =>
   run([
     { type: 'open' },
     { type: 'choose', token: q.from },
     { type: 'amount', amountIn: q.amountIn },
     { type: 'quoted', quote: q },
+    { type: 'saved', saved: savedOf(q.from, q.amountIn) },
     { type: 'confirm', now: T0 },
   ]);
 
@@ -150,20 +158,85 @@ describe('the fee-funding machine', () => {
     expect(reduce(s, { type: 'step', phase: 'message', event: { kind: 'late' } })).toBe(s);
   });
 
+  test('no step starts before the file is saved; a save made after the confirm starts the first', () => {
+    const unsaved = run([
+      { type: 'open' },
+      { type: 'choose', token: USDC },
+      { type: 'amount', amountIn: 25n },
+      { type: 'quoted', quote: SWAP },
+      { type: 'confirm', now: T0 },
+    ]);
+    expect(statuses(unsaved)).toEqual(['swap:todo', 'deposit:todo', 'message:todo', 'claim:todo']);
+    expect(next(unsaved)).toBeNull();
+    // A save for another amount does not count for this trade.
+    expect(reduce(unsaved, { type: 'saved', saved: savedOf(USDC, 30n) })).toBe(unsaved);
+    expect(next(reduce(unsaved, { type: 'saved', saved: savedOf(USDC, 25n) }))).toBe('swap');
+  });
+
+  test('another token or amount clears the save; a refreshed quote for the same pair keeps it', () => {
+    const saved = savedOf(USDC, 25n);
+    const quoted = run([
+      { type: 'open' },
+      { type: 'choose', token: USDC },
+      { type: 'amount', amountIn: 25n },
+      { type: 'quoted', quote: SWAP },
+      { type: 'saved', saved },
+    ]);
+    expect(quoted).toMatchObject({ saved });
+    expect(reduce(quoted, { type: 'lapse', id: SWAP.id })).toMatchObject({ quote: null, saved });
+    expect(reduce(quoted, { type: 'confirm', now: SWAP.expiresAt })).toMatchObject({
+      refreshed: true,
+      saved,
+    });
+    expect(reduce(quoted, { type: 'amount', amountIn: 30n })).toMatchObject({ saved: null });
+    expect(run([{ type: 'back' }, { type: 'choose', token: FJ }], quoted)).toMatchObject({ saved: null });
+  });
+
+  test('a restore with the deposit landed starts at the message; with every step landed it is done', () => {
+    const saved = savedOf(USDC, 25n, 9);
+    const resumed = reduce(
+      { at: 'idle' },
+      { type: 'restored', quote: SWAP, landed: ['swap', 'deposit'], saved },
+    );
+    expect(statuses(resumed)).toEqual(['swap:done', 'deposit:done', 'message:todo', 'claim:todo']);
+    const [done, ran] = drive(resumed);
+    expect(ran).toEqual(['message', 'claim']);
+    expect(done.at).toBe('done');
+    const claimed = reduce(
+      { at: 'pick' },
+      { type: 'restored', quote: SWAP, landed: ['swap', 'deposit', 'message', 'claim'], saved },
+    );
+    expect(claimed).toEqual({ at: 'done', quote: SWAP, received: 12n });
+    // A trade under way is not replaced by a file.
+    const trading = confirmed(SWAP);
+    expect(reduce(trading, { type: 'restored', quote: DIRECT, landed: ['deposit'], saved })).toBe(trading);
+  });
+
   test('the mock reads its switches from a closed vocabulary, anything else as none', () => {
     expect(scriptFrom('?fees=b&fees-fail=claim&fees-hold=message&fees-wallet=empty')).toEqual({
       fail: 'claim',
       wallet: 'empty',
       hold: 'message',
+      resume: 'found',
     });
-    expect(scriptFrom('?fees-hold=sign')).toEqual({ fail: 'none', wallet: 'held', hold: 'sign' });
+    expect(scriptFrom('?fees-hold=sign&fees-resume=claimed')).toEqual({
+      fail: 'none',
+      wallet: 'held',
+      hold: 'sign',
+      resume: 'claimed',
+    });
     for (const hostile of [
       '?fees-fail=<img src=x onerror=alert(1)>',
       '?fees-fail=none&fees-hold=__proto__',
       '?fees-fail=CLAIM&fees-hold=Message',
-      '?fees-fail=&fees-hold=&fees-wallet=EMPTY',
+      '?fees-fail=&fees-hold=&fees-wallet=EMPTY&fees-resume=Missing',
       '',
     ])
-      expect(scriptFrom(hostile), hostile).toEqual({ fail: 'none', wallet: 'held', hold: null });
+      expect(scriptFrom(hostile), hostile).toEqual({
+        fail: 'none',
+        wallet: 'held',
+        hold: null,
+        resume: 'found',
+      });
   });
 });
