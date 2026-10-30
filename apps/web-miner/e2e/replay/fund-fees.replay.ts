@@ -1,4 +1,6 @@
 import type { Request } from '@playwright/test';
+import { generatePrivateKey } from 'viem/accounts';
+import { connectTestWallet, installL1Wallet } from '../helpers/l1-wallet.ts';
 import { BOOT_MS } from '../helpers.ts';
 import { expect, type Page, test } from './fixtures.ts';
 import { REPLAY_NODE_ORIGIN } from './run.ts';
@@ -14,6 +16,13 @@ function fetches(page: Page): { urls: string[]; stop: () => void } {
 }
 
 const settings = (page: Page) => page.getByRole('link', { name: 'Settings' }).click();
+/** What connecting asks a wallet; anything else (a balance, a node read through the wallet) is the flow reading a chain. */
+const CONNECT_ASKS = new Set([
+  'eth_accounts',
+  'eth_chainId',
+  'eth_requestAccounts',
+  'wallet_requestPermissions',
+]);
 
 // The fixture refuses every other origin; this holds the app's own origin to what the page fetches
 // without the flow, so the mock cannot reach the network from the same origin either.
@@ -35,10 +44,17 @@ test('the mocked fee funding runs end to end on B, through a failed claim and it
   );
   known.add('/build.json');
 
+  // Its RPC is a closed port: the flow reads no chain, so nothing may reach it.
+  const l1 = await installL1Wallet(page.context(), {
+    rpcUrl: 'http://127.0.0.1:1',
+    privateKey: generatePrivateKey(),
+    chainId: 11155111,
+  });
   const seen = fetches(page);
   await page.goto(replay.url({ fees: 'b', 'fees-session': 'stand-in', 'fees-fail': 'claim' }));
   await expect(page.getByTestId('cockpit')).toBeVisible({ timeout: BOOT_MS });
   await page.getByTestId('fees-entry').click();
+  await connectTestWallet(page);
   await page.getByTestId('fees-search').fill('usd');
   await page.getByTestId('fees-token-11155111-USDC').click();
   await page.getByTestId('fees-amount').fill('100');
@@ -63,4 +79,5 @@ test('the mocked fee funding runs end to end on B, through a failed claim and it
     return url.origin !== REPLAY_NODE_ORIGIN && !(url.origin === app && known.has(url.pathname));
   });
   expect(stray).toEqual([]);
+  expect(l1.asked().filter((m) => !CONNECT_ASKS.has(m))).toEqual([]);
 });

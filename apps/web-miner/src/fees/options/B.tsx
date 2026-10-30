@@ -4,14 +4,26 @@
 import { Button, HeroCard, type HeroTone, Stepper } from '@yacana/ui';
 import { type ReactNode, useState } from 'react';
 import { TxDialog, useElapsed } from '../../features/dialogs/Frame';
+import { ConnectWallet, WalletChip } from '../../features/dialogs/Wallet';
 import { duration } from '../../lib/format';
-import { FEE_JUICE, failureCopy, fj, PICK_BODY, phaseLine, phaseName, retryLabel, tradeLine } from '../copy';
+import {
+  CONNECT_BODY,
+  FEE_JUICE,
+  failureCopy,
+  fj,
+  PICK_BODY,
+  phaseLine,
+  phaseName,
+  retryLabel,
+  tradeLine,
+} from '../copy';
 import { entryShows } from '../entry';
 import type { Shown } from '../machine';
 import { Choose } from '../parts/Choose';
-import { useChains } from '../parts/TokenPicker';
+import { useChains, useHoldings } from '../parts/TokenPicker';
 import { type FundingRun, type OptionProps, useFunding } from '../run';
 import { flight, trailItems, useCardCounted, useRequotes, useStanding } from '../views';
+import { usePayer } from '../wallet';
 
 const CARD = 'md:col-span-2 xl:col-span-4';
 
@@ -126,6 +138,8 @@ const HOW: Parameters<typeof Stepper>[0]['steps'] = [
 export function OptionB({ run, provider, reads, signedIn }: OptionProps) {
   const s = useFunding(run);
   const chains = useChains(provider);
+  const account = usePayer(run);
+  const holdings = useHoldings(provider, reads, account.address);
   const standing = useStanding(reads, s.at);
   const [how, setHow] = useState(false);
   const trading = s.at === 'trade' || s.at === 'done';
@@ -139,12 +153,25 @@ export function OptionB({ run, provider, reads, signedIn }: OptionProps) {
         onOpenChange={(o) => !o && run.dispatch({ type: 'reset' })}
         eyebrow="fees"
         title={s.at === 'quote' ? `Fund fees with ${s.token.symbol}.` : 'Fund fees.'}
-        body={s.at === 'pick' ? PICK_BODY : undefined}
+        body={!account.address ? CONNECT_BODY : s.at === 'pick' ? PICK_BODY : undefined}
         data-testid="fees-dialog"
       >
-        {(s.at === 'pick' || s.at === 'quote') && (
-          <Choose run={run} provider={provider} chains={chains} s={s} />
-        )}
+        {(s.at === 'pick' || s.at === 'quote') &&
+          (account.address ? (
+            <>
+              <WalletChip />
+              <Choose
+                run={run}
+                s={s}
+                chains={chains}
+                holdings={holdings}
+                layout="held-first"
+                walletChain={account.chainId}
+              />
+            </>
+          ) : (
+            <ConnectWallet onCancel={() => run.dispatch({ type: 'reset' })} />
+          ))}
       </TxDialog>
       <TxDialog
         open={how}

@@ -8,6 +8,8 @@ export const FEE_JUICE = 'Fee Juice';
 
 export const PICK_BODY = `Pick what you pay with. It becomes ${FEE_JUICE}, which pays for this account's transactions.`;
 
+export const CONNECT_BODY = 'Connect the Ethereum wallet you pay from.';
+
 export const fj = (raw: bigint): string => amount(raw, FEE_JUICE_DECIMALS, 2);
 
 export const tokenAmount = (raw: bigint, decimals: number): string => amount(raw, decimals, 6);

@@ -21,6 +21,8 @@ export type MockHold = 'sign' | Phase | null;
 export interface MockScript {
   /** Injected once each: a retry after it succeeds. */
   readonly fail: MockFailure;
+  /** `empty`: the wallet holds none of the tokens the mock routes. */
+  readonly wallet: 'held' | 'empty';
   /** A step that never finishes until aborted: `sign` holds the first wallet ask, a phase holds after its signature. */
   readonly hold: MockHold;
 }
@@ -28,13 +30,14 @@ export interface MockScript {
 const FAILURES: readonly MockFailure[] = ['expired', 'rejected', 'late', 'claim'];
 const HOLDS: readonly string[] = ['sign', 'swap', 'deposit', 'message', 'claim'];
 
-/** `?fees-fail=` and `?fees-hold=` against closed vocabularies; anything else is none. */
+/** `?fees-fail=`, `?fees-hold=` and `?fees-wallet=` against closed vocabularies; anything else is none. */
 export function scriptFrom(search: string): MockScript {
   const q = new URLSearchParams(search);
   const fail = q.get('fees-fail') ?? '';
   const hold = q.get('fees-hold') ?? '';
   return {
     fail: (FAILURES as readonly string[]).includes(fail) ? (fail as MockFailure) : 'none',
+    wallet: q.get('fees-wallet') === 'empty' ? 'empty' : 'held',
     hold: HOLDS.includes(hold) ? (hold as MockHold) : null,
   };
 }
@@ -62,18 +65,17 @@ export const MOCK_CHAINS: readonly Chain[] = [
 ];
 
 const unit = (decimals: number) => 10n ** BigInt(decimals);
-const token = (chainId: number, symbol: string, name: string, decimals: number, whole = 0): Token => ({
+const token = (chainId: number, symbol: string, name: string, decimals: number): Token => ({
   chainId,
   address: `0x${chainId.toString(16).padStart(6, '0')}${symbol.toLowerCase().padEnd(34, '0').slice(0, 34)}`,
   symbol,
   name,
   decimals,
-  balance: (BigInt(Math.round(whole * 1000)) * unit(decimals)) / 1000n,
 });
 
 export const FEE_JUICE_SYMBOL = 'FJ';
 
-/** What the stand-in wallet holds, in whole tokens, by chain and symbol. */
+/** What any wallet holds in the mock, in whole tokens, by chain and symbol. */
 const HELD: Readonly<Record<string, number>> = {
   [`${SEPOLIA}:USDC`]: 180,
   [`${SEPOLIA}:${FEE_JUICE_SYMBOL}`]: 40,
@@ -145,14 +147,13 @@ const SEPOLIA_LIST: readonly (readonly [string, string, number])[] = [
   ['PAXG', 'Paxos Gold', 18],
 ];
 
-const held = (chainId: number, symbol: string) => HELD[`${chainId}:${symbol}`] ?? 0;
+const held = (t: Token): bigint =>
+  (BigInt(Math.round((HELD[`${t.chainId}:${t.symbol}`] ?? 0) * 1000)) * unit(t.decimals)) / 1000n;
 
 export const MOCK_TOKENS: readonly Token[] = [
-  token(SEPOLIA, FEE_JUICE_SYMBOL, 'Fee Juice', FEE_JUICE_DECIMALS, held(SEPOLIA, FEE_JUICE_SYMBOL)),
-  ...SEPOLIA_LIST.map(([symbol, name, decimals]) =>
-    token(SEPOLIA, symbol, name, decimals, held(SEPOLIA, symbol)),
-  ),
-  token(BASE_SEPOLIA, 'USDC', 'USD Coin', 6, held(BASE_SEPOLIA, 'USDC')),
+  token(SEPOLIA, FEE_JUICE_SYMBOL, 'Fee Juice', FEE_JUICE_DECIMALS),
+  ...SEPOLIA_LIST.map(([symbol, name, decimals]) => token(SEPOLIA, symbol, name, decimals)),
+  token(BASE_SEPOLIA, 'USDC', 'USD Coin', 6),
 ];
 
 /** Fee Juice per whole token, in thousandths: the mock's rates, not prices. */
@@ -291,7 +292,7 @@ export function mockFunding(script: MockScript, timing: MockTiming = MOCK_TIMING
   const provider: FeeFundingProvider = {
     chains: async () => MOCK_CHAINS,
     tokens: async () => MOCK_TOKENS,
-    async quote(from, amountIn, signal) {
+    async quote(from, amountIn, _payer, signal) {
       await wait(timing.quote, signal);
       return priced(from, amountIn, `q${++quotes}`, Date.now() + timing.life);
     },
@@ -309,6 +310,10 @@ export function mockFunding(script: MockScript, timing: MockTiming = MOCK_TIMING
     },
   };
   const reads: FundingReads = {
+    async balances(_owner, tokens, signal) {
+      await wait(timing.quote, signal);
+      return tokens.map((t) => (script.wallet === 'empty' ? 0n : held(t)));
+    },
     standing: async () => ({ sponsored: false, privateFeeJuice: received, claimCost: CLAIM_COST }),
   };
   return { provider, reads };

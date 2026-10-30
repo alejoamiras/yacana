@@ -1,31 +1,43 @@
 import { Back } from '../../features/dialogs/Frame';
 import type { Funding } from '../machine';
-import type { Chain } from '../provider';
-import type { OptionProps } from '../run';
+import type { Chain, Token } from '../provider';
+import type { FundingRun } from '../run';
 import { QuoteView } from './QuoteView';
-import { TokenPicker } from './TokenPicker';
+import { type Holding, type Layout, TokenPicker } from './TokenPicker';
 
+const same = (a: Token, b: Token) => a.chainId === b.chainId && a.address === b.address;
+
+/** The picker, then the chosen token's amount and quote: the dialog screens every option shares. */
 export function Choose({
   run,
-  provider,
-  chains,
   s,
-}: Pick<OptionProps, 'run' | 'provider'> & {
-  chains: readonly Chain[];
+  chains,
+  holdings,
+  layout,
+  walletChain,
+}: {
+  run: FundingRun;
   s: Extract<Funding, { at: 'pick' | 'quote' }>;
+  chains: readonly Chain[];
+  holdings: readonly Holding[] | undefined;
+  layout: Layout;
+  walletChain?: number;
 }) {
   if (s.at === 'pick')
     return (
       <TokenPicker
-        provider={provider}
+        holdings={holdings}
         chains={chains}
-        onChoose={(token) => run.dispatch({ type: 'choose', token })}
+        layout={layout}
+        walletChain={walletChain}
+        onChoose={(h) => run.dispatch({ type: 'choose', token: h.token })}
       />
     );
+  const balance = holdings?.find((h) => same(h.token, s.token))?.balance ?? 0n;
   return (
     <>
       <Back onBack={() => run.dispatch({ type: 'back' })} />
-      <QuoteView run={run} s={s} chains={chains} onConfirm={run.confirm} />
+      <QuoteView run={run} s={s} chains={chains} balance={balance} onConfirm={run.confirm} />
     </>
   );
 }

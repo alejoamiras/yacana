@@ -1,11 +1,37 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { getDefaultStore } from 'jotai';
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import type { ReactNode } from 'react';
+import { sepolia } from 'viem/chains';
+import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
+import { createConfig, http, mock, useAccount, WagmiProvider } from 'wagmi';
+import { connect } from 'wagmi/actions';
+import type { BridgeSession } from '../bridge/session';
 import { feesCardAtom } from '../fees-gate';
-import { MOCK_TIMING, MOCK_TOKENS, mockFunding, scriptFrom } from './mock';
+import { bridgeSessionAtom } from '../state';
+import { MOCK_CHAINS, MOCK_TIMING, MOCK_TOKENS, type MockFunding, mockFunding, scriptFrom } from './mock';
 import { OptionB } from './options/B';
-import type { FeeFundingProvider, Phase, Quote, Token } from './provider';
+import { arranged, chainTabs, type Holding, searched } from './parts/TokenPicker';
+import type { FeeFundingProvider, FundingReads, Phase, Quote, Token } from './provider';
 import { FundingRun } from './run';
+import { FeesWallet, OWN_STORAGE_KEY } from './wallet';
+
+const PAYER = '0x90F79bf6EB2c4f870365E785982E1f101E93b906' as const;
+/** wagmi's mock connector with one account, no RPC behind it, connected before the specs run. */
+const connected = createConfig({
+  chains: [sepolia],
+  connectors: [mock({ accounts: [PAYER], features: { reconnect: true } })],
+  transports: { [sepolia.id]: http('http://127.0.0.1:9') },
+});
+const queries = new QueryClient();
+const withWallet = (ui: ReactNode) => (
+  <WagmiProvider config={connected}>
+    <QueryClientProvider client={queries}>{ui}</QueryClientProvider>
+  </WagmiProvider>
+);
+beforeAll(async () => {
+  await connect(connected, { connector: connected.connectors[0] as (typeof connected.connectors)[number] });
+});
 
 const USDC = MOCK_TOKENS.find((t) => t.chainId === 84532 && t.symbol === 'USDC') as Token;
 
@@ -99,24 +125,30 @@ const go = () => id('fees-go') as HTMLButtonElement;
 const cardCounted = () => getDefaultStore().get(feesCardAtom);
 /** Sepolia's USDC, 100 of it: a swap route of four steps, about 9.9 s of mock time. */
 const TRADE_MS = 15_000;
+/** The mock's tokens and the wallet's balances of them are read once the view mounts. */
+const holdingsRead = () => tick(MOCK_TIMING.quote);
 
-/** B on a fresh mock; `remount` unmounts it and renders it again on the same runner, as a route change does. */
+/** B on a fresh mock, connected; `remount` unmounts it and renders it again on the same runner, as a route change does. */
 async function show(
   search = '',
-  opts: { signedIn?: boolean; provider?: (p: FeeFundingProvider) => FeeFundingProvider } = {},
+  opts: {
+    signedIn?: boolean;
+    provider?: (p: FeeFundingProvider) => FeeFundingProvider;
+    reads?: (r: FundingReads) => FundingReads;
+  } = {},
 ) {
-  const mock = mockFunding(scriptFrom(search));
+  const mock: MockFunding = mockFunding(scriptFrom(search));
   const provider = opts.provider ? opts.provider(mock.provider) : mock.provider;
+  const reads = opts.reads ? opts.reads(mock.reads) : mock.reads;
   const run = new FundingRun(provider);
-  const ui = () => (
-    <OptionB run={run} provider={provider} reads={mock.reads} signedIn={opts.signedIn ?? true} />
-  );
+  const ui = () =>
+    withWallet(<OptionB run={run} provider={provider} reads={reads} signedIn={opts.signedIn ?? true} />);
   let view = render(ui());
-  await tick(0);
+  await holdingsRead();
   const remount = async () => {
     view.unmount();
     view = render(ui());
-    await tick(0);
+    await holdingsRead();
   };
   return { run, remount };
 }
@@ -173,9 +205,17 @@ describe('B on the mock', () => {
       symbol: 'ZZZ',
       name: 'Zed',
       decimals: 18,
-      balance: 10n ** 21n,
     };
-    await show('', { provider: (p) => ({ ...p, tokens: async (s) => [...(await p.tokens(s)), ZZZ] }) });
+    await show('', {
+      provider: (p) => ({ ...p, tokens: async (s) => [...(await p.tokens(s)), ZZZ] }),
+      reads: (r) => ({
+        ...r,
+        balances: async (owner, tokens, s) => {
+          const read = await r.balances(owner, tokens, s);
+          return tokens.map((t, i) => (t === ZZZ ? 10n ** 21n : (read[i] ?? 0n)));
+        },
+      }),
+    });
     fireEvent.click(id('fees-entry'));
     await tick(0);
     fireEvent.change(id('fees-search'), { target: { value: ZZZ.address } });
@@ -258,5 +298,93 @@ describe('what the flow keeps across views', () => {
     const fresh = run.getState();
     expect(fresh.at === 'quote' && first.at === 'quote' && fresh.quote?.id !== first.quote?.id).toBe(true);
     expect(id('fees-countdown').textContent).toContain('new quote in 1:00');
+  });
+});
+
+describe('the wallet and its tokens', () => {
+  const HELD = [
+    '11155111:DAI',
+    '11155111:FJ',
+    '11155111:LINK',
+    '11155111:USDC',
+    '11155111:WETH',
+    '84532:USDC',
+  ];
+  const keys = (hs: readonly Holding[]) => hs.map((h) => `${h.token.chainId}:${h.token.symbol}`);
+  const holdings = async () => {
+    const { reads } = mockFunding(scriptFrom(''), { ...MOCK_TIMING, quote: 0 });
+    const read = reads.balances(PAYER, MOCK_TOKENS, new AbortController().signal);
+    await vi.advanceTimersByTimeAsync(0);
+    const balances = await read;
+    return MOCK_TOKENS.map((token, i) => ({ token, balance: balances[i] ?? 0n }));
+  };
+
+  test('every ordering lists the held supported tokens; a search reaches the unheld after them', async () => {
+    const hs = await holdings();
+    expect(keys(arranged(MOCK_CHAINS, hs, 'one-list').held)).toEqual(HELD);
+    expect(arranged(MOCK_CHAINS, hs, 'one-list').rest).toEqual([]);
+    const first = arranged(MOCK_CHAINS, hs, 'held-first');
+    expect(keys(first.held)).toEqual(HELD);
+    expect(first.rest).toHaveLength(hs.length - HELD.length);
+    expect(chainTabs(MOCK_CHAINS, hs, 84532).map((c) => c.id)).toEqual([84532, 11155111]);
+    expect(keys(arranged(MOCK_CHAINS, hs, 'by-chain', 84532).held)).toEqual(['84532:USDC']);
+    expect(keys(arranged(MOCK_CHAINS, hs, 'by-chain', 11155111).held)).toEqual(HELD.slice(0, 5));
+    const found = searched(MOCK_CHAINS, hs, 'usd');
+    expect(keys(found.slice(0, 2))).toEqual(['11155111:USDC', '84532:USDC']);
+    expect(keys(found.slice(2))).toContain('11155111:USDT');
+    expect(found.slice(2).every((h) => h.balance === 0n)).toBe(true);
+  });
+
+  test('the picker asks the wallet only about routed tokens; an unheld one is found but cannot be chosen', async () => {
+    const asked: Token[][] = [];
+    await show('', {
+      reads: (r) => ({
+        ...r,
+        balances: (o, tokens, s) => {
+          asked.push([...tokens]);
+          return r.balances(o, tokens, s);
+        },
+      }),
+    });
+    expect(asked).toEqual([[...MOCK_TOKENS]]);
+    fireEvent.click(id('fees-entry'));
+    await tick(0);
+    expect(id('fees-token-11155111-DAI').getAttribute('data-held')).toBe('true');
+    expect(screen.getByText('Not in this wallet')).toBeTruthy();
+    fireEvent.change(id('fees-search'), { target: { value: 'usdt' } });
+    const usdt = id('fees-token-11155111-USDT') as HTMLButtonElement;
+    expect(usdt.disabled).toBe(true);
+    expect(usdt.textContent).toContain('not in this wallet');
+  });
+
+  test('a wallet holding none of them says so, and search still shows what would', async () => {
+    await show('?fees-wallet=empty');
+    fireEvent.click(id('fees-entry'));
+    await tick(0);
+    expect(id('fees-picker-empty').textContent).toBe(
+      'This wallet holds nothing that buys Fee Juice. Search to see what does.',
+    );
+    fireEvent.change(id('fees-search'), { target: { value: 'usdc' } });
+    expect((id('fees-token-84532-USDC') as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  test("the flow moves to a bridge session's config and reads its account; its own store never holds it", async () => {
+    const Probe = () => <span data-testid="probe">{useAccount().address ?? 'none'}</span>;
+    render(
+      <FeesWallet chainId={sepolia.id}>
+        <Probe />
+      </FeesWallet>,
+    );
+    await tick(0);
+    expect(id('probe').textContent).toBe('none');
+    try {
+      act(() => getDefaultStore().set(bridgeSessionAtom, { config: connected } as unknown as BridgeSession));
+      await tick(0);
+      expect(id('probe').textContent).toBe(PAYER);
+      const own = Object.keys(localStorage).filter((k) => k.startsWith(OWN_STORAGE_KEY));
+      for (const k of own) expect(localStorage.getItem(k)?.toLowerCase()).not.toContain(PAYER.toLowerCase());
+    } finally {
+      act(() => getDefaultStore().set(bridgeSessionAtom, null));
+    }
   });
 });

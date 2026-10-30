@@ -16,7 +16,6 @@ export interface Token {
   readonly symbol: string;
   readonly name: string;
   readonly decimals: number;
-  readonly balance: bigint;
 }
 
 export interface Cost {
@@ -69,8 +68,8 @@ export interface FeeFundingProvider {
   chains(signal: AbortSignal): Promise<readonly Chain[]>;
   /** Every token it turns into Fee Juice, on every chain: no size or set may be assumed. */
   tokens(signal: AbortSignal): Promise<readonly Token[]>;
-  /** The Aztec account is never sent: nothing the provider sees names it. */
-  quote(from: Token, amountIn: bigint, signal: AbortSignal): Promise<Quote>;
+  /** `payer` is the Ethereum wallet. The Aztec account is never sent: nothing the provider sees names it. */
+  quote(from: Token, amountIn: bigint, payer: string, signal: AbortSignal): Promise<Quote>;
   /** Resolves when the step is done; rejects with a FundingError. Running a failed step again is the retry. */
   run(phase: Phase, quote: Quote, on: (e: PhaseEvent) => void, signal: AbortSignal): Promise<void>;
 }
@@ -86,6 +85,8 @@ export interface Standing {
 
 /** What the page reads for itself, never through the provider. */
 export interface FundingReads {
+  /** The wallet's balance of each token, in order, read on the token's own chain. */
+  balances(owner: string, tokens: readonly Token[], signal: AbortSignal): Promise<readonly bigint[]>;
   standing(signal: AbortSignal): Promise<Standing>;
 }
 

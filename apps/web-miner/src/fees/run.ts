@@ -18,6 +18,8 @@ export class FundingRun {
   private quoting: AbortController | null = null;
   private quoteTimer: ReturnType<typeof setTimeout> | undefined;
   private lapseTimer: ReturnType<typeof setTimeout> | undefined;
+  /** The connected Ethereum wallet, the one that pays; quotes are asked for it. */
+  payer = '';
 
   constructor(
     private readonly provider: FeeFundingProvider,
@@ -82,7 +84,7 @@ export class FundingRun {
     this.quoteTimer = setTimeout(() => {
       const ctl = new AbortController();
       this.quoting = ctl;
-      this.provider.quote(token, amountIn, ctl.signal).then(
+      this.provider.quote(token, amountIn, this.payer, ctl.signal).then(
         (quote) => this.quoting === ctl && this.settleQuote({ type: 'quoted', quote }),
         (e) =>
           this.quoting === ctl &&

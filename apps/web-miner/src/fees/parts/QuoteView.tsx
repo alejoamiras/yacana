@@ -1,4 +1,4 @@
-import { Alert, AlertDescription, AmountBlock, AmountField, cn, Note } from '@yacana/ui';
+import { Alert, AlertDescription, AmountField, cn, Note } from '@yacana/ui';
 import { useEffect, useState } from 'react';
 import { Actions, AmountBelow, Primary, Row, Rows } from '../../features/dialogs/Frame';
 import { amountRefusal, parseAmount } from '../../features/withdraw-form';
@@ -27,23 +27,13 @@ function Countdown({ expiresAt }: { expiresAt: number }) {
 /** Short of the claim minimum: the least the route may deliver would not cover a claim on Aztec. */
 const short = (quote: Quote) => quote.feeJuiceMin < quote.claimMin;
 
-function QuoteRows({ quote, block }: { quote: Quote; block: boolean }) {
+function QuoteRows({ quote }: { quote: Quote }) {
   return (
     <div className="flex flex-col gap-3" data-testid="fees-quote">
-      {block && (
-        <AmountBlock
-          value={`≈ ${fj(quote.feeJuiceOut)}`}
-          unit={FEE_JUICE}
-          aside={`at least ${fj(quote.feeJuiceMin)}`}
-          tone="quiet"
-        />
-      )}
       <Rows>
-        {!block && (
-          <Row label="You get" sub={`at least ${fj(quote.feeJuiceMin)}`}>
-            about {fj(quote.feeJuiceOut)} {FEE_JUICE}
-          </Row>
-        )}
+        <Row label="You get" sub={`at least ${fj(quote.feeJuiceMin)}`}>
+          about {fj(quote.feeJuiceOut)} {FEE_JUICE}
+        </Row>
         {quote.costs.map((c) => (
           <Row key={c.label} label={c.label}>
             {tokenAmount(c.amount, c.decimals)} {c.symbol}
@@ -70,14 +60,14 @@ export function QuoteView({
   run,
   s,
   chains,
-  block = false,
+  balance,
   onConfirm,
 }: {
   run: FundingRun;
   s: Quoting;
   chains: readonly Chain[];
-  /** The figure the visitor gets as a big amount block, rather than a summary row. */
-  block?: boolean;
+  /** What the connected wallet holds of the token. */
+  balance: bigint;
   onConfirm: () => void;
 }) {
   const { token } = s;
@@ -88,14 +78,14 @@ export function QuoteView({
     s.quote && short(s.quote)
       ? `Too little to claim: at least ${fj(s.quote.claimMin)} ${FEE_JUICE} must arrive`
       : null;
-  const line = amountRefusal(text, token.balance, token.decimals) ?? below;
+  const line = amountRefusal(text, balance, token.decimals) ?? below;
   const edit = (t: string) => {
     setText(t);
-    const ok = amountRefusal(t, token.balance, token.decimals) === null;
+    const ok = amountRefusal(t, balance, token.decimals) === null;
     run.dispatch({ type: 'amount', amountIn: ok ? parseAmount(t, token.decimals) : null });
   };
   const chain = chains.find((c) => c.id === token.chainId)?.name ?? `chain ${token.chainId}`;
-  const balance = `${tokenAmount(token.balance, token.decimals)} ${token.symbol} on ${chain}`;
+  const held = `${tokenAmount(balance, token.decimals)} ${token.symbol} on ${chain}`;
   return (
     <>
       <AmountField
@@ -103,9 +93,9 @@ export function QuoteView({
         value={text}
         onChange={edit}
         unit={token.symbol}
-        max={exact(token.balance)}
+        max={exact(balance)}
         invalid={text !== '' && line !== null}
-        below={<AmountBelow line={text !== '' ? line : null} balance={balance} />}
+        below={<AmountBelow line={text !== '' ? line : null} balance={held} />}
         data-testid="fees-amount"
       />
       {s.refreshed && (
@@ -119,7 +109,7 @@ export function QuoteView({
         </Alert>
       )}
       {s.quote ? (
-        <QuoteRows quote={s.quote} block={block} />
+        <QuoteRows quote={s.quote} />
       ) : (
         s.amountIn !== null && !s.error && <p className="text-xs text-ink-3">Getting a quote…</p>
       )}

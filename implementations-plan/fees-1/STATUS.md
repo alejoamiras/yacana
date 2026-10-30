@@ -31,3 +31,7 @@
 - 2026-10-30 a2 on branch `fees-1-a2` (origin/main + the plan commit). P5 gate green: lint 0, typecheck 0,
   test:components (web-miner 175), `bun test apps/web-miner` 328 pass / 4 skip, replay 10 passed in 1.7 min (the
   B scenario 18.3 s). Forced break (the entry rule ignoring the balance) failed the Dismiss case; reverted.
+- 2026-10-30 a2 P6 gate green: lint 0, typecheck 0, test:components (web-miner 179), `bun test apps/web-miner` 328
+  pass / 4 skip, replay 10 passed in 1.8 min (the B scenario, now connecting the injected test wallet, 18.3 s).
+  Forced break (the flow's wallet ignoring a bridge session's config) failed the handover case; reverted. The
+  flow's own wagmi config got a refusing transport: it reads no chain, so a stray read fails before any RPC.

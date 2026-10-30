@@ -21,6 +21,8 @@ export interface L1WalletControl {
   readonly address: Address;
   /** How often the page asked for one wallet-side method, held and refused calls included. */
   calls(method: string): number;
+  /** Every method the page asked, in order, before any is answered: node reads included. */
+  asked(): readonly string[];
   /** The chain `eth_chainId` answers; a change emits `chainChanged` in every page of the context. */
   setChainId(chainId: number): Promise<void>;
   /** Swaps the signing key; emits `accountsChanged`. */
@@ -99,6 +101,7 @@ export async function installL1Wallet(context: BrowserContext, o: L1WalletOption
   const rejections = new Set<RejectKind>();
   const holds: { kind: RejectKind; to?: Address }[] = [];
   const counts: Record<string, number> = {};
+  const log: string[] = [];
   const count = (method: string) => {
     counts[method] = (counts[method] ?? 0) + 1;
   };
@@ -189,6 +192,7 @@ export async function installL1Wallet(context: BrowserContext, o: L1WalletOption
     process.env.YACANA_E2E_TRACE_L1 === '1' ? (line: string) => console.log(`[l1] ${line}`) : () => {};
   await context.exposeFunction('__yacanaL1Request', async (json: string) => {
     const rpc = JSON.parse(json) as Rpc;
+    log.push(rpc.method);
     try {
       const result = await handle(rpc);
       trace(`${rpc.method} → ${JSON.stringify(result)?.slice(0, 80)}`);
@@ -249,6 +253,7 @@ export async function installL1Wallet(context: BrowserContext, o: L1WalletOption
       return account.address;
     },
     calls: (method) => counts[method] ?? 0,
+    asked: () => [...log],
     setChainId: switchChain,
     async setAccount(privateKey) {
       account = privateKeyToAccount(privateKey);

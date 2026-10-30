@@ -151,18 +151,19 @@ describe('the fee-funding machine', () => {
   });
 
   test('the mock reads its switches from a closed vocabulary, anything else as none', () => {
-    expect(scriptFrom('?fees=b&fees-fail=claim&fees-hold=message')).toEqual({
+    expect(scriptFrom('?fees=b&fees-fail=claim&fees-hold=message&fees-wallet=empty')).toEqual({
       fail: 'claim',
+      wallet: 'empty',
       hold: 'message',
     });
-    expect(scriptFrom('?fees-hold=sign')).toEqual({ fail: 'none', hold: 'sign' });
+    expect(scriptFrom('?fees-hold=sign')).toEqual({ fail: 'none', wallet: 'held', hold: 'sign' });
     for (const hostile of [
       '?fees-fail=<img src=x onerror=alert(1)>',
       '?fees-fail=none&fees-hold=__proto__',
       '?fees-fail=CLAIM&fees-hold=Message',
-      '?fees-fail=&fees-hold=',
+      '?fees-fail=&fees-hold=&fees-wallet=EMPTY',
       '',
     ])
-      expect(scriptFrom(hostile), hostile).toEqual({ fail: 'none', hold: null });
+      expect(scriptFrom(hostile), hostile).toEqual({ fail: 'none', wallet: 'held', hold: null });
   });
 });
